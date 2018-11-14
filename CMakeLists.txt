@@ -58,3 +58,6 @@ include_directories("${PROJECT_SOURCE_DIR}/external/googletest/include"
 
 add_executable(rct src/main.cpp)
 target_link_libraries(rct sdsl divsufsort divsufsort64)
+
+add_executable(rlz_file src/rlz_file.cpp)
+target_link_libraries(rct sdsl divsufsort divsufsort64)

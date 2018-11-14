@@ -7,11 +7,12 @@
 
 #include <vector>
 #include <unordered_map>
+#include <sdsl/int_vector.hpp>
 
 namespace rct {
 
 
-    template<class t_value = uint32_t, uint64_t block_size_default = 1024*1024>
+    template<class t_value = uint32_t, uint64_t block_size_default = 400>
     class reference_uniform_sample {
 
     public:
@@ -29,17 +30,19 @@ namespace rct {
 
         reference_uniform_sample() = default;
 
-        //Container must contain value_type elements
-        template <class Container>
-        reference_uniform_sample(Container &container, const size_type reference_size, const size_type block_size = block_size_default){
+        reference_uniform_sample(std::vector<value_type> &container, const size_type reference_size,
+                                 const size_type block_size = block_size_default){
 
-            auto num_samples = reference_size / block_size;
+            auto ref_length = reference_size / sizeof(value_type);
+            auto block_length = block_size / sizeof(value_type);
+            auto num_samples = ref_length / block_length;
             auto input_size  = container.size();
             auto step_sample = input_size / num_samples;
 
+            std::vector<value_type> reference;
             std::unordered_map<value_type, char> voc_reference;
             for(size_type i = 0; i < input_size; i += step_sample){
-                for(size_type j = 0; j < block_size; ++j){
+                for(size_type j = 0; j < block_length; ++j){
                     if(i + j >= input_size) break;
                     value_type value = container[i + j];
                     if(voc_reference.count(value) == 0) voc_reference[value] = 1;
@@ -54,6 +57,8 @@ namespace rct {
                     m_reference.push_back(value);
                 }
             }
+
+
         }
 
         inline value_type operator[](const size_type& idx){
@@ -62,6 +67,10 @@ namespace rct {
 
         inline value_type operator[](const size_type& idx) const{
             return m_reference[idx];
+        }
+
+        void* data(const size_type& idx){
+            return &m_reference[idx];
         }
 
         inline size_type size(){

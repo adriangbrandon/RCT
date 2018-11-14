@@ -7,15 +7,20 @@
 
 #include <reference_uniform_sample.hpp>
 #include <sdsl/suffix_arrays.hpp>
+#include <sdsl/wavelet_trees.hpp>
+#include <sdsl/suffix_array_algorithm.hpp>
+
+#define INITIAL_CAPACITY 1024
 
 namespace rct {
 
-    template <class t_reference = reference_uniform_sample, class t_fm_index = sdsl::csa_wt<>>
+    template <class t_value = uint32_t, class t_reference = reference_uniform_sample<t_value>,
+            class t_fm_index = sdsl::csa_wt<sdsl::wt_huff_int<>>>
     class rlz_naive {
 
     public:
 
-        typedef uint32_t size_type;
+        typedef uint64_t size_type;
         typedef uint32_t offset_type;
         typedef uint32_t length_type;
         typedef struct rlz_factor {
@@ -23,7 +28,7 @@ namespace rct {
             length_type length;
         } factor_type;
         typedef t_reference reference_type;
-        typedef typename reference_type::value_type value_type;
+        typedef t_value value_type;
         typedef t_fm_index fm_index_type;
 
     private:
@@ -43,15 +48,21 @@ namespace rct {
 
     public:
 
+       // const fm_index_type &fm_index = &m_fm_index;
+
         rlz_naive(std::vector<value_type> &container, const size_type reference_size){
 
             m_reference = reference_type(container, reference_size);
-            std::vector<value_type > rev_reference;
+            sdsl::int_vector<> rev_reference;
+            //std::vector<uint32_t> rev_reference;
+           // rev_reference.width((uint8_t) (sizeof(value_type)*8));
+            for(size_type i = 0; i < m_reference.size(); ++i){
+                std::cout << "ref[" << i << "]=" << m_reference[i] << std::endl;
+            }
             rev_reference.resize(m_reference.size());
             std::reverse_copy(m_reference.begin(), m_reference.end(), rev_reference.begin());
-            rev_reference[rev_reference.size()-1] = 0;
-            sdsl::construct_im(m_fm_index, rev_reference, (uint8_t) sizeof(value_type));
-            m_input = std::move(container);
+            sdsl::construct_im(m_fm_index, rev_reference);
+            m_input = container;
         }
 
 
@@ -59,7 +70,7 @@ namespace rct {
             size_type start = 0;
             size_type end = m_fm_index.size()-1;
             size_type start_input = m_input_pos;
-            while(m_input_pos != end){
+            while(m_input_pos < m_input.size()){
                 auto sym = m_fm_index.char2comp[m_input[m_input_pos]];
                 size_type res_start, res_end;
                 if(start == 0 && end == m_fm_index.size()-1){
@@ -70,7 +81,11 @@ namespace rct {
                 }
                 if(res_end <= res_start){
                     length_type length = m_input_pos - start_input;
-                    if(length == 0) ++m_input_pos;
+                    if(length == 0) {
+                        ++m_input_pos;
+                        offset_type offset = m_reference.size() - m_fm_index[res_start]-1;
+                        return rlz_factor{offset, 1};
+                    }
                     offset_type offset = m_reference.size() - (m_fm_index[start] + length);
                     return rlz_factor{offset, length};
 
@@ -86,8 +101,21 @@ namespace rct {
 
         }
 
+
         inline bool has_next() const {
             return m_input_pos < m_input.size();
+        }
+
+
+         void decompress(const std::vector<rlz_factor> &factors, std::vector<value_type> &result){
+            size_type pos = 0;
+            result.resize(m_input.size());
+            for(const auto &f : factors){
+               /* std::cout << "pos: " << pos << "result.size(): " << result.size() << std::endl;
+                std::cout << "f: " << f.offset << ", " << f.length << " reference.size(): " << m_reference.size() << std::endl;*/
+                std::memcpy(&result[pos], m_reference.data(f.offset), f.length * sizeof(value_type));
+                pos += f.length;
+            }
         }
 
 
