@@ -16,7 +16,7 @@
 namespace rct {
 
     template <class t_value = uint32_t, class t_reference = reference_uniform_sample<t_value>,
-            class t_fm_index = sdsl::csa_wt<sdsl::wt_huff_int<>>>
+              class t_fm_index = sdsl::csa_wt_int<> >
     class rlz_naive {
 
     public:

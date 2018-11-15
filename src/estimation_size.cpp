@@ -16,6 +16,7 @@ int main(int argc, const char* argv[]) {
         std::string dataset_name = argv[1];
         uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
         std::ifstream in(dataset_name);
+        std::ofstream factors_log("factors.log");
         std::vector<uint32_t > input_reference;
         uint32_t id, old_id=-1, t, x, old_x,  y, old_y;
         std::cout << "Array of movements: " << std::flush;
@@ -40,9 +41,13 @@ int main(int argc, const char* argv[]) {
         using t_factor = rct::rlz_naive<>::factor_type;
         std::vector<t_factor> factors;
         while(rlz.has_next()){
-            factors.push_back(rlz.next(input_reference));
+            auto f = rlz.next(input_reference);
+            factors_log << "f.length: " << f.length << " f.offset" << std::endl;
+            factors.push_back(f);
         }
         std::cout << "Done." << std::endl;
+
+        std::cout << "Total factors: " << factors.size() << std::endl;
 
         std::vector<uint32_t > result;
         std::cout << "Decompressing: " << std::flush;
