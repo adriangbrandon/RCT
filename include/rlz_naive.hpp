@@ -66,7 +66,6 @@ namespace rct {
             util::file::write_to_file("rev_ref.txt", rev_reference);
             sdsl::construct(m_fm_index, "rev_ref.txt", 4);
             m_input_size = container.size();
-            exit(10);
         }
 
 
