@@ -7,6 +7,7 @@
 #include <random>
 #include <functional>
 #include <rlz_naive.hpp>
+#include <file_util.hpp>
 
 int main(int argc, const char* argv[]) {
 
@@ -34,15 +35,12 @@ int main(int argc, const char* argv[]) {
     std::vector<rct::rlz_naive<>::factor_type> factors;
     //uint64_t j = 0;
     while(rlz.has_next()){
-        auto factor = rlz.next();
-        /*if(j < 3){
-            std::cout << "offset: " << factor.offset << std::endl;
-            std::cout << "length: " << factor.length << std::endl;
-        }
-        ++j;*/
-       // std::cout << "{" << factor.offset << ", " << factor.length << "}" << std::endl;
+        auto factor = rlz.next(trajectory);
         factors.push_back(factor);
     }
+    std::cout << "Parsing Done." << std::endl;
+
+
 
     std::vector<uint32_t > result;
     rlz.decompress(factors, result);
@@ -61,6 +59,16 @@ int main(int argc, const char* argv[]) {
     std::cout << "OK!" << std::endl;
 
 
+    util::file::write_to_file("proba.bin", trajectory);
+    std::vector<uint32_t>  read_trajectory;
+    util::file::read_from_file("proba.bin", read_trajectory);
+
+    std::cout << trajectory.size() << " - " << read_trajectory.size() << std::endl;
+    for(uint64_t i = 0; i < trajectory.size(); ++i){
+        if(trajectory[i] != read_trajectory[i]){
+            std::cout << "Error" << std::endl;
+        }
+    }
 
 
 

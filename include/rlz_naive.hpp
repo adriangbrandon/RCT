@@ -5,6 +5,7 @@
 #ifndef RCT_RLZ_NAIVE_HPP
 #define RCT_RLZ_NAIVE_HPP
 
+#include <file_util.hpp>
 #include <reference_uniform_sample.hpp>
 #include <sdsl/suffix_arrays.hpp>
 #include <sdsl/wavelet_trees.hpp>
@@ -20,7 +21,7 @@ namespace rct {
 
     public:
 
-        typedef uint64_t size_type;
+
         typedef uint32_t offset_type;
         typedef uint32_t length_type;
         typedef struct rlz_factor {
@@ -30,18 +31,19 @@ namespace rct {
         typedef t_reference reference_type;
         typedef t_value value_type;
         typedef t_fm_index fm_index_type;
+        typedef typename fm_index_type::size_type size_type;
 
     private:
 
         reference_type m_reference;
         fm_index_type  m_fm_index;
-        std::vector<value_type> m_input;
+        size_type m_input_size = 0;
         size_type m_input_pos = 0;
 
         void copy(const rlz_naive &n){
             m_reference = n.m_reference;
             m_fm_index = n.m_fm_index;
-            m_input = n.m_input;
+            m_input_size = n.m_input_size;
             m_input_pos = n.m_input_pos;
         }
 
@@ -53,25 +55,27 @@ namespace rct {
         rlz_naive(std::vector<value_type> &container, const size_type reference_size){
 
             m_reference = reference_type(container, reference_size);
-            sdsl::int_vector<> rev_reference;
-            //std::vector<uint32_t> rev_reference;
+            //sdsl::int_vector<> rev_reference;
+            std::vector<uint32_t> rev_reference;
            // rev_reference.width((uint8_t) (sizeof(value_type)*8));
-            for(size_type i = 0; i < m_reference.size(); ++i){
+           /* for(size_type i = 0; i < m_reference.size(); ++i){
                 std::cout << "ref[" << i << "]=" << m_reference[i] << std::endl;
-            }
+            }*/
             rev_reference.resize(m_reference.size());
             std::reverse_copy(m_reference.begin(), m_reference.end(), rev_reference.begin());
-            sdsl::construct_im(m_fm_index, rev_reference);
-            m_input = container;
+            util::file::write_to_file("rev_ref.txt", rev_reference);
+            sdsl::construct(m_fm_index, "rev_ref.txt", 4);
+            m_input_size = container.size();
+            exit(10);
         }
 
 
-        rlz_factor next(){
+        rlz_factor next(std::vector<value_type> &container){
             size_type start = 0;
             size_type end = m_fm_index.size()-1;
             size_type start_input = m_input_pos;
-            while(m_input_pos < m_input.size()){
-                auto sym = m_fm_index.char2comp[m_input[m_input_pos]];
+            while(m_input_pos < m_input_size){
+                auto sym = m_fm_index.char2comp[container[m_input_pos]];
                 size_type res_start, res_end;
                 if(start == 0 && end == m_fm_index.size()-1){
                     res_start = m_fm_index.C[sym];
@@ -103,13 +107,13 @@ namespace rct {
 
 
         inline bool has_next() const {
-            return m_input_pos < m_input.size();
+            return m_input_pos < m_input_size;
         }
 
 
          void decompress(const std::vector<rlz_factor> &factors, std::vector<value_type> &result){
             size_type pos = 0;
-            result.resize(m_input.size());
+            result.resize(m_input_size);
             for(const auto &f : factors){
                /* std::cout << "pos: " << pos << "result.size(): " << result.size() << std::endl;
                 std::cout << "f: " << f.offset << ", " << f.length << " reference.size(): " << m_reference.size() << std::endl;*/
@@ -124,7 +128,7 @@ namespace rct {
             if (this != &r) {
                 m_reference.swap(r.m_reference);
                 m_fm_index.swap(r.m_fm_index);
-                std::swap(m_input, r.m_input);
+                std::swap(m_input_size, r.m_input_size);
                 std::swap(m_input_pos, r.m_input_pos);
             }
         }
@@ -142,7 +146,7 @@ namespace rct {
             if (this != &v) {
                 m_reference = std::move(v.m_reference);
                 m_fm_index = std::move(v.m_fm_index);
-                m_input = std::move(v.m_input);
+                m_input_size = std::move(v.m_input_size);
                 m_input_pos = v.m_input_pos;
             }
             return *this;

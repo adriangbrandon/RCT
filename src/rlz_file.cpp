@@ -14,7 +14,6 @@ int main(int argc, const char* argv[]) {
         std::string input_file = argv[1];
 
 
-
     }
 
     std::mt19937 rng;
