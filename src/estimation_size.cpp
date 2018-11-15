@@ -22,7 +22,7 @@ int main(int argc, const char* argv[]) {
         std::cout << "Array of movements: " << std::flush;
         while(in){
             in >> id >> t >> x >> y;
-            if(in.eof() || id > 100) break;
+            if(in.eof()) break;
             if(id == old_id){
                 int32_t diff_x = x - old_x;
                 int32_t diff_y = y - old_y;
@@ -40,14 +40,17 @@ int main(int argc, const char* argv[]) {
         std::cout << "Parsing: " << std::flush;
         using t_factor = rct::rlz_naive<>::factor_type;
         std::vector<t_factor> factors;
+        uint64_t length = 0;
         while(rlz.has_next()){
             auto f = rlz.next(input_reference);
-            factors_log << "f.length: " << f.length << " f.offset" << std::endl;
+            factors_log << "f.length: " << f.length << " f.offset: "  << f.offset << std::endl;
+            length += f.length;
             factors.push_back(f);
         }
         std::cout << "Done." << std::endl;
 
         std::cout << "Total factors: " << factors.size() << std::endl;
+        std::cout << "Total length: " << length << std::endl;
 
         std::vector<uint32_t > result;
         std::cout << "Decompressing: " << std::flush;
@@ -59,6 +62,8 @@ int main(int argc, const char* argv[]) {
             for(uint64_t i = 0; i < result.size(); ++i){
                 if(result[i] != input_reference[i]){
                     std::cout << "Error - at position: " << i << std::endl;
+                    std::cout << "Expected: " << input_reference[i] << std::endl;
+                    std::cout << "Obtained: " << result[i] << std::endl;
                     exit(1);
                 }
             }

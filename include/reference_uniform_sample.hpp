@@ -12,7 +12,7 @@
 namespace rct {
 
 
-    template<class t_value = uint32_t, uint64_t block_size_default = 400>
+    template<class t_value = uint32_t, uint64_t block_size_default = 1024>
     class reference_uniform_sample {
 
     public:

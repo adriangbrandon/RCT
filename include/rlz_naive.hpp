@@ -55,16 +55,16 @@ namespace rct {
         rlz_naive(std::vector<value_type> &container, const size_type reference_size){
 
             m_reference = reference_type(container, reference_size);
-            //sdsl::int_vector<> rev_reference;
-            std::vector<uint32_t> rev_reference;
+            sdsl::int_vector<> rev_reference;
+            //std::vector<uint32_t> rev_reference;
            // rev_reference.width((uint8_t) (sizeof(value_type)*8));
            /* for(size_type i = 0; i < m_reference.size(); ++i){
                 std::cout << "ref[" << i << "]=" << m_reference[i] << std::endl;
             }*/
             rev_reference.resize(m_reference.size());
             std::reverse_copy(m_reference.begin(), m_reference.end(), rev_reference.begin());
-            util::file::write_to_file("rev_ref.txt", rev_reference);
-            sdsl::construct(m_fm_index, "rev_ref.txt", 4);
+           // util::file::write_to_file("rev_ref.txt", rev_reference);
+            sdsl::construct_im(m_fm_index, rev_reference);
             m_input_size = container.size();
         }
 
@@ -74,11 +74,12 @@ namespace rct {
             size_type end = m_fm_index.size()-1;
             size_type start_input = m_input_pos;
             while(m_input_pos < m_input_size){
-                auto sym = m_fm_index.char2comp[container[m_input_pos]];
+                auto sym = container[m_input_pos];
                 size_type res_start, res_end;
                 if(start == 0 && end == m_fm_index.size()-1){
-                    res_start = m_fm_index.C[sym];
-                    res_end = m_fm_index.C[sym+1]-1;
+                    auto sym_comp = m_fm_index.char2comp[sym];
+                    res_start = m_fm_index.C[sym_comp];
+                    res_end = m_fm_index.C[sym_comp+1]-1;
                 }else{
                     sdsl::backward_search(m_fm_index, start, end, sym, res_start, res_end);
                 }
@@ -114,7 +115,7 @@ namespace rct {
             size_type pos = 0;
             result.resize(m_input_size);
             for(const auto &f : factors){
-               /* std::cout << "pos: " << pos << "result.size(): " << result.size() << std::endl;
+                /*std::cout << "pos: " << pos << "result.size(): " << result.size() << std::endl;
                 std::cout << "f: " << f.offset << ", " << f.length << " reference.size(): " << m_reference.size() << std::endl;*/
                 std::memcpy(&result[pos], m_reference.data(f.offset), f.length * sizeof(value_type));
                 pos += f.length;
