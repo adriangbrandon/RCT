@@ -37,8 +37,10 @@ namespace rct {
 
         reference_type m_reference;
         fm_index_type  m_fm_index;
+
         size_type m_input_size = 0;
         size_type m_input_pos = 0;
+        const std::vector<value_type>* m_input;
 
         void copy(const rlz_naive &n){
             m_reference = n.m_reference;
@@ -65,16 +67,23 @@ namespace rct {
             std::reverse_copy(m_reference.begin(), m_reference.end(), rev_reference.begin());
            // util::file::write_to_file("rev_ref.txt", rev_reference);
             sdsl::construct_im(m_fm_index, rev_reference);
-            m_input_size = container.size();
         }
 
 
-        rlz_factor next(std::vector<value_type> &container){
+        void init_factorization(const std::vector<value_type> *container){
+            m_input = container;
+            m_input_size = container->size();
+            m_input_pos = 0;
+        }
+
+
+        rlz_factor next(){
             size_type start = 0;
             size_type end = m_fm_index.size()-1;
             size_type start_input = m_input_pos;
             while(m_input_pos < m_input_size){
-                auto sym = container[m_input_pos];
+
+                auto sym = m_input->at(m_input_pos);
                 size_type res_start, res_end;
                 if(start == 0 && end == m_fm_index.size()-1){
                     auto sym_comp = m_fm_index.char2comp[sym];
