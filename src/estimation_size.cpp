@@ -49,7 +49,7 @@ int main(int argc, const char* argv[]) {
         in.open(dataset_name);
         while(in){
             in >> id >> t >> x >> y;
-            if(in.eof() || id > 100) break;
+            if(in.eof()) break;
             if(id == old_id){
                 int32_t diff_x = x - old_x;
                 int32_t diff_y = y - old_y;
@@ -98,7 +98,7 @@ int main(int argc, const char* argv[]) {
 
 
         std::cout << "Total factors: " << total_factors << std::endl;
-        std::cout << "Total factors: " << total_length << std::endl;
+        std::cout << "Total length: " << total_length << std::endl;
 
     }
 
