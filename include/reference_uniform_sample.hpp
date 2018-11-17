@@ -73,7 +73,7 @@ namespace rct {
             return &m_reference[idx];
         }
 
-        inline size_type size(){
+        inline size_type size() const{
             return m_reference.size();
         }
 

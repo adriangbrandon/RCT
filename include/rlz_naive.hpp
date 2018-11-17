@@ -51,8 +51,7 @@ namespace rct {
 
 
     public:
-
-       // const fm_index_type &fm_index = &m_fm_index;
+        const reference_type &reference = m_reference;
 
         rlz_naive(std::vector<value_type> &container, const size_type reference_size){
 

@@ -14,7 +14,8 @@ int main(int argc, const char* argv[]) {
     if(argc == 3){
 
         using t_factor = rct::rlz_naive<>::factor_type;
-
+        uint64_t size_movements = 0, size_rmqs = 0, size_disappeared = 0,
+                size_length_phrase = 0, size_offset_phrase = 0, size_value_phrase = 0;
         std::string dataset_name = argv[1];
         uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
         std::ifstream in(dataset_name);
@@ -40,9 +41,39 @@ int main(int argc, const char* argv[]) {
         rct::rlz_naive<> rlz(input_reference, size_reference);
         std::cout << "Done." << std::endl;
 
+        //Computing size of storing the reference
+        x = 0, old_x = 0, y = 0, old_y = 0;
+        bool increase_x = true, increase_y = true;
+        uint64_t ones_x = 1, ones_y = 1;
+        for(uint64_t i = 0; i < rlz.reference.size(); ++i){
+            auto pair = rct::spiral_matrix_coder::decode(rlz.reference[i]);
+            //Movements
+            size_movements += 4 + std::abs(pair.first) + std::abs(pair.second);
+            //Adding two bits per change
+            if(increase_x && pair.first < 0){
+                size_rmqs += 2;
+                increase_x = false;
+                ++ones_x;
+            }else if (!increase_x && pair.first > 0){
+                size_rmqs += 2;
+                increase_x = true;
+                ++ones_x;
+            }
+            if(increase_y && pair.second < 0){
+                size_rmqs += 2;
+                increase_y = false;
+                ++ones_y;
+            }else if (!increase_y && pair.second > 0){
+                size_rmqs += 2;
+                increase_y = true;
+                ++ones_y;
+            }
+        }
+        //Adding the bitmaps which mark the changes
+        size_rmqs += std::ceil(ones_x*(2 + log2(rlz.reference.size()/(double_t) ones_x)));
+        size_rmqs += std::ceil(ones_y*(2 + log2(rlz.reference.size()/(double_t) ones_y)));
+
         uint64_t total_length = input_reference.size();
-
-
         old_id=-1;
         std::vector<uint32_t > trajectory;
         uint64_t total_factors = 0;
@@ -83,6 +114,20 @@ int main(int argc, const char* argv[]) {
                     exit(1);
                 }
                 std::cout << "Done." << std::endl;
+
+                //Computing size of storing each trajectory
+                if(!trajectory.empty()){
+                    size_disappeared += trajectory.size();
+                    size_length_phrase += std::ceil(factors.size()*(2 + log2(trajectory.size()/(double_t) factors.size())));
+                    size_offset_phrase += 32 * factors.size();
+                    size_value_phrase += 64 * factors.size();
+                }else{
+                    size_value_phrase += 64;
+                }
+                size_value_phrase += 64; //time_start
+
+
+
                 trajectory.clear();
                 total_factors += factors.size();
                 std::cout << std::endl;
@@ -97,8 +142,22 @@ int main(int argc, const char* argv[]) {
 
 
 
+        std::cout << "---------------------STATS------------------------" << std::endl;
+
         std::cout << "Total factors: " << total_factors << std::endl;
         std::cout << "Total length: " << total_length << std::endl;
+        std::cout << "                     Size                         " << std::endl;
+        std::cout << "- Reference: " << size_movements + size_rmqs << " bits." << std::endl;
+        std::cout << "    - MOVE : " << size_movements << " bits." << std::endl;
+        std::cout << "    - RMQS : " << size_rmqs << " bits." << std::endl;
+
+        std::cout << "- Trajectories: " << size_disappeared + size_length_phrase + size_offset_phrase + size_value_phrase << " bits." << std::endl;
+        std::cout << "    - DISAP : " << size_disappeared << " bits." << std::endl;
+        std::cout << "    - LENGTH: " << size_length_phrase << " bits." << std::endl;
+        std::cout << "    - OFFSET: " << size_offset_phrase << " bits." << std::endl;
+        std::cout << "    - VALUES: " << size_value_phrase << " bits." << std::endl;
+
+
 
     }
 
