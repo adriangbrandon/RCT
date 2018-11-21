@@ -11,13 +11,14 @@
 int main(int argc, const char* argv[]) {
 
 
-    if(argc == 3){
+    if(argc == 4){
 
         using t_factor = rct::rlz_naive<>::factor_type;
         uint64_t size_movements = 0, size_rmqs = 0, size_disappeared = 0,
-                size_length_phrase = 0, size_offset_phrase = 0, size_value_phrase = 0;
+                size_length_phrase = 0, size_offset_phrase = 0, size_value_phrase = 0, size_rmq_phrase = 0;
         std::string dataset_name = argv[1];
         uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
+        uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
         std::ifstream in(dataset_name);
         std::ofstream factors_log("factors.log");
         std::vector<uint32_t > input_reference;
@@ -38,7 +39,7 @@ int main(int argc, const char* argv[]) {
         in.close();
         std::cout << "Done." << std::endl;
         std::cout << "RLZ: " << std::flush;
-        rct::rlz_naive<> rlz(input_reference, size_reference);
+        rct::rlz_naive<> rlz(input_reference, size_reference, size_block_bytes);
         std::cout << "Done." << std::endl;
 
         //Computing size of storing the reference
@@ -121,10 +122,11 @@ int main(int argc, const char* argv[]) {
                     size_length_phrase += std::ceil(factors.size()*(2 + log2(trajectory.size()/(double_t) factors.size())));
                     size_offset_phrase += 32 * factors.size();
                     size_value_phrase += 64 * factors.size();
+                    size_rmq_phrase += 2 * factors.size();
                 }else{
                     size_value_phrase += 64;
                 }
-                size_value_phrase += 64; //time_start
+                size_value_phrase += 32; //time_start
 
 
 
@@ -151,13 +153,20 @@ int main(int argc, const char* argv[]) {
         std::cout << "    - MOVE : " << size_movements << " bits." << std::endl;
         std::cout << "    - RMQS : " << size_rmqs << " bits." << std::endl;
 
-        std::cout << "- Trajectories: " << size_disappeared + size_length_phrase + size_offset_phrase + size_value_phrase << " bits." << std::endl;
+        std::cout << "- Trajectories: " << size_disappeared + size_length_phrase + size_offset_phrase + size_value_phrase + size_rmq_phrase << " bits." << std::endl;
         std::cout << "    - DISAP : " << size_disappeared << " bits." << std::endl;
         std::cout << "    - LENGTH: " << size_length_phrase << " bits." << std::endl;
         std::cout << "    - OFFSET: " << size_offset_phrase << " bits." << std::endl;
         std::cout << "    - VALUES: " << size_value_phrase << " bits." << std::endl;
+        std::cout << "    - RMQS: " << size_rmq_phrase << " bits." << std::endl;
 
+        std::cout << "--------------------------------------------------" << std::endl;
 
+        std::string stats_file = dataset_name + "_" + std::to_string(size_block_bytes) + "_" + std::to_string(size_reference) + ".txt";
+        std::ofstream stats_output(stats_file);
+        stats_output << "[" << size_movements << ", " << size_rmqs << "," << size_disappeared << ", " << size_length_phrase
+        << ", " << size_offset_phrase << ", " << size_value_phrase << ", " << size_rmq_phrase << "]" << std::endl;
+        stats_output.close();
 
     }
 
