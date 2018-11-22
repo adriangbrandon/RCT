@@ -82,6 +82,7 @@ int main(int argc, const char* argv[]) {
         while(in){
             in >> id >> t >> x >> y;
             if(in.eof()) break;
+            //if(in.eof() || id > 99) break;
             if(id == old_id){
                 int32_t diff_x = x - old_x;
                 int32_t diff_y = y - old_y;
@@ -127,9 +128,6 @@ int main(int argc, const char* argv[]) {
                     size_value_phrase += 64;
                 }
                 size_value_phrase += 32; //time_start
-
-
-
                 trajectory.clear();
                 total_factors += factors.size();
                 std::cout << std::endl;
