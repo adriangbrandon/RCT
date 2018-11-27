@@ -2,6 +2,7 @@
 // Created by adrian on 15/11/18.
 //
 
+#include <time_util.hpp>
 #include <string>
 #include <fstream>
 #include <vector>
@@ -13,7 +14,7 @@ int main(int argc, const char* argv[]) {
 
     if(argc == 4){
 
-        using t_factor = rct::rlz_naive<>::factor_type;
+        using t_factor = rct::rlz_csa_bc_int::factor_type;
         uint64_t size_movements = 0, size_rmqs = 0, size_disappeared = 0,
                 size_length_phrase = 0, size_offset_phrase = 0, size_value_phrase = 0, size_rmq_phrase = 0;
         std::string dataset_name = argv[1];
@@ -39,7 +40,7 @@ int main(int argc, const char* argv[]) {
         in.close();
         std::cout << "Done." << std::endl;
         std::cout << "RLZ: " << std::flush;
-        rct::rlz_naive<> rlz(input_reference, size_reference, size_block_bytes);
+        rct::rlz_csa_bc_int rlz(input_reference, size_reference, size_block_bytes);
         std::cout << "Done." << std::endl;
 
         //Computing size of storing the reference
@@ -79,6 +80,7 @@ int main(int argc, const char* argv[]) {
         std::vector<uint32_t > trajectory;
         uint64_t total_factors = 0;
         in.open(dataset_name);
+        auto start = util::time::user::now();
         while(in){
             in >> id >> t >> x >> y;
             //if(in.eof()) break;
@@ -136,9 +138,10 @@ int main(int argc, const char* argv[]) {
             old_x = x;
             old_y = y;
         }
+        auto end = util::time::user::now();
         in.close();
         factors_log.close();
-        std::cout << "Parsing: Done. " << std::endl;
+        std::cout << "Parsing: done in " << end-start << " (µs)" << std::endl;
 
 
 

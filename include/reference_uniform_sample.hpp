@@ -90,6 +90,18 @@ namespace rct {
             return m_reference.end();
         }
 
+        //! Copy constructor
+        reference_uniform_sample(const reference_uniform_sample& o)
+        {
+            copy(o);
+        }
+
+        //! Move constructor
+        reference_uniform_sample(reference_uniform_sample&& o)
+        {
+            *this = std::move(o);
+        }
+
         void swap(reference_uniform_sample& r)
         {
             if (this != &r) {

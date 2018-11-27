@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Release")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -56,7 +56,7 @@ include_directories("${PROJECT_SOURCE_DIR}/external/googletest/include"
         )
 
 
-add_executable(rlz_file src/rlz_file.cpp)
+add_executable(rlz_file src/rlz_file.cpp include/rlz_csa.hpp)
 target_link_libraries(rlz_file sdsl divsufsort divsufsort64)
 
 add_executable(estimation_size src/estimation_size.cpp)

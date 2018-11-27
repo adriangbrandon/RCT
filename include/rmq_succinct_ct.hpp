@@ -65,6 +65,18 @@ namespace rct {
             return m_bp.size();
         }
 
+        //! Copy constructor
+        rmq_succinct_ct(const rmq_succinct_ct& o)
+        {
+            copy(o);
+        }
+
+        //! Move constructor
+        rmq_succinct_ct(rmq_succinct_ct&& o)
+        {
+            *this = std::move(o);
+        }
+
         rmq_succinct_ct& operator=(const rmq_succinct_ct& rm) {
             if (this != &rm) {
                 m_bp = rm.m_bp;

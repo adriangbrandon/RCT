@@ -16,7 +16,7 @@
 namespace rct {
 
     template <class t_value = uint32_t, class t_reference = reference_uniform_sample<t_value>,
-              class t_fm_index = sdsl::csa_wt_int<> >
+              class t_csa = sdsl::csa_wt_int<> >
     class rlz_naive {
 
     public:
@@ -30,13 +30,13 @@ namespace rct {
         } factor_type;
         typedef t_reference reference_type;
         typedef t_value value_type;
-        typedef t_fm_index fm_index_type;
-        typedef typename fm_index_type::size_type size_type;
+        typedef t_csa csa_type;
+        typedef typename csa_type::size_type size_type;
 
     private:
 
         reference_type m_reference;
-        fm_index_type  m_fm_index;
+        csa_type  m_csa;
 
         size_type m_input_size = 0;
         size_type m_input_pos = 0;
@@ -44,7 +44,7 @@ namespace rct {
 
         void copy(const rlz_naive &n){
             m_reference = n.m_reference;
-            m_fm_index = n.m_fm_index;
+            m_csa = n.m_csa;
             m_input_size = n.m_input_size;
             m_input_pos = n.m_input_pos;
         }
@@ -65,7 +65,7 @@ namespace rct {
             rev_reference.resize(m_reference.size());
             std::reverse_copy(m_reference.begin(), m_reference.end(), rev_reference.begin());
            // util::file::write_to_file("rev_ref.txt", rev_reference);
-            sdsl::construct_im(m_fm_index, rev_reference);
+            sdsl::construct_im(m_csa, rev_reference);
         }
 
 
@@ -78,27 +78,27 @@ namespace rct {
 
         rlz_factor next(){
             size_type start = 0;
-            size_type end = m_fm_index.size()-1;
+            size_type end = m_csa.size()-1;
             size_type start_input = m_input_pos;
             while(m_input_pos < m_input_size){
 
                 auto sym = m_input->at(m_input_pos);
                 size_type res_start, res_end;
-                if(start == 0 && end == m_fm_index.size()-1){
-                    auto sym_comp = m_fm_index.char2comp[sym];
-                    res_start = m_fm_index.C[sym_comp];
-                    res_end = m_fm_index.C[sym_comp+1]-1;
+                if(start == 0 && end == m_csa.size()-1){
+                    auto sym_comp = m_csa.char2comp[sym];
+                    res_start = m_csa.C[sym_comp];
+                    res_end = m_csa.C[sym_comp+1]-1;
                 }else{
-                    sdsl::backward_search(m_fm_index, start, end, sym, res_start, res_end);
+                    sdsl::backward_search(m_csa, start, end, sym, res_start, res_end);
                 }
                 if(res_end <= res_start){
                     length_type length = m_input_pos - start_input;
                     if(length == 0) {
                         ++m_input_pos;
-                        offset_type offset = m_reference.size() - m_fm_index[res_start]-1;
+                        offset_type offset = m_reference.size() - m_csa[res_start]-1;
                         return rlz_factor{offset, 1};
                     }
-                    offset_type offset = m_reference.size() - (m_fm_index[start] + length);
+                    offset_type offset = m_reference.size() - (m_csa[start] + length);
                     return rlz_factor{offset, length};
 
                 }else{
@@ -108,7 +108,7 @@ namespace rct {
                 }
             }
             length_type length = m_input_pos - start_input;
-            offset_type offset = m_reference.size() - (m_fm_index[start] + length);
+            offset_type offset = m_reference.size() - (m_csa[start] + length);
             return rlz_factor{offset, length};
 
         }
@@ -130,12 +130,24 @@ namespace rct {
             }
         }
 
+        //! Copy constructor
+        rlz_naive(const rlz_naive& o)
+        {
+            copy(o);
+        }
+
+        //! Move constructor
+        rlz_naive(rlz_naive&& o)
+        {
+            *this = std::move(o);
+        }
+
 
         void swap(rlz_naive& r)
         {
             if (this != &r) {
                 m_reference.swap(r.m_reference);
-                m_fm_index.swap(r.m_fm_index);
+                m_csa.swap(r.m_csa);
                 std::swap(m_input_size, r.m_input_size);
                 std::swap(m_input_pos, r.m_input_pos);
             }
@@ -153,13 +165,18 @@ namespace rct {
         {
             if (this != &v) {
                 m_reference = std::move(v.m_reference);
-                m_fm_index = std::move(v.m_fm_index);
+                m_csa = std::move(v.m_csa);
                 m_input_size = std::move(v.m_input_size);
                 m_input_pos = v.m_input_pos;
             }
             return *this;
         }
     };
+
+    using rlz_fm_index_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_wt_int<> >;
+    using rlz_csa_sada_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_sada_int<> >;
+    using rlz_csa_bc_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
+
 }
 
 #endif //RCT_RLZ_NAIVE_HPP
