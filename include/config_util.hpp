@@ -5,6 +5,8 @@
 #ifndef RCT_CONFIG_UTIL_HPP
 #define RCT_CONFIG_UTIL_HPP
 
+#include <cstdint>
+
 namespace util {
 
 

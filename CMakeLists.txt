@@ -61,3 +61,9 @@ target_link_libraries(rlz_file sdsl divsufsort divsufsort64)
 
 add_executable(estimation_size src/estimation_size.cpp)
 target_link_libraries(estimation_size sdsl divsufsort divsufsort64)
+
+add_executable(rct_index src/rct_main.cpp include/log_object.hpp include/alternative_code.hpp include/rct_index.hpp)
+target_link_libraries(rct_index sdsl divsufsort divsufsort64)
+
+add_executable(alternative_code src/alternative_code.cpp)
+target_link_libraries(alternative_code sdsl divsufsort divsufsort64)

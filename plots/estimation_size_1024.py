@@ -27,8 +27,8 @@ for l in lists:
 	ref_rmq.append(l[1]/8)
 	traj_disap.append(l[2]/8)
 	traj_length.append(l[3]/8)
-	traj_offset.append(l[4]/8) #*0.75
-	traj_values.append(l[5]/8) #*0.5
+	traj_offset.append(l[4]/8*0.75) #*0.75
+	traj_values.append(l[5]/8*0.5) #*0.5
 	traj_rmq.append(l[6]/8)
 
 N = len(lists)

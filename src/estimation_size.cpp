@@ -26,7 +26,7 @@ int main(int argc, const char* argv[]) {
         std::cout << "Array of movements: " << std::flush;
         while(in){
             in >> id >> t >> x >> y;
-            if(in.eof()) break;
+            if(in.eof() || id > 99) break;
             if(id == old_id){
                 int32_t diff_x = x - old_x;
                 int32_t diff_y = y - old_y;
@@ -81,8 +81,8 @@ int main(int argc, const char* argv[]) {
         in.open(dataset_name);
         while(in){
             in >> id >> t >> x >> y;
-            if(in.eof()) break;
-            //if(in.eof() || id > 99) break;
+            //if(in.eof()) break;
+            if(in.eof() || id > 99) break;
             if(id == old_id){
                 int32_t diff_x = x - old_x;
                 int32_t diff_y = y - old_y;
