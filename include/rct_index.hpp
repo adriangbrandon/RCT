@@ -7,19 +7,26 @@
 
 #include <vector>
 #include <log_object.hpp>
+#include <log_reference.hpp>
 #include <geo_util.hpp>
 #include "spiral_matrix_coder.hpp"
+#include "time_util.hpp"
 
 namespace rct {
 
+    template <class t_rlz = rlz_csa_sada_int >
     class rct_index {
 
     public:
         typedef uint64_t size_type;
         typedef uint32_t value_type;
+        typedef t_rlz rlz_type;
+        typedef typename rlz_type::factor_type factor_type;
 
     private:
+        log_reference<> m_log_reference;
         std::vector<log_object<>> m_log_objects;
+
 
     public:
 
@@ -27,7 +34,6 @@ namespace rct {
 
         rct_index(const std::string &dataset_file, const size_type size_reference, const size_type size_block) {
 
-            using t_factor = rct::rlz_naive<>::factor_type;
             std::ifstream in(dataset_file);
             std::ofstream factors_log("factors.log");
             std::vector<uint32_t> input_reference;
@@ -48,20 +54,27 @@ namespace rct {
             in.close();
             std::cout << "Done." << std::endl;
             std::cout << "RLZ: " << std::flush;
-            rct::rlz_naive<> rlz(input_reference, size_reference, size_block);
+            rlz_type rlz(input_reference, size_reference, size_block);
             std::cout << "Done." << std::endl;
             input_reference.clear();
             input_reference.shrink_to_fit();
 
+            std::vector<util::geo::movement> ref_movements;
+            for(size_type i = 0; i < rlz.reference.size(); ++i){
+                auto pair = rct::spiral_matrix_coder::decode(rlz.reference[i]);
+                ref_movements.emplace_back(util::geo::movement{pair.first, pair.second});
+            }
+            m_log_reference = log_reference<>(ref_movements);
+            ref_movements.clear();
 
             id = 0, old_id = (uint32_t) -1, old_x = 0, old_y = 0;
             in.open(dataset_file);
             std::vector<uint32_t> movements;
             std::vector<util::geo::traj_step> trajectory;
-            while (!in.eof()) {
+            auto start = util::time::user::now();
+            while (!in.eof() && id != -1) {
                 in >> id >> t >> x >> y;
-                //if (in.eof()) id = (uint32_t) -1;
-                if(in.eof()) id = (uint32_t) -1;
+                if (in.eof()) id = (uint32_t) -1;
                 if (id == old_id) {
                     int32_t diff_x = x - old_x;
                     int32_t diff_y = y - old_y;
@@ -69,7 +82,7 @@ namespace rct {
                 }
                 if (id != old_id && old_id != -1) {
                     std::cout << "Parsing: " << old_id << std::endl;
-                    std::vector<t_factor> factors;
+                    std::vector<factor_type> factors;
                     rlz.init_factorization(&movements);
                     while (rlz.has_next()) {
                         auto f = rlz.next();
@@ -86,12 +99,15 @@ namespace rct {
                 old_y = y;
                 trajectory.emplace_back(util::geo::traj_step{t, x, y});
             }
+            auto end = util::time::user::now();
+            std::cout << "Parsing in: " << end - start << " µs" << std::endl;
             std::cout << "Everything Done." << std::endl;
         }
 
         size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="") const {
             sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
             size_type written_bytes = 0;
+            written_bytes += m_log_reference.serialize(out, child, "log_reference");
             written_bytes += sdsl::serialize_vector(m_log_objects, out, child, "log_objects");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;

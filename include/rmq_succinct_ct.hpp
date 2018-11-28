@@ -34,7 +34,7 @@ namespace rct {
             size_type k=1;
             m_bp[0]=1; //extra root
             for (size_type i=0; i < vec.size(); ++i) {
-                sdsl::int_vector<>::value_type l = vec[i];
+                typename t_rac::value_type l = vec[i];
                 if (t_min) {
                     while (vec_stack.size() > 0 and l < vec_stack.top()) {
                         vec_stack.pop(); ++k; /*bp[k++] = 0; bp is already initialized to zero*/ // writing a closing parenthesis
