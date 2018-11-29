@@ -14,7 +14,7 @@
 
 namespace rct {
 
-    template <class t_log_reference = log_reference<>, class t_log_object = log_object_v1<>, class t_rlz = rlz_csa_sada_int >
+    template <class t_log_reference = log_reference<>, class t_log_object = log_object<>, class t_rlz = rlz_csa_sada_int >
     class rct_index {
 
     public:
@@ -31,6 +31,9 @@ namespace rct {
 
 
     public:
+
+        const log_reference_type &log_reference = m_log_reference;
+        const std::vector<log_object_type> &log_objects = m_log_objects;
 
         rct_index() = default;
 
@@ -77,7 +80,7 @@ namespace rct {
             while (!in.eof() && id != -1) {
                 in >> id >> t >> x >> y;
                 if (in.eof()) id = (uint32_t) -1;
-                if(in.eof() || id > 99) id = (uint32_t) -1;
+                if (in.eof() || id > 99) id = (uint32_t) -1;
                 if (id == old_id) {
                     int32_t diff_x = x - old_x;
                     int32_t diff_y = y - old_y;

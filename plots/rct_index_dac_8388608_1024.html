@@ -1,0 +1,1616 @@
+<html>
+   <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>sdsl data structure visualization</title>
+    <script src="file:///media/HDD3/adrian/RCT/external/sdsl-lite/external/d3/d3.min.js"></script>    <script src="http://d3js.org/d3.v2.js"></script>
+    <style type="text/css">
+      path { stroke: #000; stroke-width: 0.8; cursor: pointer; }
+      text { font: 11px sans-serif; cursor: pointer; }
+      body { width: 900; margin: 0 auto; }
+      h1 { text-align: center; margin: .5em 0; }
+      #breadcrumbs { display: none; }
+      svg { font: 10px sans-serif; }
+     </style>
+  </head>
+<body marginwidth="0" marginheight="0">
+<button><a id="download">Save as SVG</a></button>
+  <div id="chart"></div>
+<script type="text/javascript">
+var w = 800,
+  h = w,
+  r = w / 2,
+  x = d3.scale.linear().range([0, 2 * Math.PI]),
+  y = d3.scale.pow().exponent(1.3).domain([0, 1]).range([0, r]),
+  p = 5,
+  color = d3.scale.category20c(),
+  duration = 1000;
+
+var vis = d3.select("#chart").append("svg:svg")
+  .attr("width", w + p * 2)
+  .attr("height", h + p * 2)
+  .append("g")
+  .attr("transform", "translate(" + (r + p) + "," + (r + p) + ")");
+
+vis.append("p")
+  .attr("id", "intro")
+  .text("Click to zoom!");
+
+var partition = d3.layout.partition()
+  .sort(null)
+  .size([2 * Math.PI, r * r])
+  .value(function(d) { return d.size; });
+
+var arc = d3.svg.arc()
+  .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
+  .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
+  .innerRadius(function(d) { return Math.max(0, d.y ? y(d.y) : d.y); })
+  .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
+
+      
+var spaceJSON = {
+	"class_name":"N3rct9rct_indexINS_13log_referenceIN4sdsl10int_vectorILh1EEEEENS_14log_object_dacINS2_13dac_vector_dpIS4_Li64EEENS2_9sd_vectorIS4_NS2_18select_support_mclILh1ELh1EEENSA_ILh0ELh1EEEEES8_S4_EENS_9rlz_naiveIjNS_24reference_uniform_sampleIjLm1024EEENS2_8csa_sadaINS2_10enc_vectorINS2_5coder11elias_deltaELj128ELh0EEELj32ELj64ENS2_20sa_order_sa_samplingILh0EEENS2_12isa_samplingILh0EEENS2_12int_alphabetISD_NS2_15rank_support_sdILh1ES4_SB_SC_EENS2_17select_support_sdILh1ES4_SB_SC_EENS3_ILh0EEEEEEEEEEE",
+	"name":"",
+	"size":"3399184",
+	"children":[
+		{
+			"class_name":"std::vector<N3rct14log_object_dacIN4sdsl13dac_vector_dpINS1_10int_vectorILh1EEELi64EEENS1_9sd_vectorIS4_NS1_18select_support_mclILh1ELh1EEENS7_ILh0ELh1EEEEES5_S4_EE>",
+			"name":"log_objects",
+			"size":"757097",
+			"children":[
+				{
+					"class_name":"N3rct14log_object_dacIN4sdsl13dac_vector_dpINS1_10int_vectorILh1EEELi64EEENS1_9sd_vectorIS4_NS1_18select_support_mclILh1ELh1EEENS7_ILh0ELh1EEEEES5_S4_EE",
+					"name":"[]",
+					"size":"757097",
+					"children":[
+						{
+							"class_name":"N3rct15rmq_succinct_ctILb0EEE",
+							"name":"rMq_x",
+							"size":"36632",
+							"children":[
+								{
+									"class_name":"N4sdsl15bp_support_sadaILj256ELj32ENS_15rank_support_v5ILh1ELh1EEENS_18select_support_mclILh1ELh1EEEEE",
+									"name":"bp_support",
+									"size":"20696",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"med_blocks",
+											"size":"1700"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"sml_blocks",
+											"size":"2492"
+										},
+										{
+											"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+											"name":"bp_rank",
+											"size":"2864",
+											"children":[
+												{
+													"class_name":"N4sdsl10int_vectorILh64EEE",
+													"name":"cumulative_counts",
+													"size":"2864"
+												}
+											]
+										},
+										{
+											"class_name":"m",
+											"name":"size",
+											"size":"800"
+										},
+										{
+											"class_name":"m",
+											"name":"med_block_cnt",
+											"size":"800"
+										},
+										{
+											"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+											"name":"bp_select",
+											"size":"10440",
+											"children":[
+												{
+													"class_name":"PN4sdsl10int_vectorILh0EEE",
+													"name":"minisuperblock",
+													"size":"7140"
+												},
+												{
+													"class_name":"PN4sdsl10int_vectorILh0EEE",
+													"name":"longsuperblock",
+													"size":"0"
+												},
+												{
+													"class_name":"N4sdsl10int_vectorILh1EEE",
+													"name":"mini_or_long",
+													"size":"800"
+												},
+												{
+													"class_name":"N4sdsl10int_vectorILh0EEE",
+													"name":"superblock",
+													"size":"1700"
+												}
+											]
+										},
+										{
+											"class_name":"m",
+											"name":"med_inner_blocks",
+											"size":"800"
+										},
+										{
+											"class_name":"m",
+											"name":"sml_block_cnt",
+											"size":"800"
+										}
+									]
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"bp",
+									"size":"15936"
+								}
+							]
+						},
+						{
+							"class_name":"N3rct15rmq_succinct_ctILb0EEE",
+							"name":"rMq_y",
+							"size":"36680",
+							"children":[
+								{
+									"class_name":"N4sdsl15bp_support_sadaILj256ELj32ENS_15rank_support_v5ILh1ELh1EEENS_18select_support_mclILh1ELh1EEEEE",
+									"name":"bp_support",
+									"size":"20744",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"med_blocks",
+											"size":"1700"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"sml_blocks",
+											"size":"2492"
+										},
+										{
+											"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+											"name":"bp_rank",
+											"size":"2864",
+											"children":[
+												{
+													"class_name":"N4sdsl10int_vectorILh64EEE",
+													"name":"cumulative_counts",
+													"size":"2864"
+												}
+											]
+										},
+										{
+											"class_name":"m",
+											"name":"size",
+											"size":"800"
+										},
+										{
+											"class_name":"m",
+											"name":"med_block_cnt",
+											"size":"800"
+										},
+										{
+											"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+											"name":"bp_select",
+											"size":"10488",
+											"children":[
+												{
+													"class_name":"PN4sdsl10int_vectorILh0EEE",
+													"name":"minisuperblock",
+													"size":"7188"
+												},
+												{
+													"class_name":"PN4sdsl10int_vectorILh0EEE",
+													"name":"longsuperblock",
+													"size":"0"
+												},
+												{
+													"class_name":"N4sdsl10int_vectorILh1EEE",
+													"name":"mini_or_long",
+													"size":"800"
+												},
+												{
+													"class_name":"N4sdsl10int_vectorILh0EEE",
+													"name":"superblock",
+													"size":"1700"
+												}
+											]
+										},
+										{
+											"class_name":"m",
+											"name":"med_inner_blocks",
+											"size":"800"
+										},
+										{
+											"class_name":"m",
+											"name":"sml_block_cnt",
+											"size":"800"
+										}
+									]
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"bp",
+									"size":"15936"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+							"name":"select_disap",
+							"size":"16281",
+							"children":[
+								{
+									"class_name":"PN4sdsl10int_vectorILh0EEE",
+									"name":"minisuperblock",
+									"size":"13650"
+								},
+								{
+									"class_name":"PN4sdsl10int_vectorILh0EEE",
+									"name":"longsuperblock",
+									"size":"0"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"mini_or_long",
+									"size":"568"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"superblock",
+									"size":"1263"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+							"name":"rank_disap",
+							"size":"9744",
+							"children":[
+								{
+									"class_name":"N4sdsl10int_vectorILh64EEE",
+									"name":"cumulative_counts",
+									"size":"9744"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl13dac_vector_dpINS_10int_vectorILh1EEELi64EEE",
+							"name":"x_values",
+							"size":"104181",
+							"children":[
+								{
+									"class_name":"std::vector<m>",
+									"name":"offsets",
+									"size":"936",
+									"children":[
+										{
+											"class_name":"m",
+											"name":"[]",
+											"size":"936"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"offsets",
+									"size":"800"
+								},
+								{
+									"class_name":"N4sdsl14rank_support_vILh1ELh1EEE",
+									"name":"overflow_rank",
+									"size":"3904",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh64EEE",
+											"name":"cumulative_counts",
+											"size":"3904"
+										}
+									]
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"overflow",
+									"size":"8784"
+								},
+								{
+									"class_name":"std::vector<N4sdsl10int_vectorILh0EEE>",
+									"name":"data",
+									"size":"88957",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"[]",
+											"size":"88957"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"data",
+									"size":"800"
+								}
+							]
+						},
+						{
+							"class_name":"j",
+							"name":"x_start",
+							"size":"400"
+						},
+						{
+							"class_name":"N4sdsl13dac_vector_dpINS_10int_vectorILh1EEELi64EEE",
+							"name":"y_values",
+							"size":"118187",
+							"children":[
+								{
+									"class_name":"std::vector<m>",
+									"name":"offsets",
+									"size":"1176",
+									"children":[
+										{
+											"class_name":"m",
+											"name":"[]",
+											"size":"1176"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"offsets",
+									"size":"800"
+								},
+								{
+									"class_name":"N4sdsl14rank_support_vILh1ELh1EEE",
+									"name":"overflow_rank",
+									"size":"4320",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh64EEE",
+											"name":"cumulative_counts",
+											"size":"4320"
+										}
+									]
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"overflow",
+									"size":"10104"
+								},
+								{
+									"class_name":"std::vector<N4sdsl10int_vectorILh0EEE>",
+									"name":"data",
+									"size":"100987",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"[]",
+											"size":"100987"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"data",
+									"size":"800"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl13dac_vector_dpINS_10int_vectorILh1EEELi64EEE",
+							"name":"offsets",
+							"size":"171088",
+							"children":[
+								{
+									"class_name":"std::vector<m>",
+									"name":"offsets",
+									"size":"1280",
+									"children":[
+										{
+											"class_name":"m",
+											"name":"[]",
+											"size":"1280"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"offsets",
+									"size":"800"
+								},
+								{
+									"class_name":"N4sdsl14rank_support_vILh1ELh1EEE",
+									"name":"overflow_rank",
+									"size":"3968",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh64EEE",
+											"name":"cumulative_counts",
+											"size":"3968"
+										}
+									]
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"overflow",
+									"size":"9136"
+								},
+								{
+									"class_name":"std::vector<N4sdsl10int_vectorILh0EEE>",
+									"name":"data",
+									"size":"155104",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"[]",
+											"size":"155104"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"data",
+									"size":"800"
+								}
+							]
+						},
+						{
+							"class_name":"j",
+							"name":"time_start",
+							"size":"400"
+						},
+						{
+							"class_name":"N4sdsl9sd_vectorINS_10int_vectorILh1EEENS_18select_support_mclILh1ELh1EEENS3_ILh0ELh1EEEEE",
+							"name":"lengths",
+							"size":"61216",
+							"children":[
+								{
+									"class_name":"N4sdsl18select_support_mclILh0ELh1EEE",
+									"name":"high_0_select",
+									"size":"9800",
+									"children":[
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"minisuperblock",
+											"size":"7000"
+										},
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"longsuperblock",
+											"size":"0"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh1EEE",
+											"name":"mini_or_long",
+											"size":"640"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"superblock",
+											"size":"1360"
+										}
+									]
+								},
+								{
+									"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+									"name":"high_1_select",
+									"size":"9776",
+									"children":[
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"minisuperblock",
+											"size":"6976"
+										},
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"longsuperblock",
+											"size":"0"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh1EEE",
+											"name":"mini_or_long",
+											"size":"640"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"superblock",
+											"size":"1360"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"size",
+									"size":"800"
+								},
+								{
+									"class_name":"h",
+									"name":"wl",
+									"size":"100"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"high",
+									"size":"18744"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"low",
+									"size":"21996"
+								}
+							]
+						},
+						{
+							"class_name":"N3rct15rmq_succinct_ctILb1EEE",
+							"name":"rmq_y",
+							"size":"36576",
+							"children":[
+								{
+									"class_name":"N4sdsl15bp_support_sadaILj256ELj32ENS_15rank_support_v5ILh1ELh1EEENS_18select_support_mclILh1ELh1EEEEE",
+									"name":"bp_support",
+									"size":"20640",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"med_blocks",
+											"size":"1700"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"sml_blocks",
+											"size":"2492"
+										},
+										{
+											"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+											"name":"bp_rank",
+											"size":"2864",
+											"children":[
+												{
+													"class_name":"N4sdsl10int_vectorILh64EEE",
+													"name":"cumulative_counts",
+													"size":"2864"
+												}
+											]
+										},
+										{
+											"class_name":"m",
+											"name":"size",
+											"size":"800"
+										},
+										{
+											"class_name":"m",
+											"name":"med_block_cnt",
+											"size":"800"
+										},
+										{
+											"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+											"name":"bp_select",
+											"size":"10384",
+											"children":[
+												{
+													"class_name":"PN4sdsl10int_vectorILh0EEE",
+													"name":"minisuperblock",
+													"size":"7084"
+												},
+												{
+													"class_name":"PN4sdsl10int_vectorILh0EEE",
+													"name":"longsuperblock",
+													"size":"0"
+												},
+												{
+													"class_name":"N4sdsl10int_vectorILh1EEE",
+													"name":"mini_or_long",
+													"size":"800"
+												},
+												{
+													"class_name":"N4sdsl10int_vectorILh0EEE",
+													"name":"superblock",
+													"size":"1700"
+												}
+											]
+										},
+										{
+											"class_name":"m",
+											"name":"med_inner_blocks",
+											"size":"800"
+										},
+										{
+											"class_name":"m",
+											"name":"sml_block_cnt",
+											"size":"800"
+										}
+									]
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"bp",
+									"size":"15936"
+								}
+							]
+						},
+						{
+							"class_name":"j",
+							"name":"y_start",
+							"size":"400"
+						},
+						{
+							"class_name":"N4sdsl15rank_support_sdILh1ENS_10int_vectorILh1EEENS_18select_support_mclILh1ELh1EEENS3_ILh0ELh1EEEEE",
+							"name":"rank_lengths",
+							"size":"0"
+						},
+						{
+							"class_name":"N3rct15rmq_succinct_ctILb1EEE",
+							"name":"rmq_x",
+							"size":"36664",
+							"children":[
+								{
+									"class_name":"N4sdsl15bp_support_sadaILj256ELj32ENS_15rank_support_v5ILh1ELh1EEENS_18select_support_mclILh1ELh1EEEEE",
+									"name":"bp_support",
+									"size":"20728",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"med_blocks",
+											"size":"1700"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"sml_blocks",
+											"size":"2492"
+										},
+										{
+											"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+											"name":"bp_rank",
+											"size":"2864",
+											"children":[
+												{
+													"class_name":"N4sdsl10int_vectorILh64EEE",
+													"name":"cumulative_counts",
+													"size":"2864"
+												}
+											]
+										},
+										{
+											"class_name":"m",
+											"name":"size",
+											"size":"800"
+										},
+										{
+											"class_name":"m",
+											"name":"med_block_cnt",
+											"size":"800"
+										},
+										{
+											"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+											"name":"bp_select",
+											"size":"10472",
+											"children":[
+												{
+													"class_name":"PN4sdsl10int_vectorILh0EEE",
+													"name":"minisuperblock",
+													"size":"7172"
+												},
+												{
+													"class_name":"PN4sdsl10int_vectorILh0EEE",
+													"name":"longsuperblock",
+													"size":"0"
+												},
+												{
+													"class_name":"N4sdsl10int_vectorILh1EEE",
+													"name":"mini_or_long",
+													"size":"800"
+												},
+												{
+													"class_name":"N4sdsl10int_vectorILh0EEE",
+													"name":"superblock",
+													"size":"1700"
+												}
+											]
+										},
+										{
+											"class_name":"m",
+											"name":"med_inner_blocks",
+											"size":"800"
+										},
+										{
+											"class_name":"m",
+											"name":"sml_block_cnt",
+											"size":"800"
+										}
+									]
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"bp",
+									"size":"15936"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl17select_support_sdILh1ENS_10int_vectorILh1EEENS_18select_support_mclILh1ELh1EEENS3_ILh0ELh1EEEEE",
+							"name":"select_lengths",
+							"size":"0"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"disap",
+							"size":"128648"
+						}
+					]
+				}
+			]
+		},
+		{
+			"class_name":"N3rct13log_referenceIN4sdsl10int_vectorILh1EEEEE",
+			"name":"log_reference",
+			"size":"2642087",
+			"children":[
+				{
+					"class_name":"N3rct15rmq_succinct_ctILb0EEE",
+					"name":"rMq_y",
+					"size":"13150",
+					"children":[
+						{
+							"class_name":"N4sdsl15bp_support_sadaILj256ELj32ENS_15rank_support_v5ILh1ELh1EEENS_18select_support_mclILh1ELh1EEEEE",
+							"name":"bp_support",
+							"size":"2854",
+							"children":[
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"med_blocks",
+									"size":"129"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"sml_blocks",
+									"size":"737"
+								},
+								{
+									"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+									"name":"bp_rank",
+									"size":"664",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh64EEE",
+											"name":"cumulative_counts",
+											"size":"664"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"size",
+									"size":"8"
+								},
+								{
+									"class_name":"m",
+									"name":"med_block_cnt",
+									"size":"8"
+								},
+								{
+									"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+									"name":"bp_select",
+									"size":"1292",
+									"children":[
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"minisuperblock",
+											"size":"1243"
+										},
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"longsuperblock",
+											"size":"0"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh1EEE",
+											"name":"mini_or_long",
+											"size":"8"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"superblock",
+											"size":"33"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"med_inner_blocks",
+									"size":"8"
+								},
+								{
+									"class_name":"m",
+									"name":"sml_block_cnt",
+									"size":"8"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"bp",
+							"size":"10296"
+						}
+					]
+				},
+				{
+					"class_name":"N3rct15rmq_succinct_ctILb1EEE",
+					"name":"rmq_y",
+					"size":"13134",
+					"children":[
+						{
+							"class_name":"N4sdsl15bp_support_sadaILj256ELj32ENS_15rank_support_v5ILh1ELh1EEENS_18select_support_mclILh1ELh1EEEEE",
+							"name":"bp_support",
+							"size":"2838",
+							"children":[
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"med_blocks",
+									"size":"129"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"sml_blocks",
+									"size":"737"
+								},
+								{
+									"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+									"name":"bp_rank",
+									"size":"664",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh64EEE",
+											"name":"cumulative_counts",
+											"size":"664"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"size",
+									"size":"8"
+								},
+								{
+									"class_name":"m",
+									"name":"med_block_cnt",
+									"size":"8"
+								},
+								{
+									"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+									"name":"bp_select",
+									"size":"1276",
+									"children":[
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"minisuperblock",
+											"size":"1227"
+										},
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"longsuperblock",
+											"size":"0"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh1EEE",
+											"name":"mini_or_long",
+											"size":"8"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"superblock",
+											"size":"33"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"med_inner_blocks",
+									"size":"8"
+								},
+								{
+									"class_name":"m",
+									"name":"sml_block_cnt",
+									"size":"8"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"bp",
+							"size":"10296"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl9sd_vectorINS_10int_vectorILh1EEENS_18select_support_mclILh1ELh1EEENS3_ILh0ELh1EEEEE",
+					"name":"rMmq_y_sample",
+					"size":"93537",
+					"children":[
+						{
+							"class_name":"N4sdsl18select_support_mclILh0ELh1EEE",
+							"name":"high_0_select",
+							"size":"3817",
+							"children":[
+								{
+									"class_name":"PN4sdsl10int_vectorILh0EEE",
+									"name":"minisuperblock",
+									"size":"3712"
+								},
+								{
+									"class_name":"PN4sdsl10int_vectorILh0EEE",
+									"name":"longsuperblock",
+									"size":"0"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"mini_or_long",
+									"size":"16"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"superblock",
+									"size":"81"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+							"name":"high_1_select",
+							"size":"11590",
+							"children":[
+								{
+									"class_name":"PN4sdsl10int_vectorILh0EEE",
+									"name":"minisuperblock",
+									"size":"2284"
+								},
+								{
+									"class_name":"PN4sdsl10int_vectorILh0EEE",
+									"name":"longsuperblock",
+									"size":"9225"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"mini_or_long",
+									"size":"16"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"superblock",
+									"size":"57"
+								}
+							]
+						},
+						{
+							"class_name":"m",
+							"name":"size",
+							"size":"8"
+						},
+						{
+							"class_name":"h",
+							"name":"wl",
+							"size":"1"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"high",
+							"size":"26680"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh0EEE",
+							"name":"low",
+							"size":"51441"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl15rank_support_sdILh1ENS_10int_vectorILh1EEENS_18select_support_mclILh1ELh1EEENS3_ILh0ELh1EEEEE",
+					"name":"rank_rMmq_y_sample",
+					"size":"0"
+				},
+				{
+					"class_name":"N4sdsl15rank_support_sdILh1ENS_10int_vectorILh1EEENS_18select_support_mclILh1ELh1EEENS3_ILh0ELh1EEEEE",
+					"name":"rank_rMmq_x_sample",
+					"size":"0"
+				},
+				{
+					"class_name":"N4sdsl17select_support_sdILh1ENS_10int_vectorILh1EEENS_18select_support_mclILh1ELh1EEENS3_ILh0ELh1EEEEE",
+					"name":"select_rMmq_x_sample",
+					"size":"0"
+				},
+				{
+					"class_name":"N4sdsl9sd_vectorINS_10int_vectorILh1EEENS_18select_support_mclILh1ELh1EEENS3_ILh0ELh1EEEEE",
+					"name":"rMmq_x_sample",
+					"size":"54734",
+					"children":[
+						{
+							"class_name":"N4sdsl18select_support_mclILh0ELh1EEE",
+							"name":"high_0_select",
+							"size":"1905",
+							"children":[
+								{
+									"class_name":"PN4sdsl10int_vectorILh0EEE",
+									"name":"minisuperblock",
+									"size":"1832"
+								},
+								{
+									"class_name":"PN4sdsl10int_vectorILh0EEE",
+									"name":"longsuperblock",
+									"size":"0"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"mini_or_long",
+									"size":"16"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"superblock",
+									"size":"49"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+							"name":"high_1_select",
+							"size":"9811",
+							"children":[
+								{
+									"class_name":"PN4sdsl10int_vectorILh0EEE",
+									"name":"minisuperblock",
+									"size":"1041"
+								},
+								{
+									"class_name":"PN4sdsl10int_vectorILh0EEE",
+									"name":"longsuperblock",
+									"size":"8713"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh1EEE",
+									"name":"mini_or_long",
+									"size":"16"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"superblock",
+									"size":"33"
+								}
+							]
+						},
+						{
+							"class_name":"m",
+							"name":"size",
+							"size":"8"
+						},
+						{
+							"class_name":"h",
+							"name":"wl",
+							"size":"1"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"high",
+							"size":"13176"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh0EEE",
+							"name":"low",
+							"size":"29833"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+					"name":"select_y_n",
+					"size":"106557",
+					"children":[
+						{
+							"class_name":"PN4sdsl10int_vectorILh0EEE",
+							"name":"minisuperblock",
+							"size":"58344"
+						},
+						{
+							"class_name":"PN4sdsl10int_vectorILh0EEE",
+							"name":"longsuperblock",
+							"size":"46628"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"mini_or_long",
+							"size":"80"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh0EEE",
+							"name":"superblock",
+							"size":"1497"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+					"name":"rank_y_n",
+					"size":"42904",
+					"children":[
+						{
+							"class_name":"N4sdsl10int_vectorILh64EEE",
+							"name":"cumulative_counts",
+							"size":"42904"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl10int_vectorILh1EEE",
+					"name":"x_n",
+					"size":"334624"
+				},
+				{
+					"class_name":"N3rct15rmq_succinct_ctILb0EEE",
+					"name":"rMq_x",
+					"size":"6384",
+					"children":[
+						{
+							"class_name":"N4sdsl15bp_support_sadaILj256ELj32ENS_15rank_support_v5ILh1ELh1EEENS_18select_support_mclILh1ELh1EEEEE",
+							"name":"bp_support",
+							"size":"1400",
+							"children":[
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"med_blocks",
+									"size":"65"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"sml_blocks",
+									"size":"361"
+								},
+								{
+									"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+									"name":"bp_rank",
+									"size":"328",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh64EEE",
+											"name":"cumulative_counts",
+											"size":"328"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"size",
+									"size":"8"
+								},
+								{
+									"class_name":"m",
+									"name":"med_block_cnt",
+									"size":"8"
+								},
+								{
+									"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+									"name":"bp_select",
+									"size":"614",
+									"children":[
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"minisuperblock",
+											"size":"573"
+										},
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"longsuperblock",
+											"size":"0"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh1EEE",
+											"name":"mini_or_long",
+											"size":"8"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"superblock",
+											"size":"25"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"med_inner_blocks",
+									"size":"8"
+								},
+								{
+									"class_name":"m",
+									"name":"sml_block_cnt",
+									"size":"8"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"bp",
+							"size":"4984"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl17select_support_sdILh1ENS_10int_vectorILh1EEENS_18select_support_mclILh1ELh1EEENS3_ILh0ELh1EEEEE",
+					"name":"select_rMmq_y_sample",
+					"size":"0"
+				},
+				{
+					"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+					"name":"select_x_p",
+					"size":"71093",
+					"children":[
+						{
+							"class_name":"PN4sdsl10int_vectorILh0EEE",
+							"name":"minisuperblock",
+							"size":"58299"
+						},
+						{
+							"class_name":"PN4sdsl10int_vectorILh0EEE",
+							"name":"longsuperblock",
+							"size":"11273"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"mini_or_long",
+							"size":"80"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh0EEE",
+							"name":"superblock",
+							"size":"1433"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl10int_vectorILh1EEE",
+					"name":"x_p",
+					"size":"344360"
+				},
+				{
+					"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+					"name":"rank_x_p",
+					"size":"21544",
+					"children":[
+						{
+							"class_name":"N4sdsl10int_vectorILh64EEE",
+							"name":"cumulative_counts",
+							"size":"21544"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+					"name":"rank_x_n",
+					"size":"20936",
+					"children":[
+						{
+							"class_name":"N4sdsl10int_vectorILh64EEE",
+							"name":"cumulative_counts",
+							"size":"20936"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl10int_vectorILh1EEE",
+					"name":"y_p",
+					"size":"611296"
+				},
+				{
+					"class_name":"N3rct15rmq_succinct_ctILb1EEE",
+					"name":"rmq_x",
+					"size":"6384",
+					"children":[
+						{
+							"class_name":"N4sdsl15bp_support_sadaILj256ELj32ENS_15rank_support_v5ILh1ELh1EEENS_18select_support_mclILh1ELh1EEEEE",
+							"name":"bp_support",
+							"size":"1400",
+							"children":[
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"med_blocks",
+									"size":"65"
+								},
+								{
+									"class_name":"N4sdsl10int_vectorILh0EEE",
+									"name":"sml_blocks",
+									"size":"361"
+								},
+								{
+									"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+									"name":"bp_rank",
+									"size":"328",
+									"children":[
+										{
+											"class_name":"N4sdsl10int_vectorILh64EEE",
+											"name":"cumulative_counts",
+											"size":"328"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"size",
+									"size":"8"
+								},
+								{
+									"class_name":"m",
+									"name":"med_block_cnt",
+									"size":"8"
+								},
+								{
+									"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+									"name":"bp_select",
+									"size":"614",
+									"children":[
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"minisuperblock",
+											"size":"573"
+										},
+										{
+											"class_name":"PN4sdsl10int_vectorILh0EEE",
+											"name":"longsuperblock",
+											"size":"0"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh1EEE",
+											"name":"mini_or_long",
+											"size":"8"
+										},
+										{
+											"class_name":"N4sdsl10int_vectorILh0EEE",
+											"name":"superblock",
+											"size":"25"
+										}
+									]
+								},
+								{
+									"class_name":"m",
+									"name":"med_inner_blocks",
+									"size":"8"
+								},
+								{
+									"class_name":"m",
+									"name":"sml_block_cnt",
+									"size":"8"
+								}
+							]
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"bp",
+							"size":"4984"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl15rank_support_v5ILh1ELh1EEE",
+					"name":"rank_y_p",
+					"size":"38216",
+					"children":[
+						{
+							"class_name":"N4sdsl10int_vectorILh64EEE",
+							"name":"cumulative_counts",
+							"size":"38216"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+					"name":"select_y_p",
+					"size":"105997",
+					"children":[
+						{
+							"class_name":"PN4sdsl10int_vectorILh0EEE",
+							"name":"minisuperblock",
+							"size":"58296"
+						},
+						{
+							"class_name":"PN4sdsl10int_vectorILh0EEE",
+							"name":"longsuperblock",
+							"size":"46116"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"mini_or_long",
+							"size":"80"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh0EEE",
+							"name":"superblock",
+							"size":"1497"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl18select_support_mclILh1ELh1EEE",
+					"name":"select_x_n",
+					"size":"71085",
+					"children":[
+						{
+							"class_name":"PN4sdsl10int_vectorILh0EEE",
+							"name":"minisuperblock",
+							"size":"58291"
+						},
+						{
+							"class_name":"PN4sdsl10int_vectorILh0EEE",
+							"name":"longsuperblock",
+							"size":"11273"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh1EEE",
+							"name":"mini_or_long",
+							"size":"80"
+						},
+						{
+							"class_name":"N4sdsl10int_vectorILh0EEE",
+							"name":"superblock",
+							"size":"1433"
+						}
+					]
+				},
+				{
+					"class_name":"N4sdsl10int_vectorILh1EEE",
+					"name":"y_n",
+					"size":"686152"
+				}
+			]
+		}
+	]
+};
+
+
+
+  var nodes = partition.nodes(spaceJSON);
+
+  var path = vis.selectAll("path").data(nodes);
+  path.enter().append("path")
+    .attr("id", function(d, i) { return "path-" + i; })
+    .attr("d", arc)
+    .attr("fill-rule", "evenodd")
+    .style("fill", colour)
+    .on("click", click);
+
+  path.append("title").text(function(d) { return 'class name: ' + d.class_name + '\nmember_name: ' + d.name + '\n size: ' + sizeMB(d) });
+
+  var text = vis.selectAll("text").data(nodes);
+  var textEnter = text.enter().append("text")
+    .style("opacity", 1)
+    .style("fill", function(d) {
+    return brightness(d3.rgb(colour(d))) < 125 ? "#eee" : "#000";
+    })
+    .attr("text-anchor", function(d) {
+    return x(d.x + d.dx / 2) > Math.PI ? "end" : "start";
+    })
+    .attr("dy", ".2em")
+    .attr("transform", function(d) {
+    var multiline = (d.name || "").split(" ").length > 1,
+      angle = x(d.x + d.dx / 2) * 180 / Math.PI - 90,
+      rotate = angle + (multiline ? -.5 : 0);
+    return "rotate(" + rotate + ")translate(" + (y(d.y) + p) + ")rotate(" + (angle > 90 ? -180 : 0) + ")";
+    })
+    .on("click", click);
+
+  textEnter.append("title").text(function(d) { return 'class name: ' + d.class_name + '\nmember_name: ' + d.name + '\n size: ' + sizeMB(d) });
+
+  textEnter.append("tspan")
+    .attr("x", 0)
+    .text(function(d) { return d.dx < 0.05 ? "" : d.depth ? d.name.split(" ")[0] : ""; });
+  textEnter.append("tspan")
+    .attr("x", 0)
+    .attr("dy", "1em")
+    .text(function(d) { return d.dx < 0.05 ? "" : d.depth ? d.name.split(" ")[1] || "" : ""; });
+
+  function click(d) {
+  path.transition()
+    .duration(duration)
+    .attrTween("d", arcTween(d));
+
+  // Somewhat of a hack as we rely on arcTween updating the scales.
+  text
+    .style("visibility", function(e) {
+    return isParentOf(d, e) ? null : d3.select(this).style("visibility");
+    })
+    .transition().duration(duration)
+    .attrTween("text-anchor", function(d) {
+    return function() {
+      return x(d.x + d.dx / 2) > Math.PI ? "end" : "start";
+    };
+    })
+    .attrTween("transform", function(d) {
+    var multiline = (d.name || "").split(" ").length > 1;
+    return function() {
+      var angle = x(d.x + d.dx / 2) * 180 / Math.PI - 90,
+        rotate = angle + (multiline ? -.5 : 0);
+      return "rotate(" + rotate + ")translate(" + (y(d.y) + p) + ")rotate(" + (angle > 90 ? -180 : 0) + ")";
+    };
+    })
+    .style("opacity", function(e) { return isParentOf(d, e) ? 1 : 1e-6; })
+    .each("end", function(e) {
+    d3.select(this).style("visibility", isParentOf(d, e) ? null : "hidden");
+    });
+  }
+
+
+function sizeMB(d) {
+//  if (d.children) {
+//  var sum = calcSum(d);
+//  return (sum / (1024*1024)).toFixed(2) + 'MB';
+//  } else {
+  return (d.size / (1024*1024)).toFixed(2) + 'MB';
+//  }
+}
+
+function calcSum(d) {
+  if(d.children) {
+  var sum = 0;
+  function recurse(d) {
+    if(d.children) d.children.forEach( function(child) { recurse(child); } );
+    else sum += d.size;
+  }
+  recurse(d,sum);
+  console.log(sum);
+  console.log(d.children);
+  return sum;
+  } else {
+  console.log(d.size);
+  return d.size;
+  }
+}
+
+function isParentOf(p, c) {
+  if (p === c) return true;
+  if (p.children) {
+  return p.children.some(function(d) {
+    return isParentOf(d, c);
+  });
+  }
+  return false;
+}
+
+function colour(d) {
+  return color(d.name);
+}
+
+// Interpolate the scales!
+function arcTween(d) {
+  var my = maxY(d),
+    xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+    yd = d3.interpolate(y.domain(), [d.y, my]),
+    yr = d3.interpolate(y.range(), [d.y ? 20 : 0, r]);
+  return function(d) {
+  return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); return arc(d); };
+  };
+}
+
+// Interpolate the scales!
+function arcTween2(d) {
+  var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+    yd = d3.interpolate(y.domain(), [d.y, 1]),
+    yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+  return function(d, i) {
+  return i
+    ? function(t) { return arc(d); }
+    : function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); return arc(d); };
+  };
+}
+
+function maxY(d) {
+  return d.children ? Math.max.apply(Math, d.children.map(maxY)) : d.y + d.dy;
+}
+
+// http://www.w3.org/WAI/ER/WD-AERT/#color-contrast
+function brightness(rgb) {
+  return rgb.r * .299 + rgb.g * .587 + rgb.b * .114;
+}
+d3.select("#download").on("click", function () {
+d3.select(this).attr("href", 'data:application/octet-stream;base64,' + btoa(d3.select("#chart").html())).attr("download", "memorysun.svg")})
+
+click(nodes[0]);
+    
+</script>
+</body>
+</html>

@@ -28,13 +28,288 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 //
-// Created by Adrián on 29/11/2018.
+// Created by Adrián on 26/11/2018.
 //
 
 #ifndef RCT_LOG_OBJECT_HPP
 #define RCT_LOG_OBJECT_HPP
 
-#include <log_object_v1.hpp>
-#include <log_object_dac.hpp>
+#include <sdsl/vectors.hpp>
+#include <sdsl/sd_vector.hpp>
+#include <rmq_succinct_ct.hpp>
+#include <rlz_naive.hpp>
+#include "alternative_code.hpp"
+#include "geo_util.hpp"
+
+namespace rct {
+
+    template <class t_offsets = sdsl::dac_vector_dp<sdsl::bit_vector>, class t_lengths = sdsl::sd_vector<>,
+              class t_values = sdsl::dac_vector_dp<sdsl::bit_vector>,  class t_disap = sdsl::bit_vector >
+    class log_object {
+
+    public:
+        typedef uint64_t size_type;
+        typedef uint32_t value_type;
+        typedef t_offsets offsets_type;
+        typedef t_lengths lengths_type;
+        typedef t_values values_type;
+        typedef t_disap disap_type;
+        typedef typename t_lengths::rank_1_type rank_1_lengths_type;
+        typedef typename t_lengths::select_1_type select_1_lengths_type;
+        typedef sdsl::rank_support_v5<1> rank_1_disap_type;
+        typedef typename t_disap::select_1_type select_1_disap_type;
+
+    private:
+        value_type m_time_start = 0;
+        value_type m_x_start = 0;
+        value_type m_y_start = 0;
+
+        values_type m_x_values;
+        values_type m_y_values;
+        rmq_succinct_ct<true> m_rmq_x;
+        rmq_succinct_ct<false> m_rMq_x;
+        rmq_succinct_ct<true> m_rmq_y;
+        rmq_succinct_ct<false> m_rMq_y;
+
+        offsets_type m_offsets;
+
+        lengths_type m_lengths;
+        rank_1_lengths_type m_rank_lengths;
+        select_1_lengths_type m_select_lengths;
+
+        disap_type m_disap;
+        rank_1_disap_type m_rank_disap;
+        select_1_disap_type m_select_disap; //TODO: select_next ??? I only need 'select' to compute the next time instant in trajectory
+
+        void copy(const log_object &o){
+            m_time_start = o.m_time_start;
+            m_x_start = o.m_x_start;
+            m_y_start = o.m_y_start;
+            m_x_values = o.m_x_values;
+            m_y_values = o.m_y_values;
+            m_offsets = o.m_offsets;
+            m_lengths = o.m_lengths;
+            m_rank_lengths = o.m_rank_lengths;
+            m_rank_lengths.set_vector(&m_lengths);
+            m_select_lengths = o.m_select_lengths;
+            m_select_lengths.set_vector(&m_lengths);
+            m_disap = o.m_disap;
+            m_rank_disap = o.m_rank_disap;
+            m_rank_disap.set_vector(&m_disap);
+            m_select_disap = o.m_select_disap;
+            m_select_disap.set_vector(&m_disap);
+            m_rmq_x = o.m_rmq_x;
+            m_rMq_x = o.m_rMq_x;
+            m_rmq_y = o.m_rmq_y;
+            m_rMq_y = o.m_rMq_y;
+        }
+
+        template <class Container, class BitVector>
+        void compress_data(sdsl::dac_vector_dp<BitVector> &ref, const Container &data){
+            ref = sdsl::dac_vector_dp<BitVector>(data);
+        }
+
+        template <class Container>
+        void compress_data(sdsl::int_vector<> &ref, const Container &data){
+            ref = sdsl::int_vector<>(data.size());
+            size_type idx = 0;
+            for(const auto &value : data){
+                ref[idx++] = value;
+            }
+            sdsl::util::bit_compress(ref);
+        }
+
+    public:
+
+        log_object() = default;
+
+
+        template<class ContainerTrajectory, class ContainerFactors>
+        log_object(const ContainerTrajectory &trajectory, const ContainerFactors &factors) {
+
+            //1. Compute the start values
+            m_time_start = trajectory[0].t;
+            m_x_start = trajectory[0].x;
+            m_y_start = trajectory[0].y;
+
+            //2. Compute the disappearances
+            auto last_t = m_time_start;
+            size_type factor_i = 0, disap_i = 0;
+            m_disap = disap_type(trajectory.back().t - m_time_start + 1, 0);
+            for (size_type i = 1; i < trajectory.size(); ++i) {
+                const auto &info = trajectory[i];
+                for (auto t = last_t + 1; t < info.t; ++t) {
+                    m_disap[disap_i++] = 1;
+                }
+                last_t = info.t;
+                disap_i++; //set to zero
+            }
+            sdsl::util::init_support(m_rank_disap, &m_disap);
+            sdsl::util::init_support(m_select_disap, &m_disap);
+
+
+            //3.1 Prepare the arrays of offsets, x and y
+
+
+            //3.2 Set offset, length, x and y
+            {
+                std::vector<size_type> offset_temp(factors.size());
+                std::vector<size_type> x_values_temp(factors.size());
+                std::vector<size_type> y_values_temp(factors.size());
+                std::vector<size_type> pos_ones_lengths;
+                std::vector<value_type> temp_x, temp_y;
+                size_type acum_length = 0;
+                for (const auto &factor : factors) {
+                    acum_length += factor.length;
+                    pos_ones_lengths.push_back(acum_length);
+                    offset_temp[factor_i] = factor.offset;
+                    //Add last value of each phrase
+                    temp_x.push_back(trajectory[acum_length].x);
+                    temp_y.push_back(trajectory[acum_length].y);
+                    ++factor_i;
+                }
+                compress_data(m_offsets, offset_temp);
+
+                //Storing the length in the sd-array
+                m_lengths = sdsl::sd_vector<>(pos_ones_lengths.begin(), pos_ones_lengths.end());
+                sdsl::util::init_support(m_rank_lengths, &m_lengths);
+                sdsl::util::init_support(m_select_lengths, &m_lengths);
+
+                //Construction of structures to solve range minimum queries (rmq) and range maximum queries (rMq)
+                m_rmq_x = rmq_succinct_ct<true>(temp_x);
+                m_rMq_x = rmq_succinct_ct<false>(temp_x);
+                m_rmq_y = rmq_succinct_ct<true>(temp_y);
+                m_rMq_y = rmq_succinct_ct<false>(temp_y);
+
+                //The absolute values are stored as differences with respect to the first position
+                for (size_type i = 0; i < temp_x.size(); ++i) {
+                    x_values_temp[i] = alternative_code::encode((int32_t) (temp_x[i] - m_x_start));
+                    y_values_temp[i] = alternative_code::encode((int32_t) (temp_y[i] - m_y_start));
+                }
+                compress_data(m_x_values, x_values_temp);
+                compress_data(m_y_values, y_values_temp);
+            }
+
+
+        }
+
+
+        inline util::geo::traj_step start_traj_step() const {
+            return util::geo::traj_step{m_time_start, m_x_start, m_y_start};
+        };
+
+
+        //Pre: t_q > m_time_start
+        inline bool interval_ref(const size_type t_q, size_type &idx_beg, size_type &idx_end, util::geo::movement &r) const {
+            auto idx = t_q - m_time_start - 1;
+            if(m_disap[idx]) return false; //Disappeared
+            auto movement = idx - m_rank_disap(idx); //index
+            auto phrase = m_rank_lengths(movement);
+            idx_beg = m_offsets[phrase];
+            idx_end = (phrase > 0) ? (movement - m_select_lengths(phrase)+1) + idx_beg : idx_beg;
+            r = (phrase > 0) ? util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase-1]),
+                                    (int32_t) alternative_code::decode(m_y_values[phrase-1])}
+                                    : util::geo::movement{0,0};
+            return true;
+        }
+
+        //! Copy constructor
+        log_object(const log_object& o)
+        {
+            copy(o);
+        }
+
+        //! Move constructor
+        log_object(log_object&& o)
+        {
+            *this = std::move(o);
+        }
+
+
+        log_object &operator=(const log_object &o) {
+            if (this != &o) {
+                copy(o);
+            }
+            return *this;
+        }
+
+        log_object &operator=(log_object &&o) {
+            if (this != &o) {
+                m_time_start = o.m_time_start;
+                m_x_start = o.m_x_start;
+                m_y_start = o.m_y_start;
+                m_x_values = std::move(o.m_x_values);
+                m_y_values = std::move(o.m_y_values);
+                m_offsets = std::move(o.m_offsets);
+                m_lengths = std::move(o.m_lengths);
+                m_rank_lengths = std::move(o.m_rank_lengths);
+                m_rank_lengths.set_vector(&m_lengths);
+                m_select_lengths = std::move(o.m_select_lengths);
+                m_select_lengths.set_vector(&m_lengths);
+                m_disap = std::move(o.m_disap);
+                m_rank_disap = std::move(o.m_rank_disap);
+                m_rank_disap.set_vector(&m_disap);
+                m_select_disap = std::move(o.m_select_disap);
+                m_select_disap.set_vector(&m_disap);
+                m_rmq_x = std::move(o.m_rmq_x);
+                m_rMq_x = std::move(o.m_rMq_x);
+                m_rmq_y = std::move(o.m_rmq_y);
+                m_rMq_y = std::move(o.m_rMq_y);
+            }
+            return *this;
+        }
+
+        void swap(log_object &o) {
+            // m_bp.swap(bp_support.m_bp); use set_vector to set the supported bit_vector
+            std::swap(m_time_start, o.m_time_start);
+            std::swap(m_x_start, o.m_x_start);
+            std::swap(m_y_start, o.m_y_start);
+            m_x_values.swap(o.m_x_values);
+            m_y_values.swap(o.m_y_values);
+            m_offsets.swap(o.m_offsets);
+            m_lengths.swap(o.m_lengths);
+            sdsl::util::swap_support(m_rank_lengths, o.m_rank_lengths, &m_lengths, &o.m_lengths);
+            sdsl::util::swap_support(m_select_lengths, o.m_select_lengths, &m_lengths, &o.m_lengths);
+            m_disap.swap(o.m_disap);
+            sdsl::util::swap_support(m_rank_disap, o.m_rank_disap, &m_disap, &o.m_disap);
+            sdsl::util::swap_support(m_select_disap, o.m_select_disap, &m_disap, &o.m_disap);
+            m_rmq_x.swap(o.m_rmq_x);
+            m_rmq_y.swap(o.m_rmq_y);
+            m_rMq_x.swap(o.m_rMq_x);
+            m_rMq_y.swap(o.m_rMq_y);
+        }
+
+
+        size_type serialize(std::ostream &out, sdsl::structure_tree_node *v = nullptr, std::string name = "") const {
+            sdsl::structure_tree_node *child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
+            size_type written_bytes = 0;
+            written_bytes += sdsl::write_member(m_time_start, out, child, "time_start");
+            written_bytes += sdsl::write_member(m_x_start, out, child, "x_start");
+            written_bytes += sdsl::write_member(m_y_start, out, child, "y_start");
+            written_bytes += m_x_values.serialize(out, child, "x_values");
+            written_bytes += m_y_values.serialize(out, child, "y_values");
+            written_bytes += m_offsets.serialize(out, child, "offsets");
+            written_bytes += m_lengths.serialize(out, child, "lengths");
+            written_bytes += m_rank_lengths.serialize(out, child, "rank_lengths");
+            written_bytes += m_select_lengths.serialize(out, child, "select_lengths");
+            written_bytes += m_disap.serialize(out, child, "disap");
+            written_bytes += m_rank_disap.serialize(out, child, "rank_disap");
+            written_bytes += m_select_disap.serialize(out, child, "select_disap");
+            written_bytes += m_rmq_x.serialize(out, child, "rmq_x");
+            written_bytes += m_rmq_y.serialize(out, child, "rmq_y");
+            written_bytes += m_rMq_x.serialize(out, child, "rMq_x");
+            written_bytes += m_rMq_y.serialize(out, child, "rMq_y");
+            sdsl::structure_tree::add_size(child, written_bytes);
+            return written_bytes;
+        }
+
+    };
+
+    using log_object_dac_vector = log_object< sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::sd_vector<>,
+                                  sdsl::dac_vector_dp<sdsl::bit_vector> >;
+
+    using log_object_int_vector = log_object< sdsl::int_vector<>, sdsl::sd_vector<>, sdsl::int_vector<> >;
+
+}
 
 #endif //RCT_LOG_OBJECT_HPP

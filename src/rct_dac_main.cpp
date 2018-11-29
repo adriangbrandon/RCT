@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstdint>
 #include <cstdlib>
 #include <rct_index.hpp>
+#include <rct_algorithm.hpp>
 
 
 int main(int argc, const char* argv[]) {
@@ -42,9 +43,23 @@ int main(int argc, const char* argv[]) {
     if(argc == 4){
         uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
         uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
-        rct::rct_index<rct::log_reference<>, rct::log_object_dac<>> m_rct_index(argv[1], size_reference, size_block_bytes);
-        std::ofstream out("rct_index_dac_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".html");
+        rct::rct_index<rct::log_reference<>, rct::log_object_int_vector> m_rct_index(argv[1], size_reference, size_block_bytes);
+        std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".html");
         sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
+
+        std::ifstream in(argv[1]);
+        uint32_t id, t, x, y;
+        util::geo::point r;
+        while(in){
+            in >> id >> t >> x >> y;
+            rct::algorithm::search_object(id, t, m_rct_index, r);
+            if(r.x != x || r.y != y){
+                std::cout << "Error looking for: id=" << id << " t=" << t << std::endl;
+                std::cout << "Expected: " << x << ", " << y << std::endl;
+                std::cout << "Obtained: " << r.x << ", " << r.y << std::endl;
+                exit(0);
+            }
+        }
         out.close();
     }
 
