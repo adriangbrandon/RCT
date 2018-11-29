@@ -14,18 +14,20 @@
 
 namespace rct {
 
-    template <class t_rlz = rlz_csa_sada_int >
+    template <class t_log_reference = log_reference<>, class t_log_object = log_object_v1<>, class t_rlz = rlz_csa_sada_int >
     class rct_index {
 
     public:
         typedef uint64_t size_type;
         typedef uint32_t value_type;
+        typedef t_log_reference log_reference_type;
+        typedef t_log_object log_object_type;
         typedef t_rlz rlz_type;
         typedef typename rlz_type::factor_type factor_type;
 
     private:
-        log_reference<> m_log_reference;
-        std::vector<log_object<>> m_log_objects;
+        log_reference_type m_log_reference;
+        std::vector<log_object_type> m_log_objects;
 
 
     public:
@@ -64,7 +66,7 @@ namespace rct {
                 auto pair = rct::spiral_matrix_coder::decode(rlz.reference[i]);
                 ref_movements.emplace_back(util::geo::movement{pair.first, pair.second});
             }
-            m_log_reference = log_reference<>(ref_movements);
+            m_log_reference = log_reference_type (ref_movements);
             ref_movements.clear();
 
             id = 0, old_id = (uint32_t) -1, old_x = 0, old_y = 0;
@@ -75,6 +77,7 @@ namespace rct {
             while (!in.eof() && id != -1) {
                 in >> id >> t >> x >> y;
                 if (in.eof()) id = (uint32_t) -1;
+                if(in.eof() || id > 99) id = (uint32_t) -1;
                 if (id == old_id) {
                     int32_t diff_x = x - old_x;
                     int32_t diff_y = y - old_y;
@@ -90,7 +93,7 @@ namespace rct {
                         factors.push_back(f);
                     }
 
-                    m_log_objects.emplace_back(log_object<>(trajectory, factors));
+                    m_log_objects.emplace_back(log_object_type(trajectory, factors));
                     movements.clear();
                     trajectory.clear();
                 }

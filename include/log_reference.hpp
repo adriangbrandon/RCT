@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sdsl/rank_support.hpp>
 #include <rmq_succinct_ct.hpp>
 #include <sdsl/sd_vector.hpp>
+#include <geo_util.hpp>
 
 namespace rct {
 
@@ -246,6 +247,14 @@ namespace rct {
                 m_rmq_y = rmq_succinct_ct<true>(min);
                 m_rMq_y = rmq_succinct_ct<false>(max);
             }
+        }
+
+        util::geo::movement compute_movement(const size_type i, const size_type j){
+
+            auto x_p = (m_select_x_p(j+1) - m_select_x_p(i+1)) - (j-i);
+            auto x_n = (m_select_x_n(j+1) - m_select_x_n(i+1)) - (j-i);
+            auto y_p = (m_select_y_p(j+1) - m_select_y_p(i+1)) - (j-i);
+            auto y_n = (m_select_y_n(j+1) - m_select_y_n(i+1)) - (j-i);
         }
 
         //! Copy constructor

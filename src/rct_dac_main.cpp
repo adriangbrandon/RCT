@@ -28,13 +28,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 //
-// Created by Adrián on 29/11/2018.
+// Created by Adrián on 27/11/2018.
 //
 
-#ifndef RCT_LOG_OBJECT_HPP
-#define RCT_LOG_OBJECT_HPP
 
-#include <log_object_v1.hpp>
-#include <log_object_dac.hpp>
+#include <cstdint>
+#include <cstdlib>
+#include <rct_index.hpp>
 
-#endif //RCT_LOG_OBJECT_HPP
+
+int main(int argc, const char* argv[]) {
+
+    if(argc == 4){
+        uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
+        uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
+        rct::rct_index<rct::log_reference<>, rct::log_object_dac<>> m_rct_index(argv[1], size_reference, size_block_bytes);
+        std::ofstream out("rct_index_dac_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".html");
+        sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
+        out.close();
+    }
+
+}
+
