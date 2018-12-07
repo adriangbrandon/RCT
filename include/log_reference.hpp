@@ -249,10 +249,17 @@ namespace rct {
             }
         }
 
-        inline util::geo::movement compute_movement(const size_type i, const size_type j) const {
-            int32_t delta_x = (m_select_x_p(j+1) - m_select_x_p(i+1)) - (m_select_x_n(j+1) - m_select_x_n(i+1));
-            int32_t delta_y = (m_select_y_p(j+1) - m_select_y_p(i+1)) - (m_select_y_n(j+1) - m_select_y_n(i+1));
-            return util::geo::movement{delta_x, delta_y};
+        util::geo::movement compute_movement(const size_type i, const size_type j) const {
+            if(i == 0){
+                int32_t delta_x = m_select_x_p(j) - m_select_x_n(j);
+                int32_t delta_y = m_select_y_p(j) - m_select_y_n(j);
+                return util::geo::movement{delta_x, delta_y};
+            }else{
+                int32_t delta_x = (m_select_x_p(j) - m_select_x_p(i)) - (m_select_x_n(j) - m_select_x_n(i));
+                int32_t delta_y = (m_select_y_p(j) - m_select_y_p(i)) - (m_select_y_n(j) - m_select_y_n(i));
+                return util::geo::movement{delta_x, delta_y};
+            }
+
         };
 
         //! Copy constructor

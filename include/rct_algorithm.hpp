@@ -68,7 +68,9 @@ namespace rct {
             typename RCTIndex::size_type idx_beg = 0, idx_end = 0;
             util::geo::movement movement_phrase;
             if(rctIndex.log_objects[oid].interval_ref(t_q, idx_beg, idx_end, movement_phrase)){
+                //std::cout << "movement_phrase: " << movement_phrase.x << ", " << movement_phrase.y << std::endl;
                 util::geo::movement movement = rctIndex.log_reference.compute_movement(idx_beg, idx_end);
+                //std::cout << "movement: " << movement.x << ", " << movement.y << std::endl;
                 r = util::geo::point{traj_step.x + movement_phrase.x + movement.x,
                                      traj_step.y + movement_phrase.y + movement.y};
                 return true;

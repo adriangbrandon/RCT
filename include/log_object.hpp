@@ -134,7 +134,7 @@ namespace rct {
 
             //2. Compute the disappearances
             auto last_t = m_time_start;
-            size_type factor_i = 0, disap_i = 0;
+            size_type disap_i = 0;
             m_disap = disap_type(trajectory.back().t - m_time_start + 1, 0);
             for (size_type i = 1; i < trajectory.size(); ++i) {
                 const auto &info = trajectory[i];
@@ -159,15 +159,18 @@ namespace rct {
                 std::vector<size_type> pos_ones_lengths;
                 std::vector<value_type> temp_x, temp_y;
                 size_type acum_length = 0;
+                size_type factor_i = 0;
                 for (const auto &factor : factors) {
-                    acum_length += factor.length;
+                    //TODO: error acum_length? or acum_length-1?
                     pos_ones_lengths.push_back(acum_length);
                     offset_temp[factor_i] = factor.offset;
-                    //Add last value of each phrase
+                    //Add last value of each phrase (except the last one)
                     temp_x.push_back(trajectory[acum_length].x);
                     temp_y.push_back(trajectory[acum_length].y);
+                    acum_length += factor.length;
                     ++factor_i;
                 }
+                if(factor_i > 0) pos_ones_lengths.push_back(acum_length);
                 compress_data(m_offsets, offset_temp);
 
                 //Storing the length in the sd-array
@@ -203,13 +206,17 @@ namespace rct {
         inline bool interval_ref(const size_type t_q, size_type &idx_beg, size_type &idx_end, util::geo::movement &r) const {
             auto idx = t_q - m_time_start - 1;
             if(m_disap[idx]) return false; //Disappeared
-            auto movement = idx - m_rank_disap(idx); //index
+            auto movement = idx - m_rank_disap(idx) + 1;//index in length
+            //std::cout << "movement: " << movement << std::endl;
             auto phrase = m_rank_lengths(movement);
-            idx_beg = m_offsets[phrase];
-            idx_end = (phrase > 0) ? (movement - m_select_lengths(phrase)+1) + idx_beg : idx_beg;
-            r = (phrase > 0) ? util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase-1]),
-                                    (int32_t) alternative_code::decode(m_y_values[phrase-1])}
-                                    : util::geo::movement{0,0};
+            //std::cout << "phrase: " << phrase << std::endl;
+            idx_beg = m_offsets[phrase-1];
+            //std::cout << "idx_beg: " << idx_beg << std::endl;
+            idx_end = (movement - m_select_lengths(phrase)) + idx_beg;
+            //std::cout << "idx_end: " << idx_end << std::endl;
+            r = util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase-1]),
+                                    (int32_t) alternative_code::decode(m_y_values[phrase-1])};
+            //std::cout << "move: " << r.x <<", " << r.y << std::endl;
             return true;
         }
 
@@ -301,6 +308,17 @@ namespace rct {
             written_bytes += m_rMq_y.serialize(out, child, "rMq_y");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
+        }
+
+        void print(){
+            for(size_type i = 0; i < m_x_values.size(); ++i){
+                std::cout << "(x,y)[" <<i << "]=" << alternative_code::decode(m_x_values[i]) << "," << alternative_code::decode(m_y_values[i]) << " ";
+            }
+            std::cout << std::endl;
+            for(size_type i = 0; i < m_lengths.size(); ++i){
+                std::cout << "length[" << i <<"]=" << m_lengths[i] << " ";
+            }
+            std::cout << std::endl;
         }
 
     };

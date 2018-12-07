@@ -80,7 +80,7 @@ namespace rct {
             while (!in.eof() && id != -1) {
                 in >> id >> t >> x >> y;
                 if (in.eof()) id = (uint32_t) -1;
-                if (in.eof() || id > 99) id = (uint32_t) -1;
+                if (in.eof()) id = (uint32_t) -1;
                 if (id == old_id) {
                     int32_t diff_x = x - old_x;
                     int32_t diff_y = y - old_y;
@@ -108,6 +108,8 @@ namespace rct {
             auto end = util::time::user::now();
             std::cout << "Parsing in: " << end - start << " µs" << std::endl;
             std::cout << "Everything Done." << std::endl;
+
+            m_log_objects[0].print();
         }
 
         size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="") const {
