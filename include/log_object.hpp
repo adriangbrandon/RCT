@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sdsl/sd_vector.hpp>
 #include <rmq_succinct_ct.hpp>
 #include <rlz_naive.hpp>
+#include <succ_support_v.hpp>
 #include "alternative_code.hpp"
 #include "geo_util.hpp"
 
@@ -57,7 +58,7 @@ namespace rct {
         typedef typename t_lengths::rank_1_type rank_1_lengths_type;
         typedef typename t_lengths::select_1_type select_1_lengths_type;
         typedef sdsl::rank_support_v5<1> rank_1_disap_type;
-        typedef typename t_disap::select_1_type select_1_disap_type;
+        typedef succ_support_v<0> succ_0_disap_type;
 
     private:
         value_type m_time_start = 0;
@@ -79,7 +80,7 @@ namespace rct {
 
         disap_type m_disap;
         rank_1_disap_type m_rank_disap;
-        select_1_disap_type m_select_disap; //TODO: select_next ??? I only need 'select' to compute the next time instant in trajectory
+        succ_0_disap_type m_succ_0_disap; //TODO: select_next ??? I only need 'select' to compute the next time instant in trajectory
 
         void copy(const log_object &o){
             m_time_start = o.m_time_start;
@@ -96,8 +97,8 @@ namespace rct {
             m_disap = o.m_disap;
             m_rank_disap = o.m_rank_disap;
             m_rank_disap.set_vector(&m_disap);
-            m_select_disap = o.m_select_disap;
-            m_select_disap.set_vector(&m_disap);
+            m_succ_0_disap = o.m_succ_0_disap;
+            m_succ_0_disap.set_vector(&m_disap);
             m_rmq_x = o.m_rmq_x;
             m_rMq_x = o.m_rMq_x;
             m_rmq_y = o.m_rmq_y;
@@ -145,7 +146,7 @@ namespace rct {
                 disap_i++; //set to zero
             }
             sdsl::util::init_support(m_rank_disap, &m_disap);
-            sdsl::util::init_support(m_select_disap, &m_disap);
+            sdsl::util::init_support(m_succ_0_disap, &m_disap);
 
 
             //3.1 Prepare the arrays of offsets, x and y
@@ -201,23 +202,58 @@ namespace rct {
             return util::geo::traj_step{m_time_start, m_x_start, m_y_start};
         };
 
+        inline size_type time_start() const {
+            return m_time_start;
+        }
 
-        //Pre: t_q > m_time_start
-        inline bool interval_ref(const size_type t_q, size_type &idx_beg, size_type &idx_end, util::geo::movement &r) const {
+        inline size_type time_end() const {
+            return m_time_start + m_disap.size();
+        }
+
+
+        inline bool time_to_movement(const size_type t_q, size_type &movement_q) const {
             auto idx = t_q - m_time_start - 1;
             if(m_disap[idx]) return false; //Disappeared
-            auto movement = idx - m_rank_disap(idx) + 1;//index in length
-            //std::cout << "movement: " << movement << std::endl;
-            auto phrase = m_rank_lengths(movement);
-            //std::cout << "phrase: " << phrase << std::endl;
+            movement_q = idx - m_rank_disap(idx) + 1;//index in length
+            return true;
+        }
+
+        inline void time_to_movement(const size_type t_i, const size_type t_j, size_type &movement_i, size_type &movement_j) const{
+            auto i = t_i - m_time_start - 1;
+            auto j = t_j - m_time_start - 1;
+            movement_i = i - m_rank_disap(i+1)+1;//index in length
+            movement_j = j - m_rank_disap(j+1)+1;//index in length
+        }
+
+        //Pre: t_q > m_time_start
+        inline size_type interval_ref(const size_type movement_q, size_type &idx_beg, size_type &idx_end,
+                                      util::geo::movement &r) const {
+
+            auto phrase = m_rank_lengths(movement_q);
             idx_beg = m_offsets[phrase-1];
-            //std::cout << "idx_beg: " << idx_beg << std::endl;
-            idx_end = (movement - m_select_lengths(phrase)) + idx_beg;
-            //std::cout << "idx_end: " << idx_end << std::endl;
+            idx_end = (movement_q - m_select_lengths(phrase)) + idx_beg;
             r = util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase-1]),
                                     (int32_t) alternative_code::decode(m_y_values[phrase-1])};
-            //std::cout << "move: " << r.x <<", " << r.y << std::endl;
-            return true;
+            return phrase;
+        }
+
+        //Pre: t_i > m_time_start && t_j <= m_time_end
+        inline size_type interval_ref(const size_type movement_i, size_type &idx_beg, size_type &idx_end,
+                size_type &phrase_end, util::geo::movement &r) const {
+
+            auto phrase = m_rank_lengths(movement_i);
+            phrase_end = m_select_lengths(phrase+1);
+            idx_beg = m_offsets[phrase-1];
+            idx_end = (movement_i - m_select_lengths(phrase)) + idx_beg;
+            r = util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase-1]),
+                                    (int32_t) alternative_code::decode(m_y_values[phrase-1])};
+            return phrase;
+        }
+
+        inline void next_phrase(size_type &phrase, size_type &idx_beg, size_type &phrase_end) const {
+            ++phrase;
+            phrase_end = m_select_lengths(phrase+1);
+            idx_beg = m_offsets[phrase-1];
         }
 
         //! Copy constructor
@@ -256,8 +292,8 @@ namespace rct {
                 m_disap = std::move(o.m_disap);
                 m_rank_disap = std::move(o.m_rank_disap);
                 m_rank_disap.set_vector(&m_disap);
-                m_select_disap = std::move(o.m_select_disap);
-                m_select_disap.set_vector(&m_disap);
+                m_succ_0_disap = std::move(o.m_succ_0_disap);
+                m_succ_0_disap.set_vector(&m_disap);
                 m_rmq_x = std::move(o.m_rmq_x);
                 m_rMq_x = std::move(o.m_rMq_x);
                 m_rmq_y = std::move(o.m_rmq_y);
@@ -279,7 +315,7 @@ namespace rct {
             sdsl::util::swap_support(m_select_lengths, o.m_select_lengths, &m_lengths, &o.m_lengths);
             m_disap.swap(o.m_disap);
             sdsl::util::swap_support(m_rank_disap, o.m_rank_disap, &m_disap, &o.m_disap);
-            sdsl::util::swap_support(m_select_disap, o.m_select_disap, &m_disap, &o.m_disap);
+            sdsl::util::swap_support(m_succ_0_disap, o.m_succ_0_disap, &m_disap, &o.m_disap);
             m_rmq_x.swap(o.m_rmq_x);
             m_rmq_y.swap(o.m_rmq_y);
             m_rMq_x.swap(o.m_rMq_x);
@@ -301,13 +337,33 @@ namespace rct {
             written_bytes += m_select_lengths.serialize(out, child, "select_lengths");
             written_bytes += m_disap.serialize(out, child, "disap");
             written_bytes += m_rank_disap.serialize(out, child, "rank_disap");
-            written_bytes += m_select_disap.serialize(out, child, "select_disap");
+            written_bytes += m_succ_0_disap.serialize(out, child, "succ_0_disap");
             written_bytes += m_rmq_x.serialize(out, child, "rmq_x");
             written_bytes += m_rmq_y.serialize(out, child, "rmq_y");
             written_bytes += m_rMq_x.serialize(out, child, "rMq_x");
             written_bytes += m_rMq_y.serialize(out, child, "rMq_y");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
+        }
+
+        void load(std::istream& in) {
+            sdsl::read_member(m_time_start, in);
+            sdsl::read_member(m_x_start, in);
+            sdsl::read_member(m_y_start, in);
+            m_x_values.load(in);
+            m_y_values.load(in);
+            m_offsets.load(in);
+            m_lengths.load(in);
+            m_rank_lengths.load(in, &m_lengths);
+            m_select_lengths.load(in, &m_lengths);
+            m_disap.load(in);
+            m_rank_disap.load(in, &m_disap);
+            m_succ_0_disap.load(in, &m_disap);
+            m_rmq_x.load(in);
+            m_rmq_y.load(in);
+            m_rMq_x.load(in);
+            m_rMq_y.load(in);
+
         }
 
         void print(){

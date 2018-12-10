@@ -6,6 +6,7 @@
 #define RCT_SPIRAL_MATRIX_CODER_HPP
 
 #include <cmath>
+#include <cstdint>
 
 namespace rct {
 

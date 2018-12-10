@@ -29,6 +29,11 @@ namespace rct {
         log_reference_type m_log_reference;
         std::vector<log_object_type> m_log_objects;
 
+        void copy(const rct_index &o){
+            m_log_reference = o.m_log_reference;
+            m_log_objects = o.m_log_objects;
+        }
+
 
     public:
 
@@ -79,8 +84,8 @@ namespace rct {
             auto start = util::time::user::now();
             while (!in.eof() && id != -1) {
                 in >> id >> t >> x >> y;
-                if (in.eof()) id = (uint32_t) -1;
-                if (in.eof()) id = (uint32_t) -1;
+                //if (in.eof()) id = (uint32_t) -1;
+                if (in.eof() || id > 1) id = (uint32_t) -1;
                 if (id == old_id) {
                     int32_t diff_x = x - old_x;
                     int32_t diff_y = y - old_y;
@@ -109,16 +114,58 @@ namespace rct {
             std::cout << "Parsing in: " << end - start << " µs" << std::endl;
             std::cout << "Everything Done." << std::endl;
 
-            m_log_objects[0].print();
+            //m_log_objects[0].print();
+        }
+
+        //! Copy constructor
+        rct_index(const rct_index& o)
+        {
+            copy(o);
+        }
+
+        //! Move constructor
+        rct_index(rct_index&& o)
+        {
+            *this = std::move(o);
+        }
+
+
+        rct_index &operator=(const rct_index &o) {
+            if (this != &o) {
+                copy(o);
+            }
+            return *this;
+        }
+
+        rct_index &operator=(rct_index &&o) {
+            if (this != &o) {
+                m_log_objects = o.m_log_objects;
+                m_log_reference = o.m_log_reference;
+            }
+            return *this;
+        }
+
+        void swap(rct_index &o) {
+            std::swap(m_log_objects, o.m_log_objects);
+            m_log_reference.swap(o.m_log_reference);
         }
 
         size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="") const {
             sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
             size_type written_bytes = 0;
-            written_bytes += m_log_reference.serialize(out, child, "log_reference");
+            sdsl::write_member(m_log_objects.size(), out, child, "log_size");
             written_bytes += sdsl::serialize_vector(m_log_objects, out, child, "log_objects");
+            written_bytes += m_log_reference.serialize(out, child, "log_reference");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
+        }
+
+        void load(std::istream& in) {
+            size_type log_size;
+            sdsl::read_member(log_size, in);
+            m_log_objects.resize(log_size);
+            sdsl::load_vector(m_log_objects, in);
+            m_log_reference.load(in);
         }
 
 

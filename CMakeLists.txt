@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -62,11 +62,11 @@ target_link_libraries(rlz_file sdsl divsufsort divsufsort64)
 add_executable(estimation_size src/estimation_size.cpp)
 target_link_libraries(estimation_size sdsl divsufsort divsufsort64)
 
-add_executable(rct_index src/rct_main.cpp include/log_object_v1.hpp include/alternative_code.hpp include/log_object.hpp)
+add_executable(rct_index src/rct_main.cpp)
 target_link_libraries(rct_index sdsl divsufsort divsufsort64)
 
 add_executable(rct_index_dac src/rct_dac_main.cpp)
 target_link_libraries(rct_index_dac sdsl divsufsort divsufsort64)
 
-add_executable(alternative_code src/alternative_code.cpp include/log_reference.hpp include/log_object.hpp include/rct_algorithm.hpp)
+add_executable(alternative_code src/alternative_code.cpp include/succ_support_v.hpp include/math_util.hpp)
 target_link_libraries(alternative_code sdsl divsufsort divsufsort64)

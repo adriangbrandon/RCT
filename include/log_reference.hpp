@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sdsl/rank_support.hpp>
 #include <rmq_succinct_ct.hpp>
 #include <sdsl/sd_vector.hpp>
+#include <succ_support_v.hpp>
 #include <geo_util.hpp>
 
 namespace rct {
@@ -48,7 +49,7 @@ namespace rct {
     public:
         typedef uint64_t size_type;
         typedef t_movements move_type;
-        typedef sdsl::rank_support_v5<1> rank_move_type;
+        typedef succ_support_v<1> succ_move_type;
         typedef typename move_type::select_1_type select_move_type;
         typedef sdsl::sd_vector<> sampling_type;
         typedef typename sampling_type::rank_1_type rank_sampling_type;
@@ -57,19 +58,19 @@ namespace rct {
     private:
 
         move_type m_x_p;
-        rank_move_type m_rank_x_p;
+        succ_move_type m_succ_x_p;
         select_move_type m_select_x_p;
 
         move_type m_y_p;
-        rank_move_type m_rank_y_p;
+        succ_move_type m_succ_y_p;
         select_move_type m_select_y_p;
 
         move_type m_x_n;
-        rank_move_type m_rank_x_n;
+        succ_move_type m_succ_x_n;
         select_move_type m_select_x_n;
 
         move_type m_y_n;
-        rank_move_type m_rank_y_n;
+        succ_move_type m_succ_y_n;
         select_move_type m_select_y_n;
 
         sampling_type m_rMmq_x_sample;
@@ -87,23 +88,23 @@ namespace rct {
             m_x_p = o.m_x_p;
             m_select_x_p = o.m_select_x_p;
             m_select_x_p.set_vector(&m_x_p);
-            m_rank_x_p = o.m_rank_x_p;
-            m_rank_x_p.set_vector(&m_x_p);
+            m_succ_x_p = o.m_succ_x_p;
+            m_succ_x_p.set_vector(&m_x_p);
             m_x_n = o.m_x_n;
             m_select_x_n = o.m_select_x_n;
             m_select_x_n.set_vector(&m_x_n);
-            m_rank_x_n = o.m_rank_x_n;
-            m_rank_x_n.set_vector(&m_x_n);
+            m_succ_x_n = o.m_succ_x_n;
+            m_succ_x_n.set_vector(&m_x_n);
             m_y_p = o.m_y_p;
             m_select_y_p = o.m_select_y_p;
             m_select_y_p.set_vector(&m_y_p);
-            m_rank_y_p = o.m_rank_y_p;
-            m_rank_y_p.set_vector(&m_y_p);
+            m_succ_y_p = o.m_succ_y_p;
+            m_succ_y_p.set_vector(&m_y_p);
             m_y_n = o.m_y_n;
             m_select_y_n = o.m_select_y_n;
             m_select_y_n.set_vector(&m_y_n);
-            m_rank_y_n = o.m_rank_y_n;
-            m_rank_y_n.set_vector(&m_y_n);
+            m_succ_y_n = o.m_succ_y_n;
+            m_succ_y_n.set_vector(&m_y_n);
             m_rMmq_x_sample = o.m_rMmq_x_sample;
             m_rank_rMmq_x_sample = o.m_rank_rMmq_x_sample;
             m_rank_rMmq_x_sample.set_vector(&m_rMmq_x_sample);
@@ -207,13 +208,13 @@ namespace rct {
                     m_y_n[one]=1;
                 }
                 sdsl::util::init_support(m_select_x_p, &m_x_p);
-                sdsl::util::init_support(m_rank_x_p, &m_x_p);
+                sdsl::util::init_support(m_succ_x_p, &m_x_p);
                 sdsl::util::init_support(m_select_x_n, &m_x_n);
-                sdsl::util::init_support(m_rank_x_n, &m_x_n);
+                sdsl::util::init_support(m_succ_x_n, &m_x_n);
                 sdsl::util::init_support(m_select_y_p, &m_y_p);
-                sdsl::util::init_support(m_rank_y_p, &m_y_p);
+                sdsl::util::init_support(m_succ_y_p, &m_y_p);
                 sdsl::util::init_support(m_select_y_n, &m_y_n);
-                sdsl::util::init_support(m_rank_y_n, &m_y_n);
+                sdsl::util::init_support(m_succ_y_n, &m_y_n);
             }
 
             //2. Compute rMmq for x-axis
@@ -262,6 +263,62 @@ namespace rct {
 
         };
 
+        util::geo::movement compute_movement_init(const size_type i, const size_type j, size_type &x_p_prev,
+                size_type &x_n_prev, size_type &y_p_prev, size_type &y_n_prev) const {
+
+            x_p_prev = m_select_x_p(j);
+            x_n_prev = m_select_x_n(j);
+            y_p_prev = m_select_y_p(j);
+            y_n_prev = m_select_y_n(j);
+            if(i == 0){
+
+                auto delta_x = (int32_t) (x_p_prev - x_n_prev);
+                auto delta_y = (int32_t) (y_p_prev - y_n_prev);
+                return util::geo::movement{delta_x, delta_y};
+            }else{
+                int32_t delta_x = (x_p_prev - m_select_x_p(i)) - (x_n_prev - m_select_x_n(i));
+                int32_t delta_y = (y_p_prev - m_select_y_p(i)) - (y_n_prev - m_select_y_n(i));
+                return util::geo::movement{delta_x, delta_y};
+            }
+        };
+
+        util::geo::movement compute_movement_init_next(const size_type j, size_type &x_p_prev, size_type &x_n_prev,
+                size_type &y_p_prev, size_type &y_n_prev) const {
+
+            x_p_prev = m_select_x_p(j+1);
+            x_n_prev = m_select_x_n(j+1);
+            y_p_prev = m_select_y_p(j+1);
+            y_n_prev = m_select_y_n(j+1);
+            if(j == 0){
+
+                auto delta_x = (int32_t) (x_p_prev - x_n_prev);
+                auto delta_y = (int32_t) (y_p_prev - y_n_prev);
+                return util::geo::movement{delta_x, delta_y};
+            }else{
+                int32_t delta_x = (x_p_prev - m_select_x_p(j)) - (x_n_prev - m_select_x_n(j));
+                int32_t delta_y = (y_p_prev - m_select_y_p(j)) - (y_n_prev - m_select_y_n(j));
+                return util::geo::movement{delta_x, delta_y};
+            }
+
+        };
+
+        util::geo::movement compute_movement_next(const size_type j, size_type &x_p_prev,
+                                                  size_type &x_n_prev, size_type &y_p_prev, size_type &y_n_prev) const {
+
+            auto x_p = m_succ_x_p(x_p_prev+1); //TODO: select_next
+            auto x_n = m_succ_x_n(x_n_prev+1);
+            auto y_p = m_succ_y_p(y_p_prev+1);
+            auto y_n = m_succ_y_n(y_n_prev+1);
+            auto delta_x = (int32_t) ((x_p - x_p_prev) - (x_n - x_n_prev));
+            auto delta_y = (int32_t) ((y_p - y_p_prev) - (y_n - y_n_prev));
+            x_p_prev = x_p;
+            x_n_prev = x_n;
+            y_p_prev = y_p;
+            y_n_prev = y_n;
+            return util::geo::movement{delta_x, delta_y};
+
+        };
+
         //! Copy constructor
         log_reference(const log_reference& o)
         {
@@ -287,23 +344,23 @@ namespace rct {
                 m_x_p = std::move(o.m_x_p);
                 m_select_x_p = std::move(o.m_select_x_p);
                 m_select_x_p.set_vector(&m_x_p);
-                m_rank_x_p = std::move(o.m_rank_x_p);
-                m_rank_x_p.set_vector(&m_x_p);
+                m_succ_x_p = std::move(o.m_succ_x_p);
+                m_succ_x_p.set_vector(&m_x_p);
                 m_x_n = std::move(o.m_x_n);
                 m_select_x_n = std::move(o.m_select_x_n);
                 m_select_x_n.set_vector(&m_x_n);
-                m_rank_x_n = std::move(o.m_rank_x_n);
-                m_rank_x_n.set_vector(&m_x_n);
+                m_succ_x_n = std::move(o.m_succ_x_n);
+                m_succ_x_n.set_vector(&m_x_n);
                 m_y_p = std::move(o.m_y_p);
                 m_select_y_p = std::move(o.m_select_y_p);
                 m_select_y_p.set_vector(&m_y_p);
-                m_rank_y_p = std::move(o.m_rank_y_p);
-                m_rank_y_p.set_vector(&m_y_p);
+                m_succ_y_p = std::move(o.m_succ_y_p);
+                m_succ_y_p.set_vector(&m_y_p);
                 m_y_n = std::move(o.m_y_n);
                 m_select_y_n = std::move(o.m_select_y_n);
                 m_select_y_n.set_vector(&m_y_n);
-                m_rank_y_n = std::move(o.m_rank_y_n);
-                m_rank_y_n.set_vector(&m_y_n);
+                m_succ_y_n = std::move(o.m_succ_y_n);
+                m_succ_y_n.set_vector(&m_y_n);
                 m_rMmq_x_sample = std::move(o.m_rMmq_x_sample);
                 m_rMmq_y_sample = std::move(o.m_rMmq_y_sample);
                 m_rank_rMmq_x_sample = std::move(o.m_rank_rMmq_x_sample);
@@ -325,16 +382,16 @@ namespace rct {
         void swap(log_reference &o) {
             // m_bp.swap(bp_support.m_bp); use set_vector to set the supported bit_vector
             m_x_p.swap(o.m_x_p);
-            sdsl::util::swap_support(m_rank_x_p, o.m_rank_x_p, &m_x_p, &o.m_x_p);
+            sdsl::util::swap_support(m_succ_x_p, o.m_succ_x_p, &m_x_p, &o.m_x_p);
             sdsl::util::swap_support(m_select_x_p, o.m_select_x_p, &m_x_p, &o.m_x_p);
             m_x_n.swap(o.m_x_n);
-            sdsl::util::swap_support(m_rank_x_n, o.m_rank_x_n, &m_x_n, &o.m_x_n);
+            sdsl::util::swap_support(m_succ_x_n, o.m_succ_x_n, &m_x_n, &o.m_x_n);
             sdsl::util::swap_support(m_select_x_n, o.m_select_x_n, &m_x_n, &o.m_x_n);
             m_y_p.swap(o.m_y_p);
-            sdsl::util::swap_support(m_rank_y_p, o.m_rank_y_p, &m_y_p, &o.m_y_p);
+            sdsl::util::swap_support(m_succ_y_p, o.m_succ_y_p, &m_y_p, &o.m_y_p);
             sdsl::util::swap_support(m_select_y_p, o.m_select_y_p, &m_y_p, &o.m_y_p);
             m_y_n.swap(o.m_y_n);
-            sdsl::util::swap_support(m_rank_y_n, o.m_rank_y_n, &m_y_n, &o.m_y_n);
+            sdsl::util::swap_support(m_succ_y_n, o.m_succ_y_n, &m_y_n, &o.m_y_n);
             sdsl::util::swap_support(m_select_y_n, o.m_select_y_n, &m_y_n, &o.m_y_n);
             m_rMmq_x_sample.swap(o.m_rMmq_x_sample);
             m_rMmq_y_sample.swap(o.m_rMmq_y_sample);
@@ -352,16 +409,16 @@ namespace rct {
             sdsl::structure_tree_node *child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
             size_type written_bytes = 0;
             written_bytes += m_x_p.serialize(out, child, "x_p");
-            written_bytes += m_rank_x_p.serialize(out, child, "rank_x_p");
+            written_bytes += m_succ_x_p.serialize(out, child, "succ_x_p");
             written_bytes += m_select_x_p.serialize(out, child, "select_x_p");
             written_bytes += m_x_n.serialize(out, child, "x_n");
-            written_bytes += m_rank_x_n.serialize(out, child, "rank_x_n");
+            written_bytes += m_succ_x_n.serialize(out, child, "succ_x_n");
             written_bytes += m_select_x_n.serialize(out, child, "select_x_n");
             written_bytes += m_y_p.serialize(out, child, "y_p");
-            written_bytes += m_rank_y_p.serialize(out, child, "rank_y_p");
+            written_bytes += m_succ_y_p.serialize(out, child, "succ_y_p");
             written_bytes += m_select_y_p.serialize(out, child, "select_y_p");
             written_bytes += m_y_n.serialize(out, child, "y_n");
-            written_bytes += m_rank_y_n.serialize(out, child, "rank_y_n");
+            written_bytes += m_succ_y_n.serialize(out, child, "succ_y_n");
             written_bytes += m_select_y_n.serialize(out, child, "select_y_n");
             written_bytes += m_rMmq_x_sample.serialize(out, child, "rMmq_x_sample");
             written_bytes += m_rank_rMmq_x_sample.serialize(out, child, "rank_rMmq_x_sample");
@@ -375,6 +432,32 @@ namespace rct {
             written_bytes += m_rMq_y.serialize(out, child, "rMq_y");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
+        }
+
+        void load(std::istream& in) {
+            m_x_p.load(in);
+            m_succ_x_p.load(in, &m_x_p);
+            m_select_x_p.load(in, &m_x_p);
+            m_x_n.load(in);
+            m_succ_x_n.load(in, &m_x_n);
+            m_select_x_n.load(in, &m_x_n);
+            m_y_p.load(in);
+            m_succ_y_p.load(in, &m_y_p);
+            m_select_y_p.load(in, &m_y_p);
+            m_y_n.load(in);
+            m_succ_y_n.load(in, &m_y_n);
+            m_select_y_n.load(in, &m_y_n);
+            m_rMmq_x_sample.load(in);
+            m_rank_rMmq_x_sample.load(in, &m_rMmq_x_sample);
+            m_select_rMmq_x_sample.load(in, &m_rMmq_x_sample);
+            m_rMmq_y_sample.load(in);
+            m_rank_rMmq_y_sample.load(in, &m_rMmq_y_sample);
+            m_select_rMmq_y_sample.load(in, &m_rMmq_y_sample);
+            m_rmq_x.load(in);
+            m_rmq_y.load(in);
+            m_rMq_x.load(in);
+            m_rMq_y.load(in);
+
         }
 
     };

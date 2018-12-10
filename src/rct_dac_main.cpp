@@ -43,16 +43,21 @@ int main(int argc, const char* argv[]) {
     if(argc == 4){
         uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
         uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
-        rct::rct_index<rct::log_reference<>, rct::log_object_int_vector> m_rct_index(argv[1], size_reference, size_block_bytes);
+        /*rct::rct_index<rct::log_reference<>, rct::log_object_int_vector> m_rct_index(argv[1], size_reference, size_block_bytes);
         std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".html");
         sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
+        sdsl::store_to_file(m_rct_index, "rct_index.idx");
+        sdsl::util::clear(m_rct_index);*/
+        rct::rct_index<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+        sdsl::load_from_file(m_rct_index, "rct_index.idx");
+
 
         std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
         util::geo::point r;
         while(in){
             in >> id >> t >> x >> y;
-            if(in.eof() || id > 99) break;
+            if(in.eof() || id > 1) break;
             rct::algorithm::search_object(id, t, m_rct_index, r);
             std::cout << "Obtained: " << r.x << ", " << r.y << std::endl;
             if(r.x != x || r.y != y){
@@ -62,7 +67,15 @@ int main(int argc, const char* argv[]) {
                 exit(0);
             }
         }
-        out.close();
+        in.close();
+
+        std::cout << "Search trajectory id=0 t_i=0 t_j=200: " << std::endl;
+        std::vector<util::geo::traj_step> traj;
+        rct::algorithm::search_trajectory(0, 11400, 11600, m_rct_index, traj);
+
+        for(const auto &step : traj){
+            std::cout << "t:" << step.t << " x:" << step.x << " y:" << step.y << std::endl;
+        }
     }
 
 }
