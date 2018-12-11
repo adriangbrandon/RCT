@@ -38,8 +38,8 @@ namespace util {
 
     namespace math {
 
-        template <class T>
-        inline T ceil_div(T x, T d){
+        template <class T, class D>
+        inline D ceil_div(T x, D d){
             return (x + d - 1) / d;
         }
     }
