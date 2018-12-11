@@ -60,6 +60,28 @@ namespace util {
             uint32_t x;
             uint32_t y;
         };
+
+        struct id_point {
+            uint32_t id;
+            uint32_t x;
+            uint32_t y;
+        };
+
+        inline bool contains(const region &r_q, const point &p){
+            return (r_q.min.x <= p.x && p.x <= r_q.max.x && r_q.min.y <= p.y && p.y <= r_q.max.y);
+        }
+
+        inline bool contains(const region &r_q, const region &r){
+            return (r_q.min.x <= r.min.x && r.min.x <= r_q.max.x &&
+                    r_q.min.y <= r.min.y && r.min.y <= r_q.max.y &&
+                    r_q.min.x <= r.max.x && r.max.x <= r_q.max.x &&
+                    r_q.min.y <= r.max.y && r.max.y <= r_q.max.y);
+        }
+
+        inline bool touches(const region &r_q, const region &r){
+                return !(r.min.x > r_q.max.x || r.max.x < r_q.min.x
+                        || r.min.y > r_q.max.y || r.max.y < r_q.min.y);
+        }
     }
 }
 

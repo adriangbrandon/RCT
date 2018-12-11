@@ -97,24 +97,24 @@ namespace rct {
             }
 
             typename RCTIndex::size_type movement_i = 0, movement_j = 0, idx_beg = 0, idx_end = 0,
-                    phrase_start = 0, phrase_end = 0, x_p_prev, x_n_prev, y_p_prev, y_n_prev;
-            util::geo::movement movement_phrase;
-            uint32_t t = 11400;
-
+                    phrase_start = 0, phrase_end = 0, x_p_prev, x_n_prev, y_p_prev, y_n_prev, phrase;
+            uint32_t t = 0;
+            util::geo::movement movement_phrase, movement;
             rctIndex.log_objects[oid].time_to_movement(t_temp_i, t_temp_j, movement_i, movement_j);
-            auto phrase = rctIndex.log_objects[oid].interval_ref(movement_i, idx_beg, idx_end,
-                                                                 phrase_end, movement_phrase);
-            util::geo::movement movement = rctIndex.log_reference.compute_movement_init(idx_beg, idx_end, x_p_prev,
-                                                                                        x_n_prev, y_p_prev, y_n_prev);
-            //std::cout << "movement: " << movement.x << ", " << movement.y << std::endl;
-            //TODO: we need to compute t!! select_next??
-            r.emplace_back(util::geo::traj_step{t, traj_step.x + movement_phrase.x + movement.x,
-                                                traj_step.y + movement_phrase.y + movement.y});
+            if(movement_i <= movement_j){
+                t = rctIndex.log_objects[oid].time_next(t_temp_i-1);
+                phrase = rctIndex.log_objects[oid].interval_ref(movement_i, idx_beg, idx_end,
+                                                                     phrase_end, movement_phrase);
+                movement = rctIndex.log_reference.compute_movement_init(idx_beg, idx_end, x_p_prev, x_n_prev,
+                                                                        y_p_prev, y_n_prev);
+                r.emplace_back(util::geo::traj_step{t, traj_step.x + movement_phrase.x + movement.x,
+                                                    traj_step.y + movement_phrase.y + movement.y});
+            }
             auto prev = idx_end-1;
             while (movement_i < movement_j) {
                 ++movement_i;
                 ++prev;
-                ++t;
+                t = rctIndex.log_objects[oid].time_next(t);
                 if (phrase_end < movement_i) {
                     rctIndex.log_objects[oid].next_phrase(phrase, prev, phrase_end);
                     movement = rctIndex.log_reference.compute_movement_init_next(prev, x_p_prev,
@@ -123,9 +123,17 @@ namespace rct {
                     movement = rctIndex.log_reference.compute_movement_next(prev, x_p_prev,
                                                                             x_n_prev, y_p_prev, y_n_prev);
                 }
-                //TODO: we need to compute t!! select_next??
                 r.emplace_back(util::geo::traj_step{t, r.back().x + movement.x, r.back().y + movement.y});
             }
+
+        }
+
+        template<class RCTIndex>
+        void time_interval(const util::geo::region& region_q, const typename RCTIndex::value_type t_i,
+                           const typename RCTIndex::size_type t_j, const RCTIndex &rctIndex,
+                           std::vector<util::geo::id_point> &r) {
+
+
 
         }
     };

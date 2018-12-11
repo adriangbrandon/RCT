@@ -75,7 +75,7 @@ namespace rct {
             size_type basic_block_size = util::math::ceil_div(v->capacity(), 64ULL);
             m_super_blocks.resize(super_block_size);   // resize structure for super_blocks
             m_basic_blocks.resize(basic_block_size);   // resize structure for basic_blocks
-            size_type i, j=0;
+            size_type i;
             size_type succ = v->size();
             const uint64_t* data = m_v->data();
             //return size if there are no more next values

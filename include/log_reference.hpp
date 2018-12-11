@@ -316,8 +316,8 @@ namespace rct {
             y_p_prev = y_p;
             y_n_prev = y_n;
             return util::geo::movement{delta_x, delta_y};
-
         };
+
 
         //! Copy constructor
         log_reference(const log_reference& o)
