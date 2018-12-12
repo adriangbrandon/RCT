@@ -19,7 +19,7 @@
 namespace rct {
 
     template <uint64_t k = 2, class t_log_reference = log_reference<>, class t_log_object = log_object<>,
-            class t_rlz = rlz_csa_bit >
+            class t_rlz = rlz_csa_sada_int >
     class rct_index {
 
     public:
