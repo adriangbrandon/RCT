@@ -70,3 +70,6 @@ target_link_libraries(rct_index_dac sdsl divsufsort divsufsort64)
 
 add_executable(alternative_code src/alternative_code.cpp)
 target_link_libraries(alternative_code sdsl divsufsort divsufsort64)
+
+add_executable(rlz_test src/rlz_test.cpp)
+target_link_libraries(rlz_test sdsl divsufsort divsufsort64)

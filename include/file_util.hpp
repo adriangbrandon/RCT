@@ -26,6 +26,11 @@ namespace util {
             return fs.st_size;
         }
 
+        bool file_exists(const std::string &file){
+            struct stat fs;
+            return (stat(file.c_str(), &fs) == 0);
+        }
+
         template<class t_value>
         void read_from_file(const std::string& file, std::vector<t_value> &container){
             std::ifstream in(file, std::ios::in | std::ios::binary );

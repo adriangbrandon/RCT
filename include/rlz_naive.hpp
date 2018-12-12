@@ -53,6 +53,7 @@ namespace rct {
     public:
         const reference_type &reference = m_reference;
 
+        rlz_naive() = default;
         rlz_naive(std::vector<value_type> &container, const size_type reference_size, const size_type block_size){
 
             m_reference = reference_type(container, reference_size, block_size);
@@ -91,7 +92,7 @@ namespace rct {
                 }else{
                     sdsl::backward_search(m_csa, start, end, sym, res_start, res_end);
                 }
-                if(res_end <= res_start){
+                if(res_end < res_start){
                     length_type length = m_input_pos - start_input;
                     if(length == 0) {
                         ++m_input_pos;
@@ -170,6 +171,33 @@ namespace rct {
                 m_input_pos = v.m_input_pos;
             }
             return *this;
+        }
+
+        size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="")const
+        {
+            sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
+            size_type written_bytes = 0;
+            m_reference.serialize(out, child, "reference");
+            m_csa.serialize(out, child, "csa");
+            sdsl::write_member(m_input_pos, out, child, "input_pos");
+            sdsl::write_member(m_input_size, out, child, "input_size");
+            sdsl::structure_tree::add_size(child, written_bytes);
+            return written_bytes;
+        }
+
+        void load(std::istream& in){
+            size_type size;
+            m_reference.load(in);
+            m_csa.load(in);
+            sdsl::read_member(m_input_pos, in);
+            sdsl::read_member(m_input_size, in);
+        }
+
+        void print_reference(const size_type i, const size_type j){
+            for(size_type k = i; k < j; ++k){
+                std::cout << m_reference[k] << ", ";
+            }
+            std::cout << std::endl;
         }
     };
 

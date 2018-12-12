@@ -125,6 +125,23 @@ namespace rct {
             return *this;
         }
 
+        size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="")const
+        {
+            sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
+            size_type written_bytes = 0;
+            sdsl::write_member(m_reference.size(), out, child, "size");
+            written_bytes += sdsl::serialize_vector(m_reference, out, child, "reference");
+            sdsl::structure_tree::add_size(child, written_bytes);
+            return written_bytes;
+        }
+
+        void load(std::istream& in){
+            size_type size;
+            sdsl::read_member(size, in);
+            m_reference.resize(size);
+            sdsl::load_vector(m_reference, in);
+        }
+
     };
 
 }
