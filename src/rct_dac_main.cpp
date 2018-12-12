@@ -48,13 +48,14 @@ int main(int argc, const char* argv[]) {
 
         uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
         uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
-        rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index(argv[1], size_reference, size_block_bytes, 120);
-        std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".html");
+        rct::rct_index<2, rct::log_reference<>, rct::log_object_dac_vector> m_rct_index(argv[1], size_reference, size_block_bytes, 120);
+        std::ofstream out("rct_index_dac" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".html");
         sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
-        sdsl::store_to_file(m_rct_index, "rct_index.idx");
+        std::string index_file = "rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".idx";
+        sdsl::store_to_file(m_rct_index, index_file);
         sdsl::util::clear(m_rct_index);
         //rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
-        sdsl::load_from_file(m_rct_index, "rct_index.idx");
+        sdsl::load_from_file(m_rct_index, index_file);
 
 
         std::ifstream in(argv[1]);
