@@ -48,6 +48,7 @@ namespace rct {
 
     public:
         typedef uint64_t size_type;
+        typedef uint32_t value_type ;
         typedef t_movements move_type;
         typedef succ_support_v<1> succ_move_type;
         typedef typename move_type::select_1_type select_move_type;
@@ -305,7 +306,7 @@ namespace rct {
         util::geo::movement compute_movement_next(const size_type j, size_type &x_p_prev,
                                                   size_type &x_n_prev, size_type &y_p_prev, size_type &y_n_prev) const {
 
-            auto x_p = m_succ_x_p(x_p_prev+1); //TODO: select_next
+            auto x_p = m_succ_x_p(x_p_prev+1);
             auto x_n = m_succ_x_n(x_n_prev+1);
             auto y_p = m_succ_y_p(y_p_prev+1);
             auto y_n = m_succ_y_n(y_n_prev+1);
@@ -318,6 +319,318 @@ namespace rct {
             return util::geo::movement{delta_x, delta_y};
         };
 
+        inline int32_t compute_delta_x(const size_type i){
+             return m_select_x_p(i) - m_select_x_n(i);
+        }
+
+        inline int32_t compute_delta_y(const size_type i){
+            return m_select_y_p(i) - m_select_y_n(i);
+        }
+
+
+        //Time Interval Functions
+
+        inline size_type _rank_min(const size_type rmMq) const{
+            return rmMq>>1; //rmMq/2
+        };
+
+        inline size_type _rank_max(const size_type rmMq, const sampling_type &rmq_sampling) const{
+            return (rmMq>>1) + (rmMq&0x1ULL) - rmq_sampling[0]; //rmMq/2 + rmMq%2 -mM[0]
+        };
+
+        inline size_type _select_min(const size_type i, const select_sampling_type &rmq_sampling_select) const{
+            return rmq_sampling_select(i<<1) -1;
+        }
+
+        inline size_type _select_max(const size_type i, const sampling_type &rmq_sampling,
+                                     const select_sampling_type &rmq_sampling_select) const{
+            return (rmq_sampling[0]) ? rmq_sampling_select((i<<1)+1)-1 : rmq_sampling_select((i<<1)-1)-1;
+            /*if(rmq_sampling[0]){
+                return rmq_sampling_select((i<<1)+1)-1;
+            }else{
+                return rmq_sampling_select((i<<1)-1)-1;
+            }*/
+        }
+
+        util::geo::region find_MBR(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
+                                   const util::geo::point &p_s, const util::geo::point &p_e, size_type &total_selects){
+
+            //1. Init the min and max points
+            value_type min_x, max_x, min_y, max_y;
+            if(p_s.x < p_e.x){
+                min_x = p_s.x;
+                max_x = p_e.x;
+            }else{
+                min_x = p_e.x;
+                max_x = p_s.x;
+            }
+            if(p_s.y < p_e.y){
+                min_y = p_s.y;
+                max_y = p_e.y;
+            }else{
+                min_y = p_e.y;
+                max_y = p_s.y;
+            }
+
+            //Adding extra 1 caused by the flag
+            size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s+1);
+            size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e+2);
+            size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s+1);
+            size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e+2);
+
+            //TODO: parameter delta_x and delta_y with i=start_phrase. They are explicitly stored
+            auto delta_x = 0;
+            auto delta_y = 0;
+            //2. Computing the minimum at x-axis
+            size_type rmq_x_s = _rank_min(rMmq_x_s)+1;  //rank_x(ms)+1 counts the number of samples before
+            size_type rmq_x_e = _rank_min(rMmq_x_e); //rank_x(me+1) counts the number of samples
+            if(rmq_x_s > 0 && rmq_x_e > 0 && rmq_x_s <= rmq_x_e){
+                /*r = rmq_x(rmq_x_s-1, rmq_x_e-1) returns the sampled position of the minimum
+                 *p = select_rmq_x_sample(r+1) returns the position of the movement (we add 1 because it is the (p+1)-th movement)
+                 */
+                size_type min_x_c = m_rmq_x(rmq_x_s-1, rmq_x_e-1)+1;
+                size_type movement_x = _select_min(min_x_c, m_select_rMmq_x_sample)+1;
+                auto min_x_aux = (value_type) (compute_delta_x(movement_x) - delta_x + x);
+                //total_selects += 2;
+                min_x = std::min(min_x, min_x_aux);
+            }
+
+            //3. Computing the minimum at y-axis
+            size_type rmq_y_s = _rank_min(rMmq_y_s)+1;
+            size_type rmq_y_e = _rank_min(rMmq_y_e);
+            if(rmq_y_s > 0 && rmq_y_e > 0 && rmq_y_s <= rmq_y_e){
+                size_type min_y_c = m_rmq_y(rmq_y_s-1, rmq_y_e-1) + 1;
+                size_type movement_y = _select_min(min_y_c, m_select_rMmq_y_sample) + 1;
+                auto min_y_aux = (value_type) (compute_delta_y(movement_y) - delta_y + y);
+                //total_selects += 2;
+                min_y = std::min(min_y, min_y_aux);
+            }
+
+            //4. Computing the maximum at x-axis
+            size_type rMq_x_s = _rank_max(rMmq_x_s, m_rMmq_x_sample)+1;
+            size_type rMq_x_e = _rank_max(rMmq_x_e, m_rMmq_x_sample);
+            if(rMq_x_s > 0 && rMq_x_e > 0 && rMq_x_s <= rMq_x_e){
+                size_type max_x_c = m_rMq_x(rMq_x_s-1, rMq_x_e-1) + 1;
+                size_type movement_x = _select_max(max_x_c, m_rMmq_x_sample, m_select_rMmq_x_sample) + 1;
+                auto max_x_aux = (value_type) (compute_delta_x(movement_x) - delta_x + x);
+                //total_selects += 2;
+                max_x_aux += x;
+                max_x = std::max(max_x, max_x_aux);
+            }
+
+            //5. Computing the maximum at y-axis
+            size_type rMq_y_s = _rank_max(rMmq_y_s, m_rMmq_y_sample)+1;
+            size_type rMq_y_e = _rank_max(rMmq_y_e, m_rMmq_y_sample);
+            if(rMq_y_s > 0 && rMq_y_e > 0 && rMq_y_s <= rMq_y_e){
+                size_type max_y_c = m_rMq_y(rMq_y_s-1, rMq_y_e-1) + 1;
+                size_type movement_y = _select_max(max_y_c, m_rMmq_y_sample, m_select_rMmq_y_sample) + 1;
+                auto max_y_aux = (value_type) (compute_delta_y(movement_y) - delta_y + y);
+                //total_selects += 2;
+                max_y = std::max(max_y, max_y_aux);
+            }
+
+            return util::geo::region{ util::geo::point{min_x, min_y}, util::geo::point{max_x, max_y}};
+
+        }
+
+        bool find_MBR_lazy_init(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
+                                const util::geo::point &p_s, const util::geo::point &p_e, const util::geo::region &r_q,
+                                size_type &p_min_x_index, size_type &p_max_x_index,
+                                size_type &p_min_y_index, size_type &p_max_y_index,
+                                size_type &total_selects, int32_t &delta_x, int32_t &delta_y, util::geo::region &mbr){
+
+            //1. Init the min and max points
+            value_type min_x, max_x, min_y, max_y;
+            if(p_s.x < p_e.x){
+                min_x = p_s.x;
+                max_x = p_e.x;
+            }else{
+                min_x = p_e.x;
+                max_x = p_s.x;
+            }
+            if(p_s.y < p_e.y){
+                min_y = p_s.y;
+                max_y = p_e.y;
+            }else{
+                min_y = p_e.y;
+                max_y = p_s.y;
+            }
+
+            p_min_x_index = 0, p_max_x_index = 0, p_min_y_index = 0, p_max_y_index = 0;
+            //Adding extra 1 caused by the flag bit
+            size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s+1);
+            size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e+2);//move_e + 1 + flag
+
+            //TODO: parameter delta_x with i=start_phrase
+            delta_x = 0;
+            //2. Computing the minimum at x-axis
+            size_type rmq_x_s = _rank_min(rMmq_x_s)+1;  //rank_x(ms)+1 counts the number of samples before
+            size_type rmq_x_e = _rank_min(rMmq_x_e); //rank_x(me+1) counts the number of samples
+            if(rmq_x_s > 0 && rmq_x_e > 0 && rmq_x_s <= rmq_x_e){
+                /*r = rmq_x(rmq_x_s-1, rmq_x_e-1) returns the sampled position of the minimum
+                 *p = select_rmq_x_sample(r+1) returns the position of the movement (we add 1 because it is the (p+1)-th movement)
+                 */
+                size_type min_x_c = m_rmq_x(rmq_x_s-1, rmq_x_e-1)+1;
+                p_min_x_index =  _select_min(min_x_c, m_select_rMmq_x_sample);
+                auto min_x_aux = (value_type) (compute_delta_x(p_min_x_index+1) - delta_x + x);
+                //total_selects += 2;
+                min_x = std::min(min_x, min_x_aux);
+            }
+
+            //4. Computing the maximum at x-axis
+            size_type rMq_x_s = _rank_max(rMmq_x_s, m_rMmq_x_sample)+1;
+            size_type rMq_x_e = _rank_max(rMmq_x_e, m_rMmq_x_sample);
+            if(rMq_x_s > 0 && rMq_x_e > 0 && rMq_x_s <= rMq_x_e){
+                size_type max_x_c = m_rMq_x(rMq_x_s-1, rMq_x_e-1) + 1;
+                p_max_x_index = _select_max(max_x_c, m_rMmq_x_sample, m_select_rMmq_x_sample);
+                auto max_x_aux = (value_type) (compute_delta_x(p_max_x_index+1) - delta_x + x);
+                //total_selects += 2;
+                max_x = std::max(max_x, max_x_aux);
+            }
+
+            if(min_x > r_q.max.x || max_x < r_q.min.x) return false;
+
+            size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s+1);
+            size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e+2);
+
+            //TODO: parameter delta_y with i=start_phrase
+            delta_y = 0;
+            //3. Computing the minimum at y-axis
+            size_type rmq_y_s = _rank_min(rMmq_y_s)+1;
+            size_type rmq_y_e = _rank_min(rMmq_y_e);
+            if(rmq_y_s > 0 && rmq_y_e > 0 && rmq_y_s <= rmq_y_e){
+                size_type min_y_c = m_rmq_y(rmq_y_s-1, rmq_y_e-1) + 1;
+                p_min_y_index = _select_min(min_y_c, m_select_rMmq_y_sample);
+                auto min_y_aux = (value_type) (compute_delta_y(p_min_y_index+1) - delta_y + y);
+                //total_selects += 2;
+                min_y = std::min(min_y, min_y_aux);
+            }
+
+            //5. Computing the maximum at y-axis
+            size_type rMq_y_s = _rank_max(rMmq_y_s, m_rMmq_y_sample)+1;
+            size_type rMq_y_e = _rank_max(rMmq_y_e, m_rMmq_y_sample);
+            if(rMq_y_s > 0 && rMq_y_e > 0 && rMq_y_s <= rMq_y_e){
+                size_type max_y_c = m_rMq_y(rMq_y_s-1, rMq_y_e-1) + 1;
+                p_max_y_index = _select_max(max_y_c, m_rMmq_y_sample, m_select_rMmq_y_sample);
+                auto max_y_aux = (value_type) (compute_delta_y(p_max_y_index+1) - delta_y + y);
+                //total_selects += 2;
+                max_y = std::max(max_y, max_y_aux);
+            }
+            if(min_y > r_q.max.y || max_y < r_q.min.y) return false;
+
+            mbr = {util::geo::point{min_x, min_y}, util::geo::point{max_x, max_y}};
+            return true;
+
+        }
+
+        bool find_MBR_lazy(const size_type x, const size_type y,
+                           const size_type move_s, const size_type move_e,
+                           const util::geo::point &p_s, const util::geo::point &p_e, const util::geo::region r_q,
+                           const util::geo::region &parent_region, util::geo::region &r,
+                           const int32_t delta_x, const int32_t delta_y,
+                           size_type &p_min_x_index, size_type &p_max_x_index,
+                           size_type &p_min_y_index, size_type &p_max_y_index,
+                           size_type &total_selects){
+
+            //1. Init the min and max points
+            value_type min_x, max_x, min_y, max_y;
+            if(p_s.x < p_e.x){
+                min_x = p_s.x;
+                max_x = p_e.x;
+            }else{
+                min_x = p_e.x;
+                max_x = p_s.x;
+            }
+            if(p_s.y < p_e.y){
+                min_y = p_s.y;
+                max_y = p_e.y;
+            }else{
+                min_y = p_e.y;
+                max_y = p_s.y;
+            }
+
+            //Check if the local maximum and minimum was computed, during the computation of the parent's MBR
+            if(move_s < p_min_x_index && move_e > p_min_x_index && move_s < p_max_x_index && move_e > p_max_x_index){
+                r = parent_region;
+            }else{
+                //Adding extra 1 caused by the flag bit
+                size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s+1);
+                size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e+2);//move_e + 1 + flag
+                //2. Computing the minimum at x-axis
+                if(move_s < p_min_x_index && move_e > p_min_x_index){
+                    r.min.x = parent_region.min.x;
+                }else{
+                    size_type rmq_x_s = _rank_min(rMmq_x_s)+1;  //rank_x(ms)+1 counts the number of samples before
+                    size_type rmq_x_e = _rank_min(rMmq_x_e); //rank_x(me+1) counts the number of samples
+                    if(rmq_x_s > 0 && rmq_x_e > 0 && rmq_x_s <= rmq_x_e){
+                        /*r = rmq_x(rmq_x_s-1, rmq_x_e-1) returns the sampled position of the minimum
+                         *p = select_rmq_x_sample(r+1) returns the position of the movement (we add 1 because it is the (p+1)-th movement)
+                         */
+                        size_type min_x_c = m_rmq_x(rmq_x_s-1, rmq_x_e-1)+1;
+                        p_min_x_index = _select_min(min_x_c, m_select_rMmq_x_sample);
+                        auto min_x_aux = (value_type) (compute_delta_x(p_min_x_index+1) - delta_x + x);
+                        min_x = std::min(min_x, min_x_aux);
+                    }
+                    r.min.x = min_x;
+                }
+
+                if(move_s < p_max_x_index && move_e > p_max_x_index){
+                    r.max.x = parent_region.max.x;
+                }else{
+                    //4. Computing the maximum at x-axis
+                    size_type rMq_x_s = _rank_max(rMmq_x_s, m_rMmq_x_sample)+1;
+                    size_type rMq_x_e = _rank_max(rMmq_x_e, m_rMmq_x_sample);
+                    if(rMq_x_s > 0 && rMq_x_e > 0 && rMq_x_s <= rMq_x_e){
+                        size_type max_x_c = m_rMq_x(rMq_x_s-1, rMq_x_e-1) + 1;
+                        p_max_x_index = _select_max(max_x_c, m_rMmq_x_sample, m_select_rMmq_x_sample);
+                        auto max_x_aux = (value_type) (compute_delta_x(p_max_x_index+1) - delta_x + x);
+                        max_x = std::max(max_x, max_x_aux);
+                    }
+                    r.max.x = max_x;
+                }
+
+            }
+            if(r.min.x > r_q.max.x || r.max.x < r_q.min.x) return false;
+
+            if(move_s < p_min_y_index && move_e > p_min_y_index && move_s < p_max_y_index && move_e > p_max_y_index){
+                r.min.y = parent_region.min.y;
+                r.max.y = parent_region.max.y;
+            }else{
+                size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s+1);
+                size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e+2);//move_e + 1 + flag
+                if(move_s < p_min_y_index && move_e > p_min_y_index){
+                    r.min.y = parent_region.min.y;
+                }else{
+                    //3. Computing the minimum at y-axis
+                    size_type rmq_y_s = _rank_min(rMmq_y_s)+1;
+                    size_type rmq_y_e = _rank_min(rMmq_y_e);
+                    if(rmq_y_s > 0 && rmq_y_e > 0 && rmq_y_s <= rmq_y_e){
+                        size_type min_y_c = m_rmq_y(rmq_y_s-1, rmq_y_e-1) + 1;
+                        p_min_y_index = _select_min(min_y_c, m_select_rMmq_y_sample);
+                        auto min_y_aux = (value_type) (compute_delta_y(p_min_y_index+1) - delta_y + y);
+                        min_y = std::min(min_y, min_y_aux);
+                    }
+                    r.min.y = min_y;
+                }
+
+                if(move_s < p_max_y_index && move_e > p_max_y_index){
+                    r.max.y = parent_region.max.y;
+                }else{
+                    size_type rMq_y_s = _rank_max(rMmq_y_s, m_rMmq_y_sample)+1;
+                    size_type rMq_y_e = _rank_max(rMmq_y_e, m_rMmq_y_sample);
+                    if(rMq_y_s > 0 && rMq_y_e > 0 && rMq_y_s <= rMq_y_e){
+                        size_type max_y_c = m_rMq_y(rMq_y_s-1, rMq_y_e-1) + 1;
+                        p_max_y_index = _select_max(max_y_c, m_rMmq_y_sample, m_select_rMmq_y_sample);
+                        auto max_y_aux = (value_type) (compute_delta_y(p_max_y_index+1) - delta_y + y);
+                        max_y = std::max(max_y, max_y_aux);
+                    }
+                    r.max.y = max_y;
+                }
+
+            }
+            return !(r.min.y > r_q.max.y || r.max.y < r_q.min.y);
+
+        }
 
         //! Copy constructor
         log_reference(const log_reference& o)

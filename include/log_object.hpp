@@ -125,6 +125,11 @@ namespace rct {
         }
 
         template <class Container>
+        void compress_data(sdsl::dac_vector<8> &ref, const Container &data){
+            ref = sdsl::dac_vector<8>(data);
+        }
+
+        template <class Container>
         void compress_data(sdsl::int_vector<> &ref, const Container &data){
             ref = sdsl::int_vector<>(data.size());
             size_type idx = 0;
@@ -135,21 +140,27 @@ namespace rct {
         }
 
         inline util::geo::region MBR(const size_type phrase_i, const size_type phrase_j){
-            return util::geo::region{util::geo::point{(uint32_t) m_rmq_x(phrase_i-1, phrase_j-1) + m_x_start,
-                                                      (uint32_t) m_rmq_y(phrase_i-1, phrase_j-1) + m_y_start},
-                                     util::geo::point{(uint32_t) m_rMq_x(phrase_i-1, phrase_j-1) + m_x_start,
-                                                      (uint32_t) m_rMq_y(phrase_i-1, phrase_j-1) + m_y_start}
+            auto index_min_x = m_rmq_x(phrase_i-1, phrase_j-1);
+            auto index_min_y = m_rmq_y(phrase_i-1, phrase_j-1);
+            auto index_max_x = m_rMq_x(phrase_i-1, phrase_j-1);
+            auto index_max_y = m_rMq_y(phrase_i-1, phrase_j-1);
+            return util::geo::region{util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_min_x]) - alternative_code::decode(m_min_x_values[index_min_x])),
+                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_min_y]) - alternative_code::decode(m_min_y_values[index_min_y]))},
+                                     util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_max_x]) + alternative_code::decode(m_max_x_values[index_max_x])),
+                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_max_y]) + alternative_code::decode(m_max_y_values[index_max_y]))}
             };
         }
 
-        //TODO: acabar esta funcion
-        /*inline util::geo::region MBR(const size_type phrase_i){
-            return util::geo::region{util::geo::point{(uint32_t) m_rmq_x(phrase_i-1, phrase_j-1) + m_x_start,
-                                                      (uint32_t) m_rmq_y(phrase_i-1, phrase_j-1) + m_y_start},
-                                     util::geo::point{(uint32_t) m_rMq_x(phrase_i-1, phrase_j-1) + m_x_start,
-                                                      (uint32_t) m_rMq_y(phrase_i-1, phrase_j-1) + m_y_start}
+        inline util::geo::region MBR(const size_type phrase_i){
+
+            auto x_phrase = m_x_start + alternative_code::decode(m_x_values[phrase_i-1]);
+            auto y_phrase = m_y_start + alternative_code::decode(m_y_values[phrase_i-1]);
+            return util::geo::region{util::geo::point{(uint32_t) (x_phrase - alternative_code::decode(m_min_x_values[phrase_i-1])),
+                                                      (uint32_t) (y_phrase - alternative_code::decode(m_min_y_values[phrase_i-1]))},
+                                     util::geo::point{(uint32_t) (x_phrase + alternative_code::decode(m_max_x_values[phrase_i-1])),
+                                                      (uint32_t) (y_phrase + alternative_code::decode(m_max_x_values[phrase_i-1]))}
             };
-        }*/
+        }
 
     public:
 
@@ -203,7 +214,7 @@ namespace rct {
                     temp_x.push_back(trajectory[acum_length].x);
                     temp_y.push_back(trajectory[acum_length].y);
 
-                    value_type m_x = trajectory[start_phrase].x, M_x = trajectory[start_phrase].y;
+                    value_type m_x = trajectory[start_phrase].x, M_x = trajectory[start_phrase].x;
                     value_type m_y = trajectory[start_phrase].y, M_y = trajectory[start_phrase].y;
                     for(size_type i = start_phrase+1; i < start_phrase + factor.length; ++i){
                         if(trajectory[i].x < m_x) m_x = trajectory[i].x;
@@ -237,10 +248,10 @@ namespace rct {
                 for (size_type i = 0; i < temp_x.size(); ++i) {
                     x_values_temp[i] = alternative_code::encode((int32_t) (temp_x[i] - m_x_start));
                     y_values_temp[i] = alternative_code::encode((int32_t) (temp_y[i] - m_y_start));
-                    min_x_values_temp[i] = alternative_code::encode((int32_t) (min_x[i] - temp_x[i]));
-                    min_y_values_temp[i] = alternative_code::encode((int32_t) (min_y[i] - temp_y[i]));
-                    max_x_values_temp[i] = alternative_code::encode((int32_t) (max_x[i] - temp_x[i]));
-                    max_y_values_temp[i] = alternative_code::encode((int32_t) (max_y[i] - temp_y[i]));
+                    min_x_values_temp[i] =  alternative_code::encode((int32_t) (temp_x[i] - min_x[i]));
+                    min_y_values_temp[i] =  alternative_code::encode((int32_t) (temp_y[i] - min_y[i]));
+                    max_x_values_temp[i] =  alternative_code::encode((int32_t) (max_x[i] - temp_x[i]));
+                    max_y_values_temp[i] =  alternative_code::encode((int32_t) (max_y[i] - temp_y[i]));
                 }
                 compress_data(m_x_values, x_values_temp);
                 compress_data(m_y_values, y_values_temp);
@@ -307,7 +318,7 @@ namespace rct {
                 c_phrase_j = ic_phrase_r-1;
             }
         }
-/*
+
         inline bool contains_region(const size_type phrase_i, const size_type phrase_j, const util::geo::region &r,
                                         std::vector<size_type> &phrases_to_check){
 
@@ -327,11 +338,16 @@ namespace rct {
                         queue_index.push({mid+1, phrase_j});
                     }
                 }else{
-                    auto mbr_region =
+                    auto mbr_region = MBR(pair.first);
+                    if(util::geo::contains(r, mbr_region)){
+                        return true;
+                    }
+                    phrases_to_check.push_back(pair.first);
                 }
             }
+            return false;
 
-        }*/
+        }
 
         //Pre: t_q > m_time_start
         inline size_type interval_ref(const size_type movement_q, size_type &idx_beg, size_type &idx_end,
@@ -499,6 +515,15 @@ namespace rct {
                 std::cout << "length[" << i <<"]=" << m_lengths[i] << " ";
             }
             std::cout << std::endl;
+        }
+
+        void stats() const {
+            std::cout << "m_x_values width \t " << (uint64_t) m_x_values.width();
+            std::cout << "\t m_y_values width \t " << (uint64_t) m_y_values.width();
+            std::cout << "\t m_min_x_values width \t " << (uint64_t) m_min_x_values.width();
+            std::cout << "\t m_min_y_values width \t " << (uint64_t) m_min_y_values.width();
+            std::cout << "\t m_max_x_values width \t " << (uint64_t) m_max_x_values.width();
+            std::cout << "\t m_max_y_values width \t " << (uint64_t) m_max_y_values.width() << std::endl;
         }
 
     };

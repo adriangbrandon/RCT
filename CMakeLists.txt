@@ -73,3 +73,6 @@ target_link_libraries(alternative_code sdsl divsufsort divsufsort64)
 
 add_executable(rlz_test src/rlz_test.cpp)
 target_link_libraries(rlz_test sdsl divsufsort divsufsort64)
+
+add_executable(stats_rct src/stats_rct.cpp)
+target_link_libraries(stats_rct sdsl divsufsort divsufsort64)
