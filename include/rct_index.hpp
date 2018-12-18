@@ -204,6 +204,7 @@ namespace rct {
 
             std::cout << "Everything Done." << std::endl;
 
+
             //m_log_objects[0].print();
         }
 

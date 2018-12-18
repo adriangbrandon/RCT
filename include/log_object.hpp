@@ -41,7 +41,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <succ_support_v.hpp>
 #include <queue>
 #include "alternative_code.hpp"
+#include <oz_vector.hpp>
+#include <runs_vector.hpp>
 #include "geo_util.hpp"
+#include <runs_bitvector.hpp>
 
 namespace rct {
 
@@ -166,6 +169,14 @@ namespace rct {
 
         log_object() = default;
 
+        const values_min_max_type &x_values = m_x_values;
+        const values_min_max_type &y_values = m_y_values;
+        const values_min_max_type &min_x_values = m_min_x_values;
+        const values_min_max_type &min_y_values = m_min_y_values;
+        const values_min_max_type &max_x_values = m_max_x_values;
+        const values_min_max_type &max_y_values = m_max_y_values;
+        const offsets_type  &offsets = m_offsets;
+        const disap_type &disap = m_disap;
 
         template<class ContainerTrajectory, class ContainerFactors>
         log_object(const ContainerTrajectory &trajectory, const ContainerFactors &factors) {
@@ -517,15 +528,102 @@ namespace rct {
             std::cout << std::endl;
         }
 
-        void stats() const {
-            std::cout << "m_x_values width \t " << (uint64_t) m_x_values.width();
-            std::cout << "\t m_y_values width \t " << (uint64_t) m_y_values.width();
-            std::cout << "\t m_min_x_values width \t " << (uint64_t) m_min_x_values.width();
-            std::cout << "\t m_min_y_values width \t " << (uint64_t) m_min_y_values.width();
-            std::cout << "\t m_max_x_values width \t " << (uint64_t) m_max_x_values.width();
-            std::cout << "\t m_max_y_values width \t " << (uint64_t) m_max_y_values.width() << std::endl;
+
+
+        template<class Container>
+        void stats(size_type &byte1, size_type &byte2, size_type &byte3, size_type &byte4, const Container &cont) const {
+            for(const auto &v: cont){
+                auto size = sdsl::bits::hi(v);
+                if(size < 8){
+                    ++byte1;
+                }else if (size < 16){
+                    ++byte2;
+                }else if (size < 24){
+                    ++byte3;
+                }else{
+                    ++byte4;
+                }
+            }
         }
 
+        template<class Container>
+        double diff_dac(const Container &cont) const{
+            auto actual_size = sdsl::size_in_mega_bytes(cont);
+            sdsl::dac_vector_dp<sdsl::bit_vector> m_dac(cont);
+            auto new_size = sdsl::size_in_mega_bytes(m_dac);
+            return  new_size - actual_size;
+        }
+
+        template<class Container>
+        void runs(const Container &cont) const{
+            size_type i = 0, j = 1;
+            bool ones = false;
+            size_type k = 0;
+            for(const auto &v : cont){
+                if(k == 0) {
+                    ones = (v == 1);
+                }else{
+                    if((v && ones) || (!v && !ones)){
+                        ++j;
+                    }else{
+                        std::cout << "ones: " << ones << " [" << i << ", " << j << "]";
+                        i = ++j;
+                        ones = !ones;
+                    }
+                }
+                ++k;
+            }
+            std::cout << std::endl;
+        }
+
+        template<class Container>
+        double diff_oz_vector(const Container &cont) const{
+            auto actual_size = sdsl::size_in_mega_bytes(cont);
+            oz_vector<> m_oz(cont);
+            auto new_size = sdsl::size_in_mega_bytes(m_oz);
+            return  new_size - actual_size;
+        }
+
+        template<class Container>
+        double diff_runs_vector(const Container &cont) const{
+            auto actual_size = sdsl::size_in_mega_bytes(cont);
+            runs_vector<> m_oz(cont);
+            auto new_size = sdsl::size_in_mega_bytes(m_oz);
+            return  new_size - actual_size;
+        }
+
+        template<class Container>
+        double diff_sd_vector(const Container &cont) const{
+            auto actual_size = sdsl::size_in_mega_bytes(cont);
+            sdsl::sd_vector<> m_sd(cont);
+            auto new_size = sdsl::size_in_mega_bytes(m_sd);
+            return  new_size - actual_size;
+        }
+
+        template<class Container>
+        double diff_runs_bitvector(const Container &cont) const{
+            auto actual_size = sdsl::size_in_mega_bytes(cont);
+            runs_bitvector<> m_sd(cont);
+            auto new_size = sdsl::size_in_mega_bytes(m_sd);
+            return  new_size - actual_size;
+        }
+
+        template<class Container>
+        double diff_offset_vector(const Container &cont) const{
+            auto actual_size = sdsl::size_in_mega_bytes(cont);
+            sdsl::enc_vector<> enc_v(cont);
+            auto new_size = sdsl::size_in_mega_bytes(enc_v);
+           // std::cout << "actual_size: " << actual_size << std::endl;
+            //std::cout << "new_size: " << new_size << std::endl;
+            return  new_size - actual_size;
+        }
+
+        void print_offset_vector() const {
+            for(const auto &v : m_offsets){
+                std::cout << v << ", ";
+            }
+            std::cout << std::endl;
+        }
     };
 
     using log_object_dac_vector = log_object< sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::sd_vector<>,

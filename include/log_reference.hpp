@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sdsl/sd_vector.hpp>
 #include <succ_support_v.hpp>
 #include <geo_util.hpp>
+#include <queue>
 
 namespace rct {
 
@@ -57,6 +58,21 @@ namespace rct {
         typedef typename sampling_type::select_1_type select_sampling_type;
 
     private:
+
+        typedef struct {
+            util::geo::point p_s;
+            util::geo::point p_e;
+            size_type beg;
+            size_type end;
+            size_type sel_p_x;
+            size_type sel_n_x;
+            size_type sel_p_y;
+            size_type sel_n_y;
+            size_type min_x_index;
+            size_type max_x_index;
+            size_type min_y_index;
+            size_type max_y_index;
+        } mbr_q_type;
 
         move_type m_x_p;
         succ_move_type m_succ_x_p;
@@ -353,7 +369,8 @@ namespace rct {
         }
 
         util::geo::region find_MBR(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
-                                   const util::geo::point &p_s, const util::geo::point &p_e, size_type &total_selects){
+                                   const util::geo::point &p_s, const util::geo::point &p_e, const int32_t delta_x,
+                                   const int32_t  delta_y, size_type &total_selects){
 
             //1. Init the min and max points
             value_type min_x, max_x, min_y, max_y;
@@ -378,9 +395,6 @@ namespace rct {
             size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s+1);
             size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e+2);
 
-            //TODO: parameter delta_x and delta_y with i=start_phrase. They are explicitly stored
-            auto delta_x = 0;
-            auto delta_y = 0;
             //2. Computing the minimum at x-axis
             size_type rmq_x_s = _rank_min(rMmq_x_s)+1;  //rank_x(ms)+1 counts the number of samples before
             size_type rmq_x_e = _rank_min(rMmq_x_e); //rank_x(me+1) counts the number of samples
@@ -433,11 +447,12 @@ namespace rct {
 
         }
 
-        bool find_MBR_lazy_init(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
+        bool contains_region_init(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
                                 const util::geo::point &p_s, const util::geo::point &p_e, const util::geo::region &r_q,
+                                  const int32_t delta_x, const int32_t delta_y,
                                 size_type &p_min_x_index, size_type &p_max_x_index,
                                 size_type &p_min_y_index, size_type &p_max_y_index,
-                                size_type &total_selects, int32_t &delta_x, int32_t &delta_y, util::geo::region &mbr){
+                                size_type &total_selects, util::geo::region &mbr){
 
             //1. Init the min and max points
             value_type min_x, max_x, min_y, max_y;
@@ -461,8 +476,6 @@ namespace rct {
             size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s+1);
             size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e+2);//move_e + 1 + flag
 
-            //TODO: parameter delta_x with i=start_phrase
-            delta_x = 0;
             //2. Computing the minimum at x-axis
             size_type rmq_x_s = _rank_min(rMmq_x_s)+1;  //rank_x(ms)+1 counts the number of samples before
             size_type rmq_x_e = _rank_min(rMmq_x_e); //rank_x(me+1) counts the number of samples
@@ -493,8 +506,6 @@ namespace rct {
             size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s+1);
             size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e+2);
 
-            //TODO: parameter delta_y with i=start_phrase
-            delta_y = 0;
             //3. Computing the minimum at y-axis
             size_type rmq_y_s = _rank_min(rMmq_y_s)+1;
             size_type rmq_y_e = _rank_min(rMmq_y_e);
@@ -523,7 +534,7 @@ namespace rct {
 
         }
 
-        bool find_MBR_lazy(const size_type x, const size_type y,
+        bool contains_region_lazy(const size_type x, const size_type y,
                            const size_type move_s, const size_type move_e,
                            const util::geo::point &p_s, const util::geo::point &p_e, const util::geo::region r_q,
                            const util::geo::region &parent_region, util::geo::region &r,
@@ -531,6 +542,8 @@ namespace rct {
                            size_type &p_min_x_index, size_type &p_max_x_index,
                            size_type &p_min_y_index, size_type &p_max_y_index,
                            size_type &total_selects){
+
+
 
             //1. Init the min and max points
             value_type min_x, max_x, min_y, max_y;
@@ -631,6 +644,37 @@ namespace rct {
             return !(r.min.y > r_q.max.y || r.max.y < r_q.min.y);
 
         }
+
+
+        bool contains_region(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
+                             const util::geo::point &p_s, const util::geo::point &p_e, const util::geo::region &r_q,
+                             const int32_t delta_x, const int32_t delta_y){
+
+            /*size_type p_min_x_index = 0, p_max_x_index = 0, p_min_y_index = 0, p_max_y_index = 0;
+            util::geo::region mbr;
+            std::queue<mbr_q_type> mbrs;
+            mbrs.push(mbr_q_type{p_s, p_e, move_s-1, move_e-1, })
+            size_type i = 0;
+            while(!mbrs.empty()){
+                if(i == 0){
+                    contains_region_init(x,y,move_s,move_e, p_s, p_e, r_q, delta_x, delta_y, p_min_x_index, p_max_x_index,
+                                         p_min_y_index, p_max_y_index, mbr);
+                }else{
+                    if(util::geo::contains(r_q, p_s) || util::geo::contains(r_q, p_e)) {
+                        return true;
+                    }
+
+
+
+                }
+            }*/
+
+
+
+
+
+        }
+
 
         //! Copy constructor
         log_reference(const log_reference& o)

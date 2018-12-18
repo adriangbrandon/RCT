@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -62,13 +62,13 @@ target_link_libraries(rlz_file sdsl divsufsort divsufsort64)
 add_executable(estimation_size src/estimation_size.cpp)
 target_link_libraries(estimation_size sdsl divsufsort divsufsort64)
 
-add_executable(rct_index src/rct_main.cpp)
+add_executable(rct_index src/rct_main.cpp include/runs_vector.hpp)
 target_link_libraries(rct_index sdsl divsufsort divsufsort64)
 
 add_executable(rct_index_dac src/rct_dac_main.cpp)
 target_link_libraries(rct_index_dac sdsl divsufsort divsufsort64)
 
-add_executable(alternative_code src/alternative_code.cpp)
+add_executable(alternative_code src/alternative_code.cpp include/oz_vector.hpp include/prev_support_v.hpp include/runs_rank_vector.hpp include/runs_bitvector.hpp src/runs_bitvector_test.cpp)
 target_link_libraries(alternative_code sdsl divsufsort divsufsort64)
 
 add_executable(rlz_test src/rlz_test.cpp)
@@ -76,3 +76,6 @@ target_link_libraries(rlz_test sdsl divsufsort divsufsort64)
 
 add_executable(stats_rct src/stats_rct.cpp)
 target_link_libraries(stats_rct sdsl divsufsort divsufsort64)
+
+add_executable(runs_bitvector_test src/runs_bitvector_test.cpp)
+target_link_libraries(runs_bitvector_test sdsl divsufsort divsufsort64)

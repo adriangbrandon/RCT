@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "geo_util.hpp"
 #include <vector>
+#include <unordered_map>
 
 namespace rct {
 
@@ -131,8 +132,40 @@ namespace rct {
         template<class RCTIndex>
         void time_interval(const util::geo::region& region_q, const typename RCTIndex::value_type t_i,
                            const typename RCTIndex::size_type t_j, const RCTIndex &rctIndex,
-                           std::vector<util::geo::id_point> &r) {
+                           std::vector<typename  RCTIndex::value_type> &r) {
 
+
+
+
+            std::vector<const typename RCTIndex::value_type> ids;
+            std::unordered_map<const typename RCTIndex::value_type, char> processed_ids;
+            typename RCTIndex::size_type movement_i = 0, movement_j = 0, c_phrase_i = 0, c_phrase_j = 0,
+            ic_phrase_l = 0, ic_phrase_r = 0, delta_phrase_l = 0, delta_phrase_r = 0;
+            for(const auto &oid: ids){
+                if(processed_ids.count(oid) == 0){
+                    rctIndex.log_objects[oid].time_to_movement(t_i, t_j, movement_i, movement_j);
+                    if(movement_i <= movement_j){
+                        rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
+                                ic_phrase_l, delta_phrase_l, ic_phrase_r, delta_phrase_r);
+                        std::vector<typename RCTIndex::size_type> phrases_to_check;
+                        if(!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q, phrases_to_check)){
+                            if(ic_phrase_l != c_phrase_i){
+
+                            }
+                            for(const auto &phrase : phrases_to_check){
+
+                            }
+                            if(ic_phrase_r != c_phrase_j){
+
+                            }
+                        }else{
+                            r.push_back(oid);
+                        }
+                    }
+                    processed_ids[oid]=1;
+                }
+
+            }
 
 
         }
