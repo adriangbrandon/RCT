@@ -103,34 +103,40 @@ int main(int argc, const char* argv[]) {
         }*/
 
 
-        diff = 0;
+        /*diff = 0;
         for(const auto &log : m_rct_index.log_objects){
-            diff += log.diff_oz_vector(log.disap);
+            diff += log.diff_oz_vector(log.info);
         }
 
         std::cout << "Disap OZ: " << diff << std::endl;
 
         diff = 0;
         for(const auto &log : m_rct_index.log_objects){
-            diff += log.diff_runs_vector(log.disap);
+            diff += log.diff_runs_vector(log.info);
         }
 
         std::cout << "Disap Runs: " << diff << std::endl;
 
         diff = 0;
         for(const auto &log : m_rct_index.log_objects){
-            diff += log.diff_sd_vector(log.disap);
+            diff += log.diff_sd_vector(log.info);
         }
 
         std::cout << "SD Runs: " << diff << std::endl;
 
         diff = 0;
         for(const auto &log : m_rct_index.log_objects){
-            diff += log.diff_runs_bitvector(log.disap);
+            diff += log.diff_runs_bitvector(log.info);
         }
         std::cout << "Disap Runs Bitvector: " << diff << std::endl;
 
         diff = 0;
+        for(const auto &log : m_rct_index.log_objects){
+            diff += log.size_runs_bitvector(log.info);
+        }
+        std::cout << "Size Runs Bitvector: " << diff << std::endl;*/
+
+       /* diff = 0;
         for(const auto &log : m_rct_index.log_objects){
             diff += log.diff_offset_vector(log.offsets);
         }
@@ -145,7 +151,7 @@ int main(int argc, const char* argv[]) {
                 }
             }
         }
-        std::cout << "Everythin ok!" << std::endl;
+        std::cout << "Everythin ok!" << std::endl;*/
         //m_rct_index.log_objects[2].disap;
 
        /* sdsl::bit_vector bv = {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1};
@@ -156,6 +162,12 @@ int main(int argc, const char* argv[]) {
         //rct::oz_vector<> m_oz(bv);
         std::cout << sdsl::size_in_bytes(m_runs) << std::endl;
         std::cout << sdsl::size_in_bytes(m_oz) << std::endl;*/
+
+        diff = 0;
+        for(const auto &log : m_rct_index.log_objects){
+            diff += log.size_element(log.info);
+        }
+        std::cout << "Size Runs Bitvector: " << diff << std::endl;
     }
 
 }

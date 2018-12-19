@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Release")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -68,7 +68,7 @@ target_link_libraries(rct_index sdsl divsufsort divsufsort64)
 add_executable(rct_index_dac src/rct_dac_main.cpp)
 target_link_libraries(rct_index_dac sdsl divsufsort divsufsort64)
 
-add_executable(alternative_code src/alternative_code.cpp include/oz_vector.hpp include/prev_support_v.hpp include/runs_rank_vector.hpp include/runs_bitvector.hpp src/runs_bitvector_test.cpp)
+add_executable(alternative_code src/alternative_code.cpp)
 target_link_libraries(alternative_code sdsl divsufsort divsufsort64)
 
 add_executable(rlz_test src/rlz_test.cpp)

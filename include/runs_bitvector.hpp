@@ -44,7 +44,7 @@ namespace rct {
 
     template <uint64_t sample_min = 8, uint64_t sample_max = 4096,
                     class t_sampling = sdsl::bit_vector, class t_values = sdsl::bit_vector,
-                    class t_sampling_rank = sdsl::rank_support_v5<1>, class t_values_rank = sdsl::rank_support_v5<1>,
+                    class t_sampling_rank = sdsl::rank_support_v<1>, class t_values_rank = sdsl::rank_support_v<1>,
                     class t_offset = sdsl::int_vector<>, class t_pos = sdsl::int_vector<>>
     class runs_bitvector {
 
@@ -245,6 +245,19 @@ namespace rct {
             return best_sample;
         }
 
+        void copy(const runs_bitvector &o){
+            m_size = o.m_size;
+            m_sample = o.m_sample;
+            m_sampling = o.m_sampling;
+            m_rank_sampling = o.m_rank_sampling;
+            m_rank_sampling.set_vector(&m_sampling);
+            m_offset = o.m_offset;
+            m_pos = o.m_pos;
+            m_values = o.m_values;
+            m_rank_values = o.m_rank_values;
+            m_rank_values.set_vector(&m_values);
+        }
+
     public:
 
         const size_type &sample = m_sample;
@@ -254,6 +267,8 @@ namespace rct {
         const pos_type &pos = m_pos;
         const values_type &values = m_values;
         const rank_values_type &rank_values = m_rank_values;
+
+        runs_bitvector() = default;
 
         runs_bitvector(const sdsl::bit_vector &c){
            // std::cout << "size: " << c.size() << std::endl;
@@ -299,6 +314,54 @@ namespace rct {
             sdsl::util::bit_compress(m_pos);
         }
 
+        //! Copy constructor
+        runs_bitvector(const runs_bitvector& o)
+        {
+            copy(o);
+        }
+
+        //! Move constructor
+        runs_bitvector(runs_bitvector&& o)
+        {
+            *this = std::move(o);
+        }
+
+
+        runs_bitvector &operator=(const runs_bitvector &o) {
+            if (this != &o) {
+                copy(o);
+            }
+            return *this;
+        }
+        runs_bitvector &operator=(runs_bitvector &&o) {
+            if (this != &o) {
+                m_size = o.m_size;
+                m_sample = o.m_sample;
+                m_sampling = std::move(o.m_sampling);
+                m_rank_sampling = std::move(o.m_rank_sampling);
+                m_rank_sampling.set_vector(&m_sampling);
+                m_offset = std::move(o.m_offset);
+                m_pos = std::move(o.m_pos);
+                m_values = std::move(o.m_values);
+                m_rank_values = std::move(o.m_rank_values);
+                m_rank_values.set_vector(&m_values);
+            }
+            return *this;
+        }
+
+        void swap(runs_bitvector &o) {
+            // m_bp.swap(bp_support.m_bp); use set_vector to set the supported bit_vector
+            m_size = o.m_size;
+            std::swap(m_size, o.m_size);
+            std::swap(m_sample, o.m_sample);
+            m_sampling.swap(o.m_sampling);
+            sdsl::util::swap_support(m_rank_sampling, o.m_rank_sampling, &m_sampling, &o.m_sampling);
+            m_offset.swap(o.m_offset);
+            m_pos.swap(o.m_pos);
+            m_values.swap(o.m_values);
+            sdsl::util::swap_support(m_rank_values, o.m_rank_values, &m_values, &o.m_values);
+        }
+
         inline value_type operator[](const size_type i) const{
             if(!m_sampling[i/m_sample]) return 0;
             auto ones = m_rank_sampling(i/m_sample + 1);
@@ -327,6 +390,18 @@ namespace rct {
             written_bytes += sdsl::serialize(m_sample, out, child, "sample");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
+        }
+
+        void load(std::istream& in)
+        {
+            m_values.load(in);
+            m_rank_values.load(in, &m_values);
+            m_sampling.load(in);
+            m_rank_sampling.load(in, &m_sampling);
+            m_offset.load(in);
+            m_pos.load(in);
+            sdsl::load(m_size, in);
+            sdsl::load(m_sample, in);
         }
 
         void print(){
@@ -377,16 +452,20 @@ namespace rct {
         {
             assert(i >= 0); assert(i <= m_v->size());
             auto ones = m_v->rank_sampling(i/m_v->sample + 1);
-            auto pos = m_v->pos[ones-1];
-            auto beg = i/m_v->sample* m_v->sample + m_v->offset[ones-1];
-            auto length = m_v->pos[ones] - pos;
             size_type r;
-            if(beg >= i){
-                r = m_v->rank_values(pos+1);
-            }else if (i >= beg + length-1){
+            if(!m_v->sampling[i/m_v->sample]){
+                r = m_v->rank_values(m_v->pos[ones]);
+                return rank_support_runs_bitvector_trait<t_b>::adjust_rank(r, i);
+            }
+            auto pos = m_v->pos[ones-1];
+            auto length = m_v->pos[ones] - pos;
+            auto beg = i/m_v->sample* m_v->sample + m_v->offset[ones-1];
+            if(beg > i){
+                r = m_v->rank_values(pos);
+            }else if (i >= beg + length){
                 r = m_v->rank_values(pos+length);
             }else{
-                r = m_v->rank_values(pos + (i-beg)+1);
+                r = m_v->rank_values(pos + (i-beg));
             }
             return rank_support_runs_bitvector_trait<t_b>::adjust_rank(r, i);
         }
@@ -400,12 +479,16 @@ namespace rct {
             beg = i/m_v->sample* m_v->sample + m_v->offset[ones-1];
             length = m_v->pos[ones] - pos;
             size_type r;
-            if(beg >= i){
-                r = m_v->rank_values(pos+1);
-            }else if (i >= beg + length-1){
+            if(!m_v->sampling[i/m_v->sample]){
+                r = m_v->rank_values(m_v->pos[ones]);
+                return rank_support_runs_bitvector_trait<t_b>::adjust_rank(r, i);
+            }
+            if(beg > i){
+                r = m_v->rank_values(pos);
+            }else if (i >= beg + length){
                 r = m_v->rank_values(pos+length);
             }else{
-                r = m_v->rank_values(pos + (i-beg)+1);
+                r = m_v->rank_values(pos + (i-beg));
             }
             return rank_support_runs_bitvector_trait<t_b>::adjust_rank(r, i);
         }
@@ -464,7 +547,9 @@ namespace rct {
         succ_support_v<1> m_succ_values;
     public:
 
-        explicit succ_support_runs_bitvector(const bit_vector_type* v=nullptr)
+        succ_support_runs_bitvector() = default;
+
+        succ_support_runs_bitvector(const bit_vector_type* v)
         {
             set_vector(v);
             sdsl::util::init_support(m_succ_sampling, &m_v->sampling);
@@ -475,16 +560,25 @@ namespace rct {
         //! Returns the position of the i-th occurrence in the bit vector.
         size_type succ(size_type i)const
         {
-            assert(i >= 0); assert(i <= m_v->size());
-            auto ones = m_v->rank_sampling(i/m_v->sample + 1);
+            assert(i >= 0); assert(i < m_v->size());
+            auto sample_index = i/m_v->sample;
+            auto ones = m_v->rank_sampling(sample_index + 1);
+            size_type beg = 0;
+            if(m_v->sampling[sample_index]){
+                beg = sample_index * m_v->sample + m_v->offset[ones-1];
+            }else{
+                ++ones;
+                ++sample_index;
+                beg = m_succ_sampling(sample_index)* m_v->sample + m_v->offset[ones-1];
+            }
             auto pos = m_v->pos[ones-1];
-            auto beg = i/m_v->sample* m_v->sample + m_v->offset[ones-1];
             auto length = m_v->pos[ones] - pos;
             size_type r;
             if(beg >= i){
                 return beg; //the first value is a one
-            }else if (i > beg + length-1){ //the first value of the next block is a one
-                return m_succ_sampling(i/m_v->sample+1) * m_v->sample + m_v->offset[ones];
+            }else if (i >= beg + length){ //the first value of the next block is a one
+                if(ones == m_v->offset.size()) return m_v->size();
+                return m_succ_sampling(sample_index+1) * m_v->sample + m_v->offset[ones];
             }else{
                 r = m_succ_values(pos + (i-beg)); //the next one is at the same block
                 return beg + (r-pos);
@@ -494,19 +588,20 @@ namespace rct {
 
         size_type succ(size_type i, size_type &ones, size_type &beg, size_type &length)const
         {
-            if(i > beg + length -1){
+            assert(i >= 0); assert(i < m_v->size());
+            if(i >= beg + length){
+                if(ones == m_v->offset.size()) return m_v->size();
                 ++ones;
-                beg = m_succ_sampling(i/m_v->sample+1) * m_v->sample + m_v->offset[ones-1];
+                beg = m_succ_sampling(beg/m_v->sample+1)* m_v->sample + m_v->offset[ones-1];
                 length = m_v->pos[ones] - m_v->pos[ones-1];
                 return beg;
             }else if(beg >= i){
                 return beg;
             }else{
-                auto pos = m_v->pos[ones];
+                auto pos = m_v->pos[ones-1];
                 auto r = m_succ_values(pos + (i-beg));
                 return beg + (r - pos);
             }
-
         }
 
         size_type operator()(size_type i)const
@@ -555,19 +650,36 @@ namespace rct {
 
         void swap(succ_support_runs_bitvector& ss) {
             if (this != &ss) {
-                sdsl::util::swap_support(m_succ_sampling, ss.m_succ_sampling, &m_v->sampling, &ss.m_v->sampling);
-                sdsl::util::swap_support(m_succ_values, ss.m_succ_values, &m_v->values, &ss.m_v->values);
+                std::swap(m_v, ss.m_v);
+                m_succ_sampling.swap(ss.m_succ_sampling);
+                m_succ_values.swap(ss.m_succ_sampling);
+                if(m_v != nullptr){
+                   m_succ_sampling.set_vector(&m_v->sampling);
+                   m_succ_values.set_vector(&m_v->values);
+                }
+                if(ss.m_v != nullptr){
+                    ss.m_succ_sampling.set_vector(&ss.m_v->sampling);
+                    ss.m_succ_values.set_vector(&ss.m_v->values);
+                }
             }
         }
 
-        void load(std::istream&, const bit_vector_type* v=nullptr)
+        void load(std::istream& in, const bit_vector_type* v=nullptr)
         {
             set_vector(v);
+            m_succ_sampling.load(in, &m_v->sampling);
+            m_succ_values.load(in, &m_v->values);
         }
 
+        //! Serializes the data structure into the given ostream
         size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="")const
         {
-            return serialize_empty_object(out, v, name, this);
+            sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
+            size_type written_bytes = 0;
+            written_bytes += m_succ_sampling.serialize(out, child, "succ_sampling");
+            written_bytes += m_succ_values.serialize(out, child, "succ_values");
+            sdsl::structure_tree::add_size(child, written_bytes);
+            return written_bytes;
         }
 
 
