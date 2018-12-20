@@ -37,7 +37,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, const char* argv[]) {
 
-    sdsl::bit_vector bv = {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,0};
+    //sdsl::bit_vector bv = {0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,0};
+    sdsl::bit_vector bv = {1,1,1,1,0,0,0,0,
+                           0,0,0,0,0,0,0,0,
+                           0,0,0,1,1,1,1,0,
+                           0,0,0,0,0,0,1,1,
+                           1,1,0};
+    //sdsl::bit_vector bv = {0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0};
     rct::runs_bitvector<> m_runs(bv);
     m_runs.print();
     for(uint64_t i = 0; i < bv.size(); ++i){
@@ -46,20 +52,27 @@ int main(int argc, const char* argv[]) {
             exit(1);
         }
     }
-    rct::succ_support_runs_bitvector m_succ;
+    rct::succ_support_runs_bitvector_v2<1> m_succ;
+    rct::succ_support_runs_bitvector_v2<0> m_succ_0;
     rct::rank_support_runs_bitvector<1> m_rank;
     sdsl::util::init_support(m_succ, &m_runs);
+    sdsl::util::init_support(m_succ_0, &m_runs);
     sdsl::util::init_support(m_rank, &m_runs);
     for(uint64_t i = 0; i < m_runs.size(); ++i){
         std::cout << "i: " << i << " succ: " << m_succ(i) << std::endl;
     }
+    m_succ_0(30);
+    for(uint64_t i = 0; i < m_runs.size(); ++i){
+        std::cout << "i: " << i << " succ0: " << m_succ_0(i) << std::endl;
+    }
     /*for(uint64_t i = 0; i <= m_runs.size(); ++i){
         std::cout << "i: " <<i << " rank: " << m_rank(i) << std::endl;
     }*/
-    uint64_t ones = 0, beg = 0, length = 0;
+    /*uint64_t ones = 0, beg = 0, length = 0;
     m_rank(0, ones, beg, length);
     for(uint64_t i = 0; i < m_runs.size(); ++i){
         std::cout << "i: " <<i << " succ2: " << m_succ(i, ones, beg, length) << std::endl;
-    }
+    }*/
+   // m_succ_0(30);
     std::cout << "Everything OK!" << std::endl;
 }

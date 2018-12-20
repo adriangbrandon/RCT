@@ -52,9 +52,9 @@ namespace rct {
               class t_lengths = sdsl::sd_vector<>,
               class t_values = sdsl::dac_vector_dp<sdsl::bit_vector>,
               class t_values_min_max= sdsl::dac_vector_dp<sdsl::bit_vector>,
-              class t_info = runs_bitvector<>,
-              class t_info_rank_1 = rank_support_runs_bitvector<1>,
-              class t_info_succ_1 = succ_support_runs_bitvector>
+              class t_disap = runs_bitvector<>,
+              class t_disap_rank_1 = rank_support_runs_bitvector<1>,
+              class t_disap_succ_0 = succ_support_runs_bitvector>
     class log_object {
 
     public:
@@ -64,11 +64,11 @@ namespace rct {
         typedef t_lengths lengths_type;
         typedef t_values values_type;
         typedef t_values_min_max values_min_max_type;
-        typedef t_info info_type;
+        typedef t_disap disap_type;
         typedef typename t_lengths::rank_1_type rank_1_lengths_type;
         typedef typename t_lengths::select_1_type select_1_lengths_type;
-        typedef t_info_rank_1 rank_1_info_type;
-        typedef t_info_succ_1 succ_1_info_type;
+        typedef t_disap_rank_1 rank_1_disap_type;
+        typedef t_disap_succ_0 succ_0_disap_type;
 
     private:
         value_type m_time_start = 0;
@@ -93,9 +93,9 @@ namespace rct {
         rank_1_lengths_type m_rank_lengths;
         select_1_lengths_type m_select_lengths;
 
-        info_type m_info;
-        rank_1_info_type m_rank_info;
-        succ_1_info_type m_succ_1_info;
+        disap_type m_disap;
+        rank_1_disap_type m_rank_disap;
+        succ_0_disap_type m_succ_0_disap;
 
         void copy(const log_object &o){
             m_time_start = o.m_time_start;
@@ -113,11 +113,11 @@ namespace rct {
             m_rank_lengths.set_vector(&m_lengths);
             m_select_lengths = o.m_select_lengths;
             m_select_lengths.set_vector(&m_lengths);
-            m_info = o.m_info;
-            m_rank_info = o.m_rank_info;
-            m_rank_info.set_vector(&m_info);
-            m_succ_1_info = o.m_succ_1_info;
-            m_succ_1_info.set_vector(&m_info);
+            m_disap = o.m_disap;
+            m_rank_disap = o.m_rank_disap;
+            m_rank_disap.set_vector(&m_disap);
+            m_succ_0_disap = o.m_succ_0_disap;
+            m_succ_0_disap.set_vector(&m_disap);
             m_rmq_x = o.m_rmq_x;
             m_rMq_x = o.m_rMq_x;
             m_rmq_y = o.m_rmq_y;
@@ -178,7 +178,7 @@ namespace rct {
         const values_min_max_type &max_x_values = m_max_x_values;
         const values_min_max_type &max_y_values = m_max_y_values;
         const offsets_type  &offsets = m_offsets;
-        const info_type &info = m_info;
+        const disap_type &disap = m_disap;
 
         template<class ContainerTrajectory, class ContainerFactors>
         log_object(const ContainerTrajectory &trajectory, const ContainerFactors &factors) {
@@ -209,9 +209,9 @@ namespace rct {
                 last_t = info.t;
                 disap_i++; //set to zero
             }
-            m_info = info_type(aux_disap);
-            sdsl::util::init_support(m_rank_info, &m_info);
-            sdsl::util::init_support(m_succ_1_info, &m_info);
+            m_disap = disap_type(aux_disap);
+            sdsl::util::init_support(m_rank_disap, &m_disap);
+            sdsl::util::init_support(m_succ_0_disap, &m_disap);
 
 
             //3.1 Prepare the arrays of offsets, x and y
@@ -297,26 +297,26 @@ namespace rct {
         }
 
         inline size_type time_end() const {
-            return m_time_start + m_info.size();
+            return m_time_start + m_disap.size();
         }
 
         inline size_type time_next(const size_type t) const{
             //t-time_start points to the next position in disap
-            return m_time_start + m_succ_1_info(t - m_time_start) + 1;
+            return m_time_start + m_succ_0_disap(t - m_time_start) + 1;
         }
 
         inline bool time_to_movement(const size_type t_q, size_type &movement_q) const {
-            auto idx = t_q - m_time_start-1;
-            if(!m_info[idx]) return false; //Disappeared
-            movement_q = m_rank_info(idx+1);//index in length
+            auto idx = t_q - m_time_start - 1;
+            if(m_disap[idx]) return false; //Disappeared
+            movement_q = idx - m_rank_disap(idx) + 1;//index in length
             return true;
         }
 
         inline void time_to_movement(const size_type t_i, const size_type t_j, size_type &movement_i, size_type &movement_j) const{
-            auto i = t_i - m_time_start-1;
-            auto j = t_j - m_time_start-1;
-            movement_i = m_rank_info(i+1);//index in length
-            movement_j = m_rank_info(j+1);//index in length
+            auto i = t_i - m_time_start - 1;
+            auto j = t_j - m_time_start - 1;
+            movement_i = i - m_rank_disap(i+1)+1;//index in length
+            movement_j = j - m_rank_disap(j+1)+1;//index in length
         }
 
 
@@ -440,11 +440,11 @@ namespace rct {
                 m_rank_lengths.set_vector(&m_lengths);
                 m_select_lengths = std::move(o.m_select_lengths);
                 m_select_lengths.set_vector(&m_lengths);
-                m_info = std::move(o.m_info);
-                m_rank_info = std::move(o.m_rank_info);
-                m_rank_info.set_vector(&m_info);
-                m_succ_1_info = std::move(o.m_succ_1_info);
-                m_succ_1_info.set_vector(&m_info);
+                m_disap = std::move(o.m_disap);
+                m_rank_disap = std::move(o.m_rank_disap);
+                m_rank_disap.set_vector(&m_disap);
+                m_succ_0_disap = std::move(o.m_succ_0_disap);
+                m_succ_0_disap.set_vector(&m_disap);
                 m_rmq_x = std::move(o.m_rmq_x);
                 m_rMq_x = std::move(o.m_rMq_x);
                 m_rmq_y = std::move(o.m_rmq_y);
@@ -468,9 +468,9 @@ namespace rct {
             m_lengths.swap(o.m_lengths);
             sdsl::util::swap_support(m_rank_lengths, o.m_rank_lengths, &m_lengths, &o.m_lengths);
             sdsl::util::swap_support(m_select_lengths, o.m_select_lengths, &m_lengths, &o.m_lengths);
-            m_info.swap(o.m_info);
-            sdsl::util::swap_support(m_rank_info, o.m_rank_info, &m_info, &o.m_info);
-            sdsl::util::swap_support(m_succ_1_info, o.m_succ_1_info, &m_info, &o.m_info);
+            m_disap.swap(o.m_disap);
+            sdsl::util::swap_support(m_rank_disap, o.m_rank_disap, &m_disap, &o.m_disap);
+            sdsl::util::swap_support(m_succ_0_disap, o.m_succ_0_disap, &m_disap, &o.m_disap);
             m_rmq_x.swap(o.m_rmq_x);
             m_rmq_y.swap(o.m_rmq_y);
             m_rMq_x.swap(o.m_rMq_x);
@@ -494,9 +494,9 @@ namespace rct {
             written_bytes += m_lengths.serialize(out, child, "lengths");
             written_bytes += m_rank_lengths.serialize(out, child, "rank_lengths");
             written_bytes += m_select_lengths.serialize(out, child, "select_lengths");
-            written_bytes += m_info.serialize(out, child, "disap");
-            written_bytes += m_rank_info.serialize(out, child, "rank_disap");
-            written_bytes += m_succ_1_info.serialize(out, child, "succ_0_disap");
+            written_bytes += m_disap.serialize(out, child, "disap");
+            written_bytes += m_rank_disap.serialize(out, child, "rank_disap");
+            written_bytes += m_succ_0_disap.serialize(out, child, "succ_0_disap");
             written_bytes += m_rmq_x.serialize(out, child, "rmq_x");
             written_bytes += m_rmq_y.serialize(out, child, "rmq_y");
             written_bytes += m_rMq_x.serialize(out, child, "rMq_x");
@@ -519,9 +519,9 @@ namespace rct {
             m_lengths.load(in);
             m_rank_lengths.load(in, &m_lengths);
             m_select_lengths.load(in, &m_lengths);
-            m_info.load(in);
-            m_rank_info.load(in, &m_info);
-            m_succ_1_info.load(in, &m_info);
+            m_disap.load(in);
+            m_rank_disap.load(in, &m_disap);
+            m_succ_0_disap.load(in, &m_disap);
             m_rmq_x.load(in);
             m_rmq_y.load(in);
             m_rMq_x.load(in);

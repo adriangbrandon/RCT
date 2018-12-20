@@ -150,12 +150,15 @@ namespace rct {
                         std::vector<typename RCTIndex::size_type> phrases_to_check;
                         if(!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q, phrases_to_check)){
                             if(ic_phrase_l != c_phrase_i){
+                                //Check the first incomplete phrase
 
                             }
                             for(const auto &phrase : phrases_to_check){
+                                //Check the rest of phrases
 
                             }
                             if(ic_phrase_r != c_phrase_j){
+                                //Check the last incomplete phrase
 
                             }
                         }else{

@@ -362,13 +362,17 @@ namespace rct {
             sdsl::util::swap_support(m_rank_values, o.m_rank_values, &m_values, &o.m_values);
         }
 
-        inline value_type operator[](const size_type i) const{
+        inline value_type access(const size_type i) const{
             if(!m_sampling[i/m_sample]) return 0;
             auto ones = m_rank_sampling(i/m_sample + 1);
             auto pos = m_pos[ones-1];
             auto beg = i/m_sample* m_sample + m_offset[ones-1];
             auto end = beg + m_pos[ones] - pos - 1;
             return (value_type) (beg <= i && i <= end && m_values[i-beg + pos]);
+        }
+
+        inline value_type operator[](const size_type i) const{
+            return access(i);
         }
 
         inline size_type size() const {
@@ -557,6 +561,29 @@ namespace rct {
         }
 
 
+        //succ_0
+        size_type succ_0(size_type i ) const {
+            assert(i >= 0); assert(i < m_v->size());
+            auto sample_index = i/m_v->sample;
+            if(!m_v->sampling[sample_index]){
+                return i;
+            }else{
+                auto ones = m_v->rank_sampling(sample_index + 1);
+                auto beg = sample_index * m_v->sample + m_v->offset[ones-1];
+                auto pos = m_v->pos[ones-1];
+                auto length = m_v->pos[ones] - pos;
+                if(beg >= i || beg + length <= i){
+                    return i;
+                }else{
+                    //TODO: m_succ_values<0>
+                    auto j = m_succ_values((i-beg) + pos);
+                    if(j >= m_v->pos[ones]){
+
+                    }
+                }
+            }
+        }
+
         //! Returns the position of the i-th occurrence in the bit vector.
         size_type succ(size_type i)const
         {
@@ -684,6 +711,245 @@ namespace rct {
 
 
     };
+
+    template <uint8_t t_b>
+    class succ_support_runs_bitvector_v2 {
+
+    public:
+        typedef sdsl::bit_vector::size_type size_type;
+        typedef runs_bitvector<> bit_vector_type;
+    private:
+        const bit_vector_type* m_v;
+        succ_support_v<t_b> m_succ_sampling;
+        succ_support_v<t_b> m_succ_values;
+        sdsl::int_vector<> m_delta_next_0;
+    public:
+
+        succ_support_runs_bitvector_v2() = default;
+
+        succ_support_runs_bitvector_v2(const bit_vector_type* v)
+        {
+            set_vector(v);
+            size_type ones = 0;
+            std::vector<size_type > deltas;
+            for(size_type i = 0; i < m_v->sampling.size(); ++i){
+                if(m_v->sampling[i]){
+                    bool delta = false;
+                    for(size_type j = (i+1)*m_v->sample; j < m_v->size(); ++j){
+                        if(!m_v->access(j)) {
+                            auto next = j / m_v->sample;
+                            std::cout << "index: " << i << " next: " << next << std::endl;
+                            deltas.push_back(next-i);
+                            delta = true;
+                            break;
+                        }
+                    }
+                    if(!delta){
+                        deltas.push_back(0);
+                    }
+                }
+            }
+
+            m_delta_next_0.resize(deltas.size());
+            size_type i = 0;
+            for(const auto &delta : deltas){
+                m_delta_next_0[i] = delta;
+                ++i;
+            }
+            std::cout << "delta.size: " << m_delta_next_0.size() << std::endl;
+            for(size_type i = 0; i < m_delta_next_0.size(); ++i){
+                std::cout << "delta[" << i << "]=" << m_delta_next_0[i] << std::endl;
+            }
+            sdsl::util::bit_compress(m_delta_next_0);
+            sdsl::util::init_support(m_succ_sampling, &m_v->sampling);
+            sdsl::util::init_support(m_succ_values, &m_v->values);
+
+        }
+
+
+        size_type succ(size_type i) const;
+
+        size_type succ(size_type i, size_type &ones, size_type &beg, size_type &length) const;
+
+        size_type operator()(size_type i)const
+        {
+            return succ(i);
+        }
+
+        size_type operator()(size_type i, size_type &ones, size_type &beg, size_type &length)const
+        {
+            return succ(i, ones, beg, length);
+        }
+
+        size_type size()const
+        {
+            return m_v->size();
+        }
+
+        void set_vector(const bit_vector_type* v=nullptr)
+        {
+            m_v = v;
+        }
+
+        succ_support_runs_bitvector_v2& operator=(const succ_support_runs_bitvector_v2& ss)
+        {
+            if (this != &ss) {
+                set_vector(ss.m_v);
+                m_succ_sampling = ss.m_succ_sampling;
+                m_succ_sampling.set_vector(&m_v->sampling);
+                m_succ_values = ss.m_succ_values;
+                m_succ_values.set_vector(&m_v->values);
+                m_delta_next_0 = ss.m_delta_next_0;
+            }
+            return *this;
+        }
+
+        succ_support_runs_bitvector_v2& operator=(succ_support_runs_bitvector_v2&& ss)
+        {
+            if (this != &ss) {
+                set_vector(ss.m_v);
+                m_succ_sampling = std::move(ss.m_succ_sampling);
+                m_succ_sampling.set_vector(&m_v->sampling);
+                m_succ_values = std::move(ss.m_succ_values);
+                m_succ_values.set_vector(&m_v->values);
+                m_delta_next_0 = std::move(ss.m_delta_next_0);
+            }
+            return *this;
+        }
+
+        void swap(succ_support_runs_bitvector_v2& ss) {
+            if (this != &ss) {
+                std::swap(m_v, ss.m_v);
+                m_succ_sampling.swap(ss.m_succ_sampling);
+                m_succ_values.swap(ss.m_succ_sampling);
+                if(m_v != nullptr){
+                    m_succ_sampling.set_vector(&m_v->sampling);
+                    m_succ_values.set_vector(&m_v->values);
+                }
+                if(ss.m_v != nullptr){
+                    ss.m_succ_sampling.set_vector(&ss.m_v->sampling);
+                    ss.m_succ_values.set_vector(&ss.m_v->values);
+                }
+                m_delta_next_0.swap(ss.m_delta_next_0);
+            }
+        }
+
+        void load(std::istream& in, const bit_vector_type* v=nullptr)
+        {
+            set_vector(v);
+            m_succ_sampling.load(in, &m_v->sampling);
+            m_succ_values.load(in, &m_v->values);
+            m_delta_next_0.load(in);
+        }
+
+        //! Serializes the data structure into the given ostream
+        size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="")const
+        {
+            sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
+            size_type written_bytes = 0;
+            written_bytes += m_succ_sampling.serialize(out, child, "succ_sampling");
+            written_bytes += m_succ_values.serialize(out, child, "succ_values");
+            written_bytes += m_delta_next_0.serialize(out, child, "delta_next");
+            sdsl::structure_tree::add_size(child, written_bytes);
+            return written_bytes;
+        }
+
+
+    };
+
+    //! Returns the position of the i-th occurrence in the bit vector.
+    template<>
+    typename succ_support_runs_bitvector_v2<1>::size_type succ_support_runs_bitvector_v2<1>::succ(size_type i)const
+    {
+        assert(i >= 0); assert(i < m_v->size());
+        auto sample_index = i/m_v->sample;
+        auto ones = m_v->rank_sampling(sample_index + 1);
+        size_type beg = 0;
+        if(m_v->sampling[sample_index]){
+            beg = sample_index * m_v->sample + m_v->offset[ones-1];
+        }else{
+            ++ones;
+            ++sample_index;
+            beg = m_succ_sampling(sample_index)* m_v->sample + m_v->offset[ones-1];
+        }
+        auto pos = m_v->pos[ones-1];
+        auto length = m_v->pos[ones] - pos;
+        size_type r;
+        if(beg >= i){
+            return beg; //the first value is a one
+        }else if (i >= beg + length){ //the first value of the next block is a one
+            if(ones == m_v->offset.size()) return m_v->size();
+            return m_succ_sampling(sample_index+1) * m_v->sample + m_v->offset[ones];
+        }else{
+            r = m_succ_values(pos + (i-beg)); //the next one is at the same block
+            return beg + (r-pos);
+        }
+    }
+
+
+    //! Returns the position of the i-th occurrence in the bit vector.
+    template<>
+    typename succ_support_runs_bitvector_v2<0>::size_type succ_support_runs_bitvector_v2<0>::succ(size_type i)const
+    {
+        assert(i >= 0); assert(i < m_v->size());
+        auto sample_index = i/m_v->sample;
+        if(!m_v->sampling[sample_index]) return i;
+        auto ones = m_v->rank_sampling(sample_index + 1);
+        auto beg = sample_index * m_v->sample + m_v->offset[ones-1];
+        auto pos = m_v->pos[ones-1];
+        auto next_pos = m_v->pos[ones];
+        auto length = next_pos - pos;
+        if(beg > i || beg + length <= i){
+            return i;
+        }else{
+            auto next_0_value = m_succ_values((i-beg) + pos);
+            if(next_0_value < next_pos){
+                return beg + (next_0_value - pos);
+            }
+            if((beg + length) % m_v->sample != 0){
+                return beg + length;
+            }
+            if(next_0_value > m_v->values.size()) return m_v->size();
+            if(next_0_value < next_pos){
+                return beg + (next_0_value - pos);
+            }else {
+                auto delta = m_delta_next_0[ones-1];
+                if(delta == 0) return m_v->size();
+                auto new_index = sample_index + delta;
+                if (!m_v->sampling[new_index]) return new_index * m_v->sample;
+                auto offset = m_v->offset[ones + delta - 1];
+                pos = m_v->pos[ones + delta - 1];
+                next_pos = m_v->pos[ones + delta];
+                beg = new_index * m_v->sample + offset;
+                if (pos <= next_0_value && next_0_value < next_pos) {
+                    return (next_0_value - pos) + beg;
+                } else if (next_0_value < pos) {
+                    return beg;
+                } else {
+                    return beg + (next_pos - pos);
+                }
+            }
+        }
+    }
+
+    template <>
+    succ_support_runs_bitvector_v2<1>::size_type succ_support_runs_bitvector_v2<1>::succ(size_type i, size_type &ones, size_type &beg, size_type &length)const
+    {
+        assert(i >= 0); assert(i < m_v->size());
+        if(i >= beg + length){
+            if(ones == m_v->offset.size()) return m_v->size();
+            ++ones;
+            beg = m_succ_sampling(beg/m_v->sample+1)* m_v->sample + m_v->offset[ones-1];
+            length = m_v->pos[ones] - m_v->pos[ones-1];
+            return beg;
+        }else if(beg >= i){
+            return beg;
+        }else{
+            auto pos = m_v->pos[ones-1];
+            auto r = m_succ_values(pos + (i-beg));
+            return beg + (r - pos);
+        }
+    }
 }
 
 #endif //RCT_RUNS_BITVECTOR_HPP
