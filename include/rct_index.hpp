@@ -171,8 +171,8 @@ namespace rct {
             auto start = util::time::user::now();
             while (!in.eof() && id != -1) {
                 in >> id >> t >> x >> y;
-                //if (in.eof()) id = (uint32_t) -1;
-                if (in.eof() || id > 99) id = (uint32_t) -1;
+                if (in.eof()) id = (uint32_t) -1;
+                //if (in.eof() || id > 99) id = (uint32_t) -1;
                 if (id == old_id) {
                     int32_t diff_x = x - old_x;
                     int32_t diff_y = y - old_y;
