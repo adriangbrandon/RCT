@@ -528,43 +528,7 @@ namespace rct {
         }
 
         //! Returns the position of the i-th occurrence in the bit vector.
-        size_type rank(size_type i)const
-        {
-            assert(i >= 0); assert(i <= m_v->size());
-            size_type j = binary_search(i);
-            if(t_b){ //rank_1
-                if(m_v->z_1){
-                    if(i<(m_v->support_select_z(j+1) + m_v->support_select_o(j))){
-                        return m_v->support_select_o(j); //j-th run zeroes
-                    }else{
-                        return i - m_v->support_select_z(j+1) + 1;//j-th run ones
-                    }
-
-                }else{
-                    if(i< (m_v->support_select_o(j+1) + m_v->support_select_z(j))){
-                        return i - m_v->support_select_z(j)+1; //j-th run ones
-                    }else{
-                        return m_v->support_select_o(j+1);//j-th run zeroes
-                    }
-                }
-            }else{
-                if(m_v->z_1){
-                    if(i<(m_v->support_select_z(j+1) +m_v->support_select_o(j))){
-                        return i - m_v->support_select_o(j) + 1; //j-th run zeroes
-                    }else{
-                        return m_v->support_select_z(j+1); //j-th run ones
-                    }
-
-                }else{
-                    if(i< (m_v->support_select_o(j+1) + m_v->support_select_z(j))){
-                        return m_v->support_select_z(j);
-                    }else{
-                        return i - m_v->support_select_o(j+1)+1;
-                    }
-                }
-
-            }
-        }
+        size_type rank(size_type i)const;
 
         size_type operator()(size_type i)const
         {
@@ -603,6 +567,49 @@ namespace rct {
 
 
     };
+
+
+    template<>
+    typename rank_support_oz<0>::size_type rank_support_oz<0>::rank(size_type i)const
+    {
+        assert(i >= 0); assert(i <= m_v->size());
+        size_type j = binary_search(i);
+        if(m_v->z_1){
+            if(i<(m_v->support_select_z(j+1) +m_v->support_select_o(j))){
+                return i - m_v->support_select_o(j) + 1; //j-th run zeroes
+            }else{
+                return m_v->support_select_z(j+1); //j-th run ones
+            }
+
+        }else{
+            if(i< (m_v->support_select_o(j+1) + m_v->support_select_z(j))){
+                return m_v->support_select_z(j);
+            }else{
+                return i - m_v->support_select_o(j+1)+1;
+            }
+        }
+    }
+
+    template<>
+    typename rank_support_oz<1>::size_type rank_support_oz<1>::rank(size_type i)const
+    {
+        assert(i >= 0); assert(i <= m_v->size());
+        size_type j = binary_search(i);
+        if(m_v->z_1){
+            if(i<(m_v->support_select_z(j+1) + m_v->support_select_o(j))){
+                return m_v->support_select_o(j); //j-th run zeroes
+            }else{
+                return i - m_v->support_select_z(j+1) + 1;//j-th run ones
+            }
+
+        }else{
+            if(i< (m_v->support_select_o(j+1) + m_v->support_select_z(j))){
+                return i - m_v->support_select_z(j)+1; //j-th run ones
+            }else{
+                return m_v->support_select_o(j+1);//j-th run zeroes
+            }
+        }
+    }
 }
 
 

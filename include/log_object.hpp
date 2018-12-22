@@ -54,7 +54,7 @@ namespace rct {
               class t_values_min_max= sdsl::dac_vector_dp<sdsl::bit_vector>,
               class t_disap = runs_bitvector<>,
               class t_disap_rank_1 = rank_support_runs_bitvector<1>,
-              class t_disap_succ_0 = succ_support_runs_bitvector>
+              class t_disap_succ_0 = succ_support_runs_bitvector<0>>
     class log_object {
 
     public:
@@ -200,11 +200,11 @@ namespace rct {
                 last_t = info.t;
                 disap_i++; //set to zero
             }*/
-            sdsl::bit_vector aux_disap(trajectory.back().t - m_time_start + 1, 1);
+            sdsl::bit_vector aux_disap(trajectory.back().t - m_time_start + 1, 0);
             for (size_type i = 1; i < trajectory.size(); ++i) {
                 const auto &info = trajectory[i];
                 for (auto t = last_t + 1; t < info.t; ++t) {
-                    aux_disap[disap_i++] = 0;
+                    aux_disap[disap_i++] = 1;
                 }
                 last_t = info.t;
                 disap_i++; //set to zero
@@ -308,7 +308,7 @@ namespace rct {
         inline bool time_to_movement(const size_type t_q, size_type &movement_q) const {
             auto idx = t_q - m_time_start - 1;
             if(m_disap[idx]) return false; //Disappeared
-            movement_q = idx - m_rank_disap(idx) + 1;//index in length
+            movement_q = idx - m_rank_disap(idx+1) + 1;//index in length
             return true;
         }
 
@@ -624,7 +624,7 @@ namespace rct {
         double size_runs_bitvector(const Container &cont) const{
             auto actual_size = sdsl::size_in_mega_bytes(cont);
             runs_bitvector<> m_sd(cont);
-            succ_support_runs_bitvector m_succ;
+            succ_support_runs_bitvector<0> m_succ;
             sdsl::util::init_support(m_succ, &m_sd);
             auto new_size = sdsl::size_in_mega_bytes(m_sd) + sdsl::size_in_mega_bytes(m_succ);
             return  new_size;

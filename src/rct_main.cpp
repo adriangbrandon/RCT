@@ -48,7 +48,7 @@ int main(int argc, const char* argv[]) {
         std::string index_file = "rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".idx";
         sdsl::store_to_file(m_rct_index, index_file);
         sdsl::util::clear(m_rct_index);
-        /*std::string index_file = "rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".idx";
+       /* std::string index_file = "rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".idx";
         rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;*/
         sdsl::load_from_file(m_rct_index, index_file);
 
@@ -64,11 +64,13 @@ int main(int argc, const char* argv[]) {
             if(r.x != x || r.y != y){
                 std::cout << "Error looking for: id=" << id << " t=" << t << std::endl;
                 std::cout << "Expected: " << x << ", " << y << std::endl;
-
+                rct::algorithm::search_object(0, 82, m_rct_index, r);
+                std::cout << "Obtained: " << r.x << ", " << r.y << std::endl;
                 exit(0);
             }
         }
         in.close();
+
 
         std::cout << "Search trajectory id=0 t_i=0 t_j=200: " << std::endl;
         std::vector<util::geo::traj_step> traj;

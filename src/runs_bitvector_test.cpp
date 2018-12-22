@@ -37,8 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, const char* argv[]) {
 
-    //sdsl::bit_vector bv = {0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,0};
-    sdsl::bit_vector bv = {1,1,1,1,0,0,0,0,
+    //sdsl::bit_vector bv = {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,0};
+     sdsl::bit_vector bv = {1,1,1,1,0,0,0,0,
                            0,0,0,0,0,0,0,0,
                            0,0,0,1,1,1,1,0,
                            0,0,0,0,0,0,1,1,
@@ -52,8 +52,8 @@ int main(int argc, const char* argv[]) {
             exit(1);
         }
     }
-    rct::succ_support_runs_bitvector_v2<1> m_succ;
-    rct::succ_support_runs_bitvector_v2<0> m_succ_0;
+    rct::succ_support_runs_bitvector<1> m_succ;
+    rct::succ_support_runs_bitvector<0> m_succ_0;
     rct::rank_support_runs_bitvector<1> m_rank;
     sdsl::util::init_support(m_succ, &m_runs);
     sdsl::util::init_support(m_succ_0, &m_runs);
@@ -61,10 +61,12 @@ int main(int argc, const char* argv[]) {
     for(uint64_t i = 0; i < m_runs.size(); ++i){
         std::cout << "i: " << i << " succ: " << m_succ(i) << std::endl;
     }
-    m_succ_0(30);
+   // m_succ_0(30);
     for(uint64_t i = 0; i < m_runs.size(); ++i){
         std::cout << "i: " << i << " succ0: " << m_succ_0(i) << std::endl;
     }
+    std::cout << "Size Succ: " << sdsl::size_in_mega_bytes(m_succ) << std::endl;
+    std::cout << "Size Succ 0: " << sdsl::size_in_mega_bytes(m_succ_0) << std::endl;
     /*for(uint64_t i = 0; i <= m_runs.size(); ++i){
         std::cout << "i: " <<i << " rank: " << m_rank(i) << std::endl;
     }*/
