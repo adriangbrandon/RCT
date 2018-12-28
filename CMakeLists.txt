@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10

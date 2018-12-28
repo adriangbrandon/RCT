@@ -130,15 +130,75 @@ namespace rct {
         }
 
         template<class RCTIndex>
+        void time_interval_reference(const typename RCTIndex::size_type oid,
+                                     const util::geo::region& region_q,
+                                     const typename RCTIndex::size_type movement_i,
+                                     const typename RCTIndex::size_type movement_j,
+                                     const std::vector<typename RCTIndex::size_type> &phrases_to_check,
+                                     const typename RCTIndex::size_type ic_phrase_l,
+                                     const typename RCTIndex::size_type delta_phrase_l, //FIXME: ojo a esto
+                                     const typename RCTIndex::size_type ic_phrase_r,
+                                     const typename RCTIndex::size_type delta_phrase_r, //FIXME: ojo a esto
+                                     const RCTIndex &rctIndex,
+                                     std::vector<typename  RCTIndex::value_type> &r){
+
+            auto traj_step = rctIndex.log_objects[oid].start_traj_step();
+            typename RCTIndex::size_type phrase_start, phrase_x, phrase_y, last_movement, start_movement;
+            if(delta_phrase_l){
+                //Check the first incomplete phrase
+                //1. Positions at reference
+                phrase_start = rctIndex.log_objects[oid].offsets[ic_phrase_l-1];
+                phrase_x = rctIndex.log_objects[oid].x_values[ic_phrase_l-1] + traj_step.x;
+                phrase_y = rctIndex.log_objects[oid].y_values[ic_phrase_l-1] + traj_step.y;
+                last_movement = rctIndex.log_objects[oid].last_movement(ic_phrase_l);
+                auto move_ref_start =  phrase_start + delta_phrase_l;
+                auto move_ref_end = move_ref_start + (last_movement - movement_i);
+                //TODO: revisar
+                if(rctIndex.log_reference.contains_region(phrase_x, phrase_y, phrase_start, move_ref_start,
+                                                          move_ref_end, region_q)){
+                    r.push_back(oid);
+                    return;
+                };
+            }
+            for(const auto &phrase : phrases_to_check){
+                //Check the rest of phrases
+                phrase_start = rctIndex.log_objects[oid].offsets[phrase-1];
+                phrase_x = rctIndex.log_objects[oid].x_values[phrase-1] + traj_step.x;
+                phrase_y = rctIndex.log_objects[oid].y_values[phrase-1] + traj_step.y;
+                start_movement = rctIndex.log_objects[oid].start_movement(phrase);
+                last_movement = rctIndex.log_objects[oid].last_movement(phrase);
+                auto move_ref_end = phrase_start + (last_movement - start_movement);
+                if(rctIndex.log_reference.contains_region(phrase_x, phrase_y, phrase_start, phrase_start,
+                                                          move_ref_end, region_q)){
+                    r.push_back(oid);
+                    return;
+                };
+            }
+            if(delta_phrase_r && ic_phrase_l < ic_phrase_r){
+                //Check the last incomplete phrase
+                phrase_start = rctIndex.log_objects[oid].offsets[ic_phrase_r-1];
+                phrase_x = rctIndex.log_objects[oid].x_values[ic_phrase_r-1] + traj_step.x;
+                phrase_y = rctIndex.log_objects[oid].y_values[ic_phrase_r-1] + traj_step.y;
+                start_movement = rctIndex.log_objects[oid].start_movement(ic_phrase_r);
+                auto move_ref_end = phrase_start + (movement_j - start_movement);
+                if(rctIndex.log_reference.contains_region(phrase_x, phrase_y, phrase_start, phrase_start,
+                                                          move_ref_end, region_q)){
+                    r.push_back(oid);
+                    return;
+                };
+            }
+
+        }
+
+        template<class RCTIndex>
         void time_interval(const util::geo::region& region_q, const typename RCTIndex::value_type t_i,
                            const typename RCTIndex::size_type t_j, const RCTIndex &rctIndex,
                            std::vector<typename  RCTIndex::value_type> &r) {
 
 
-
-
-            std::vector<const typename RCTIndex::value_type> ids;
-            std::unordered_map<const typename RCTIndex::value_type, char> processed_ids;
+            std::vector<typename RCTIndex::value_type> ids;
+            ids.push_back(0);
+            std::unordered_map<typename RCTIndex::value_type, char> processed_ids;
             typename RCTIndex::size_type movement_i = 0, movement_j = 0, c_phrase_i = 0, c_phrase_j = 0,
             ic_phrase_l = 0, ic_phrase_r = 0, delta_phrase_l = 0, delta_phrase_r = 0;
             for(const auto &oid: ids){
@@ -149,28 +209,15 @@ namespace rct {
                                 ic_phrase_l, delta_phrase_l, ic_phrase_r, delta_phrase_r);
                         std::vector<typename RCTIndex::size_type> phrases_to_check;
                         if(!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q, phrases_to_check)){
-                            if(ic_phrase_l != c_phrase_i){
-                                //Check the first incomplete phrase
-
-                            }
-                            for(const auto &phrase : phrases_to_check){
-                                //Check the rest of phrases
-
-                            }
-                            if(ic_phrase_r != c_phrase_j){
-                                //Check the last incomplete phrase
-
-                            }
+                            time_interval_reference(oid, region_q, movement_i, movement_j, phrases_to_check, ic_phrase_l,
+                                                    delta_phrase_l, ic_phrase_r, delta_phrase_r, rctIndex, r);
                         }else{
                             r.push_back(oid);
                         }
                     }
                     processed_ids[oid]=1;
                 }
-
             }
-
-
         }
     };
 }

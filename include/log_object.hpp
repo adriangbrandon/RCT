@@ -144,7 +144,7 @@ namespace rct {
             sdsl::util::bit_compress(ref);
         }
 
-        inline util::geo::region MBR(const size_type phrase_i, const size_type phrase_j){
+        inline util::geo::region MBR(const size_type phrase_i, const size_type phrase_j) const {
             auto index_min_x = m_rmq_x(phrase_i-1, phrase_j-1);
             auto index_min_y = m_rmq_y(phrase_i-1, phrase_j-1);
             auto index_max_x = m_rMq_x(phrase_i-1, phrase_j-1);
@@ -156,7 +156,7 @@ namespace rct {
             };
         }
 
-        inline util::geo::region MBR(const size_type phrase_i){
+        inline util::geo::region MBR(const size_type phrase_i) const{
 
             auto x_phrase = m_x_start + alternative_code::decode(m_x_values[phrase_i-1]);
             auto y_phrase = m_y_start + alternative_code::decode(m_y_values[phrase_i-1]);
@@ -171,8 +171,8 @@ namespace rct {
 
         log_object() = default;
 
-        const values_min_max_type &x_values = m_x_values;
-        const values_min_max_type &y_values = m_y_values;
+        const values_type &x_values = m_x_values;
+        const values_type &y_values = m_y_values;
         const values_min_max_type &min_x_values = m_min_x_values;
         const values_min_max_type &min_y_values = m_min_y_values;
         const values_min_max_type &max_x_values = m_max_x_values;
@@ -319,22 +319,29 @@ namespace rct {
             movement_j = j - m_rank_disap(j+1)+1;//index in length
         }
 
+        inline size_type start_movement(const size_type phrase) const {
+            return m_select_lengths(phrase);
+        }
+
+        inline size_type last_movement(const size_type phrase) const {
+            return m_select_lengths(phrase+1)-1;
+        }
+
 
         inline void interval_phrases(const size_type movement_i, const size_type movement_j,
                                      size_type &c_phrase_i, size_type &c_phrase_j,
                                      size_type &ic_phrase_l, size_type &delta_phrase_l,
-                                     size_type &ic_phrase_r, size_type &delta_phrase_r){
+                                     size_type &ic_phrase_r, size_type &delta_phrase_r) const {
 
             ic_phrase_l = m_rank_lengths(movement_i);
-            delta_phrase_l = movement_i - m_select_lengths(ic_phrase_l)-1;
+            delta_phrase_l = movement_i - start_movement(ic_phrase_l);
             if(!delta_phrase_l){
                 c_phrase_i = ic_phrase_l;
             }else{
                 c_phrase_i = ic_phrase_l+1;
             }
-
             ic_phrase_r = m_rank_lengths(movement_j);
-            delta_phrase_r = movement_j - m_select_lengths(ic_phrase_r-1);
+            delta_phrase_r = last_movement(ic_phrase_r) - movement_j;
             if(!delta_phrase_r){
                 c_phrase_j = ic_phrase_r;
             }else{
@@ -343,8 +350,9 @@ namespace rct {
         }
 
         inline bool contains_region(const size_type phrase_i, const size_type phrase_j, const util::geo::region &r,
-                                        std::vector<size_type> &phrases_to_check){
+                                        std::vector<size_type> &phrases_to_check) const {
 
+            if(phrase_i > phrase_j) return false;
             std::queue<std::pair<size_type, size_type>> queue_index;
             queue_index.push({phrase_i, phrase_j});
             while(!queue_index.empty()){

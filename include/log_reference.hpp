@@ -62,6 +62,7 @@ namespace rct {
         typedef struct {
             util::geo::point p_s;
             util::geo::point p_e;
+            util::geo::region parent_region;
             size_type beg;
             size_type end;
             size_type sel_p_x;
@@ -269,13 +270,13 @@ namespace rct {
 
         util::geo::movement compute_movement(const size_type i, const size_type j) const {
             if(i == 0){
-                int32_t delta_x = m_select_x_p(j) - m_select_x_n(j);
-                int32_t delta_y = m_select_y_p(j) - m_select_y_n(j);
-                return util::geo::movement{delta_x, delta_y};
+                int32_t inc_x = m_select_x_p(j) - m_select_x_n(j);
+                int32_t inc_y = m_select_y_p(j) - m_select_y_n(j);
+                return util::geo::movement{inc_x, inc_y};
             }else{
-                int32_t delta_x = (m_select_x_p(j) - m_select_x_p(i)) - (m_select_x_n(j) - m_select_x_n(i));
-                int32_t delta_y = (m_select_y_p(j) - m_select_y_p(i)) - (m_select_y_n(j) - m_select_y_n(i));
-                return util::geo::movement{delta_x, delta_y};
+                int32_t inc_x = (m_select_x_p(j) - m_select_x_p(i)) - (m_select_x_n(j) - m_select_x_n(i));
+                int32_t inc_y = (m_select_y_p(j) - m_select_y_p(i)) - (m_select_y_n(j) - m_select_y_n(i));
+                return util::geo::movement{inc_x, inc_y};
             }
 
         };
@@ -289,13 +290,13 @@ namespace rct {
             y_n_prev = m_select_y_n(j);
             if(i == 0){
 
-                auto delta_x = (int32_t) (x_p_prev - x_n_prev);
-                auto delta_y = (int32_t) (y_p_prev - y_n_prev);
-                return util::geo::movement{delta_x, delta_y};
+                auto inc_x = (int32_t) (x_p_prev - x_n_prev);
+                auto inc_y = (int32_t) (y_p_prev - y_n_prev);
+                return util::geo::movement{inc_x, inc_y};
             }else{
-                int32_t delta_x = (x_p_prev - m_select_x_p(i)) - (x_n_prev - m_select_x_n(i));
-                int32_t delta_y = (y_p_prev - m_select_y_p(i)) - (y_n_prev - m_select_y_n(i));
-                return util::geo::movement{delta_x, delta_y};
+                int32_t inc_x = (x_p_prev - m_select_x_p(i)) - (x_n_prev - m_select_x_n(i));
+                int32_t inc_y = (y_p_prev - m_select_y_p(i)) - (y_n_prev - m_select_y_n(i));
+                return util::geo::movement{inc_x, inc_y};
             }
         };
 
@@ -308,13 +309,13 @@ namespace rct {
             y_n_prev = m_select_y_n(j+1);
             if(j == 0){
 
-                auto delta_x = (int32_t) (x_p_prev - x_n_prev);
-                auto delta_y = (int32_t) (y_p_prev - y_n_prev);
-                return util::geo::movement{delta_x, delta_y};
+                auto inc_x = (int32_t) (x_p_prev - x_n_prev);
+                auto inc_y = (int32_t) (y_p_prev - y_n_prev);
+                return util::geo::movement{inc_x, inc_y};
             }else{
-                int32_t delta_x = (x_p_prev - m_select_x_p(j)) - (x_n_prev - m_select_x_n(j));
-                int32_t delta_y = (y_p_prev - m_select_y_p(j)) - (y_n_prev - m_select_y_n(j));
-                return util::geo::movement{delta_x, delta_y};
+                int32_t inc_x = (x_p_prev - m_select_x_p(j)) - (x_n_prev - m_select_x_n(j));
+                int32_t inc_y = (y_p_prev - m_select_y_p(j)) - (y_n_prev - m_select_y_n(j));
+                return util::geo::movement{inc_x, inc_y};
             }
 
         };
@@ -326,22 +327,33 @@ namespace rct {
             auto x_n = m_succ_x_n(x_n_prev+1);
             auto y_p = m_succ_y_p(y_p_prev+1);
             auto y_n = m_succ_y_n(y_n_prev+1);
-            auto delta_x = (int32_t) ((x_p - x_p_prev) - (x_n - x_n_prev));
-            auto delta_y = (int32_t) ((y_p - y_p_prev) - (y_n - y_n_prev));
+            auto inc_x = (int32_t) ((x_p - x_p_prev) - (x_n - x_n_prev));
+            auto inc_y = (int32_t) ((y_p - y_p_prev) - (y_n - y_n_prev));
             x_p_prev = x_p;
             x_n_prev = x_n;
             y_p_prev = y_p;
             y_n_prev = y_n;
-            return util::geo::movement{delta_x, delta_y};
+            return util::geo::movement{inc_x, inc_y};
         };
 
-        inline int32_t compute_delta_x(const size_type i){
+        inline int32_t compute_delta_x(const size_type i) const {
+             if(!i) return 0;
              return m_select_x_p(i) - m_select_x_n(i);
         }
 
-        inline int32_t compute_delta_y(const size_type i){
+        inline int32_t compute_delta_y(const size_type i) const {
+            if(!i) return 0;
             return m_select_y_p(i) - m_select_y_n(i);
         }
+
+        util::geo::movement compute_movement_deltas(const size_type i, const int32_t delta_x, const int32_t delta_y) const {
+
+            if(!i) return util::geo::movement{0, 0};
+            auto inc_x = (int32_t) (m_select_x_p(i) - m_select_x_n(i) - delta_x);
+            auto inc_y = (int32_t) (m_select_y_p(i) - m_select_y_n(i) - delta_y);
+            return util::geo::movement{inc_x, inc_y};
+        };
+
 
 
         //Time Interval Functions
@@ -370,7 +382,7 @@ namespace rct {
 
         util::geo::region find_MBR(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
                                    const util::geo::point &p_s, const util::geo::point &p_e, const int32_t delta_x,
-                                   const int32_t  delta_y, size_type &total_selects){
+                                   const int32_t  delta_y, size_type &total_selects) const {
 
             //1. Init the min and max points
             value_type min_x, max_x, min_y, max_y;
@@ -448,11 +460,11 @@ namespace rct {
         }
 
         bool contains_region_init(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
-                                const util::geo::point &p_s, const util::geo::point &p_e, const util::geo::region &r_q,
+                                  const util::geo::point &p_s, const util::geo::point &p_e, const util::geo::region &r_q,
                                   const int32_t delta_x, const int32_t delta_y,
-                                size_type &p_min_x_index, size_type &p_max_x_index,
-                                size_type &p_min_y_index, size_type &p_max_y_index,
-                                size_type &total_selects, util::geo::region &mbr){
+                                  size_type &p_min_x_index, size_type &p_max_x_index,
+                                  size_type &p_min_y_index, size_type &p_max_y_index,
+                                  util::geo::region &mbr) const {
 
             //1. Init the min and max points
             value_type min_x, max_x, min_y, max_y;
@@ -540,8 +552,7 @@ namespace rct {
                            const util::geo::region &parent_region, util::geo::region &r,
                            const int32_t delta_x, const int32_t delta_y,
                            size_type &p_min_x_index, size_type &p_max_x_index,
-                           size_type &p_min_y_index, size_type &p_max_y_index,
-                           size_type &total_selects){
+                           size_type &p_min_y_index, size_type &p_max_y_index) const {
 
 
 
@@ -646,30 +657,199 @@ namespace rct {
         }
 
 
-        bool contains_region(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
+        template<size_type leaf_width = 20 >
+        bool contains_region_old(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
                              const util::geo::point &p_s, const util::geo::point &p_e, const util::geo::region &r_q,
-                             const int32_t delta_x, const int32_t delta_y){
+                             const int32_t delta_x, const int32_t delta_y) const{
 
-            /*size_type p_min_x_index = 0, p_max_x_index = 0, p_min_y_index = 0, p_max_y_index = 0;
+            if(util::geo::contains(r_q, p_s) || util::geo::contains(r_q, p_e)) {
+                return true;
+            }
             util::geo::region mbr;
             std::queue<mbr_q_type> mbrs;
-            mbrs.push(mbr_q_type{p_s, p_e, move_s-1, move_e-1, })
+            size_type p_min_x_index = 0, p_max_x_index = 0, p_min_y_index = 0, p_max_y_index = 0;
+            size_type sel_p_x, sel_n_x, sel_p_y, sel_n_y;
+            mbrs.push(mbr_q_type{p_s, p_e, util::geo::region(), move_s-1, move_e-1, sel_p_x, sel_n_x, sel_p_y, sel_n_y,
+                                 p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index});
             size_type i = 0;
+            bool intersects;
             while(!mbrs.empty()){
+                mbr_q_type q_e = mbrs.front();
+                mbrs.pop();
                 if(i == 0){
-                    contains_region_init(x,y,move_s,move_e, p_s, p_e, r_q, delta_x, delta_y, p_min_x_index, p_max_x_index,
-                                         p_min_y_index, p_max_y_index, mbr);
+                    intersects = contains_region_init(x, y, move_s, move_e, p_s, p_e, r_q, delta_x, delta_y,
+                                                     p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index, mbr);
                 }else{
-                    if(util::geo::contains(r_q, p_s) || util::geo::contains(r_q, p_e)) {
-                        return true;
-                    }
-
-
+                    p_min_x_index = q_e.min_x_index;
+                    p_max_x_index = q_e.max_x_index;
+                    p_min_y_index = q_e.min_y_index;
+                    p_max_y_index = q_e.max_y_index;
+                    intersects = contains_region_lazy(x, y, q_e.beg, q_e.end, q_e.p_s, q_e.p_e, r_q, q_e.parent_region,
+                                 mbr, delta_x, delta_y, p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index);
 
                 }
-            }*/
+
+                if(intersects) {
+
+                    if(util::geo::contains(r_q, mbr)){
+                        return true;
+                    }
+                    if((q_e.beg - q_e.end) > leaf_width){
+                        size_type move_m_count = (q_e.beg - q_e.end+1) / 2 + q_e.beg + 1; //index -1
+                        util::geo::point p_m = compute_movement_init(q_e.beg, q_e.end, sel_p_x, sel_n_x, sel_p_y, sel_n_y);
+                        p_m.x += x;
+                        p_m.y += y;
+#if VERBOSE_AGB
+                        std::cout << "m_index = " << move_m_count << std::endl;
+                            std::cout << "p_m: (" << p_m.m_x << ", " << p_m.m_y << ")" << std::endl;
+#endif
+                        if(util::geo::contains(r_q, p_m)) {
+#if VERBOSE_AGB
+                            std::cout << "the r_q contains p_m" << std::endl;
+#endif
+                            return true;
+                        }
+                        mbrs.push(mbr_q_type(q_e.p_s, p_m, q_e.beg, move_m_count-1,
+                                             q_e.sel_p_x, q_e.sel_n_x, q_e.sel_p_y, q_e.sel_n_y, mbr,
+                                             p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index));
+                        mbrs.push(mbr_q_type(p_m, q_e.p_e, move_m_count-1, q_e.end, sel_p_x, sel_n_x, sel_p_y,
+                                             sel_n_y,  mbr, p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index));
+                    }else{
+                        sel_p_x = q_e.sel_p_x;
+                        sel_n_x = q_e.sel_n_x;
+                        sel_p_y = q_e.sel_p_y;
+                        sel_n_y = q_e.sel_n_y;
+
+                        size_type move_index = q_e.beg+1;
+                        while(move_index < q_e.end){
+#if VERBOSE_AGB
+                            std::cout << "(leaf) sel_p_x: " << sel_p_x << " sel_n_x: " << sel_n_x << " sel_p_y: " << sel_p_y << " sel_n_y: " << sel_n_y << std::endl;
+                                std::cout << "move_index: " << move_index << std::endl;
+#endif
+                            util::geo::point p_m = compute_movement_next(move_index, sel_p_x, sel_n_x, sel_p_y, sel_n_y);
+                            p_m.x += x;
+                            p_m.y += y;
+#if VERBOSE_AGB
+                            std::cout << "p_m leaf: (" << p_m.m_x << ", " << p_m.m_y << ")" << std::endl;
+#endif
+                            if(util::geo::contains(r_q, p_m)) {
+#if VERBOSE_AGB
+                                std::cout << "the r_q contains p_m leaf" << std::endl;
+#endif
+                                return true;
+                            }
+                            move_index++;
+                        }
+                    }
+                }
+
+                ++i;
+            }
+
+            return false;
 
 
+
+        }
+
+
+        template<size_type leaf_width = 20 >
+        bool contains_region(const value_type phrase_x, const value_type phrase_y, const size_type phrase_start,
+                                const size_type move_s, const size_type move_e, const util::geo::region &r_q) const {
+
+            //1. Compute p_s and p_e
+            int32_t delta_x = compute_delta_x(phrase_start);
+            int32_t delta_y = compute_delta_y(phrase_start);
+
+            auto m_s = compute_movement_deltas(move_s, delta_x, delta_y);
+            util::geo::point p_s{m_s.x + phrase_x, m_s.y + phrase_y};
+            if(util::geo::contains(r_q, p_s)) return true;
+
+            auto m_e = compute_movement_deltas(move_e, delta_x, delta_y);
+            util::geo::point p_e{m_e.x + phrase_x, m_e.y + phrase_y};
+            if(util::geo::contains(r_q, p_e)) return true;
+
+
+            util::geo::region mbr;
+            std::queue<mbr_q_type> mbrs;
+            size_type p_min_x_index = 0, p_max_x_index = 0, p_min_y_index = 0, p_max_y_index = 0;
+            size_type sel_p_x, sel_n_x, sel_p_y, sel_n_y;
+            mbrs.push(mbr_q_type{p_s, p_e, util::geo::region(), move_s-1, move_e-1, sel_p_x, sel_n_x, sel_p_y, sel_n_y,
+                                 p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index});
+            size_type i = 0;
+            bool intersects;
+            while(!mbrs.empty()){
+                mbr_q_type q_e = mbrs.front();
+                mbrs.pop();
+                if(i == 0){
+                    intersects = contains_region_init(phrase_x, phrase_y, move_s, move_e, p_s, p_e, r_q, delta_x, delta_y,
+                                                      p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index, mbr);
+                }else{
+                    p_min_x_index = q_e.min_x_index;
+                    p_max_x_index = q_e.max_x_index;
+                    p_min_y_index = q_e.min_y_index;
+                    p_max_y_index = q_e.max_y_index;
+                    intersects = contains_region_lazy(phrase_x, phrase_y, q_e.beg, q_e.end, q_e.p_s, q_e.p_e, r_q, q_e.parent_region,
+                                                      mbr, delta_x, delta_y, p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index);
+
+                }
+
+                if(intersects) {
+
+                    if(util::geo::contains(r_q, mbr)){
+                        return true;
+                    }
+                    if((q_e.beg - q_e.end) > leaf_width){
+                        size_type move_m_count = (q_e.beg - q_e.end+1) / 2 + q_e.beg + 1; //index -1
+                        util::geo::movement movement = compute_movement_init(q_e.beg, q_e.end, sel_p_x, sel_n_x, sel_p_y, sel_n_y);
+                        util::geo::point p_m {movement.x + phrase_x, movement.y + phrase_y};
+#if VERBOSE_AGB
+                        std::cout << "m_index = " << move_m_count << std::endl;
+                            std::cout << "p_m: (" << p_m.m_x << ", " << p_m.m_y << ")" << std::endl;
+#endif
+                        if(util::geo::contains(r_q, p_m)) {
+#if VERBOSE_AGB
+                            std::cout << "the r_q contains p_m" << std::endl;
+#endif
+                            return true;
+                        }
+                        mbrs.push(mbr_q_type{q_e.p_s, p_m, mbr, q_e.beg, move_m_count-1,
+                                             q_e.sel_p_x, q_e.sel_n_x, q_e.sel_p_y, q_e.sel_n_y,
+                                             p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index});
+                        mbrs.push(mbr_q_type{p_m, q_e.p_e, mbr, move_m_count-1, q_e.end, sel_p_x, sel_n_x, sel_p_y,
+                                             sel_n_y, p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index});
+                    }else{
+                        sel_p_x = q_e.sel_p_x;
+                        sel_n_x = q_e.sel_n_x;
+                        sel_p_y = q_e.sel_p_y;
+                        sel_n_y = q_e.sel_n_y;
+
+                        size_type move_index = q_e.beg+1;
+                        while(move_index < q_e.end){
+#if VERBOSE_AGB
+                            std::cout << "(leaf) sel_p_x: " << sel_p_x << " sel_n_x: " << sel_n_x << " sel_p_y: " << sel_p_y << " sel_n_y: " << sel_n_y << std::endl;
+                                std::cout << "move_index: " << move_index << std::endl;
+#endif
+                            util::geo::movement movement = compute_movement_next(move_index, sel_p_x, sel_n_x, sel_p_y, sel_n_y);
+                            util::geo::point p_m {movement.x + phrase_x, movement.y + phrase_y};
+#if VERBOSE_AGB
+                            std::cout << "p_m leaf: (" << p_m.m_x << ", " << p_m.m_y << ")" << std::endl;
+#endif
+                            if(util::geo::contains(r_q, p_m)) {
+#if VERBOSE_AGB
+                                std::cout << "the r_q contains p_m leaf" << std::endl;
+#endif
+                                return true;
+                            }
+                            move_index++;
+                        }
+                    }
+                }
+
+                ++i;
+            }
+
+            return false;
 
 
 
