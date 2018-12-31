@@ -68,7 +68,7 @@ target_link_libraries(rct_index sdsl divsufsort divsufsort64)
 add_executable(rct_index_dac src/rct_dac_main.cpp)
 target_link_libraries(rct_index_dac sdsl divsufsort divsufsort64)
 
-add_executable(alternative_code src/alternative_code.cpp)
+add_executable(alternative_code src/alternative_code.cpp src/cut_dataset.cpp)
 target_link_libraries(alternative_code sdsl divsufsort divsufsort64)
 
 add_executable(rlz_test src/rlz_test.cpp)
@@ -79,3 +79,6 @@ target_link_libraries(stats_rct sdsl divsufsort divsufsort64)
 
 add_executable(runs_bitvector_test src/runs_bitvector_test.cpp)
 target_link_libraries(runs_bitvector_test sdsl divsufsort divsufsort64)
+
+add_executable(cut_dataset src/cut_dataset.cpp)
+target_link_libraries(cut_dataset sdsl divsufsort divsufsort64)

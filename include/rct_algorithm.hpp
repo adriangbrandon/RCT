@@ -37,6 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "geo_util.hpp"
 #include <vector>
 #include <unordered_map>
+#include <math_util.hpp>
+#include <cmath>
 
 namespace rct {
 
@@ -195,28 +197,64 @@ namespace rct {
                            const typename RCTIndex::size_type t_j, const RCTIndex &rctIndex,
                            std::vector<typename  RCTIndex::value_type> &r) {
 
+            auto snap_start = util::math::ceil_div(t_i, rctIndex.period_snapshot);
+            auto snap_end = util::math::ceil_div(t_j, rctIndex.period_snapshot);
 
-            std::vector<typename RCTIndex::value_type> ids;
-            ids.push_back(0);
             std::unordered_map<typename RCTIndex::value_type, char> processed_ids;
             typename RCTIndex::size_type movement_i = 0, movement_j = 0, c_phrase_i = 0, c_phrase_j = 0,
-            ic_phrase_l = 0, ic_phrase_r = 0, delta_phrase_l = 0, delta_phrase_r = 0;
-            for(const auto &oid: ids){
+                    ic_phrase_l = 0, ic_phrase_r = 0, delta_phrase_l = 0, delta_phrase_r = 0;
+            typename RCTIndex::value_type t_beg = t_i;
+
+            auto time_interval_object = [&] (typename RCTIndex::value_type oid){
                 if(processed_ids.count(oid) == 0){
-                    rctIndex.log_objects[oid].time_to_movement(t_i, t_j, movement_i, movement_j);
-                    if(movement_i <= movement_j){
-                        rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
-                                ic_phrase_l, delta_phrase_l, ic_phrase_r, delta_phrase_r);
-                        std::vector<typename RCTIndex::size_type> phrases_to_check;
-                        if(!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q, phrases_to_check)){
-                            time_interval_reference(oid, region_q, movement_i, movement_j, phrases_to_check, ic_phrase_l,
-                                                    delta_phrase_l, ic_phrase_r, delta_phrase_r, rctIndex, r);
-                        }else{
-                            r.push_back(oid);
+                    auto traj_step = rctIndex.log_objects[oid].start_traj_step();
+                    if(t_j >= traj_step.t) {
+                        if(t_i <= traj_step.t){
+                            if(util::geo::contains(region_q, util::geo::point{traj_step.x, traj_step.y})){
+                                r.push_back(oid);
+                                processed_ids[oid]=1;
+                                return;
+                            };
+                        }
+                        t_beg = std::max(t_beg, traj_step.t+1);
+                        auto t_end = t_j;
+                        rctIndex.log_objects[oid].time_to_movement(t_beg, t_end, movement_i, movement_j);
+                        if (movement_i <= movement_j) {
+                            rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
+                                                                       ic_phrase_l, delta_phrase_l, ic_phrase_r,
+                                                                       delta_phrase_r);
+                            std::vector<typename RCTIndex::size_type> phrases_to_check;
+                            if (!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q,
+                                                                           phrases_to_check)) {
+                                time_interval_reference(oid, region_q, movement_i, movement_j, phrases_to_check,
+                                                        ic_phrase_l,
+                                                        delta_phrase_l, ic_phrase_r, delta_phrase_r, rctIndex, r);
+                            } else {
+                                r.push_back(oid);
+                            }
                         }
                     }
                     processed_ids[oid]=1;
                 }
+            };
+
+            for(auto snap_id = snap_start; snap_id <= snap_end; ++snap_id){
+                auto region_expanded = util::geo::expand(region_q, rctIndex.speed_max, t_j - snap_id * rctIndex.period_snapshot,
+                                                         rctIndex.x_max, rctIndex.y_max);
+                auto data = rctIndex.snapshots[snap_id].find_objects_in_region(region_expanded.min.x, region_expanded.max.x,
+                                                                               region_expanded.min.y, region_expanded.max.y);
+                for(const auto &e: data){
+                    time_interval_object(e.id);
+                }
+                auto id = 0;
+                while(id < rctIndex.total_objects){
+                    id = rctIndex.succs_reap[snap_id](id);
+                    if(id >= rctIndex.total_objects) break;
+                    time_interval_object(id);
+                    ++id;
+
+                }
+                t_beg = snap_id * rctIndex.period_snapshot;
             }
         }
     };

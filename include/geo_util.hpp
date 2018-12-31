@@ -82,6 +82,36 @@ namespace util {
                 return !(r.min.x > r_q.max.x || r.max.x < r_q.min.x
                         || r.min.y > r_q.max.y || r.max.y < r_q.min.y);
         }
+
+        inline region expand(const region &r,
+                             const uint32_t max_speed, const uint32_t time,
+                             const uint32_t max_x, const uint32_t max_y){
+
+            auto distance = max_speed * time;
+            region ret;
+            if(r.min.x < distance){
+                ret.min.x = 0;
+            }else{
+                ret.min.x = r.min.x - distance;
+            }
+            if(r.min.y < distance){
+                ret.min.y = 0;
+            }else{
+                ret.min.y = r.min.y - distance;
+            }
+
+            if(r.max.x + distance > max_x){
+                ret.max.x = max_x;
+            }else{
+                ret.max.x = r.max.x + distance;
+            }
+            if(r.max.y + distance > max_y){
+                ret.max.y = max_y;
+            }else{
+                ret.max.y = r.max.y + distance;
+            }
+            return ret;
+        }
     }
 }
 

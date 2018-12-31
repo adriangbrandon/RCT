@@ -333,14 +333,14 @@ namespace rct {
                                      size_type &ic_phrase_l, size_type &delta_phrase_l,
                                      size_type &ic_phrase_r, size_type &delta_phrase_r) const {
 
-            ic_phrase_l = m_rank_lengths(movement_i);
+            ic_phrase_l = m_rank_lengths(movement_i+1);
             delta_phrase_l = movement_i - start_movement(ic_phrase_l);
             if(!delta_phrase_l){
                 c_phrase_i = ic_phrase_l;
             }else{
                 c_phrase_i = ic_phrase_l+1;
             }
-            ic_phrase_r = m_rank_lengths(movement_j);
+            ic_phrase_r = m_rank_lengths(movement_j+1);
             delta_phrase_r = last_movement(ic_phrase_r) - movement_j;
             if(!delta_phrase_r){
                 c_phrase_j = ic_phrase_r;

@@ -42,6 +42,8 @@ namespace rct {
         log_reference_type m_log_reference;
         std::vector<log_object_type> m_log_objects;
         std::vector<snapshot_type> m_snapshots;
+        std::vector<sdsl::bit_vector> m_reap;
+        std::vector<succ_support_v<1>> m_succs_reap;
 
         void copy(const rct_index &o){
             m_total_objects = o.m_total_objects;
@@ -54,6 +56,8 @@ namespace rct {
             m_log_reference = o.m_log_reference;
             m_log_objects = o.m_log_objects;
             m_snapshots = o.m_snapshots;
+            m_reap = o.m_reap;
+            m_succs_reap = o.m_succs_reap;
         }
 
         void _get_stats(const std::string &infile){
@@ -110,6 +114,13 @@ namespace rct {
         const log_reference_type &log_reference = m_log_reference;
         const std::vector<log_object_type> &log_objects = m_log_objects;
         const std::vector<snapshot_type> &snapshots = m_snapshots;
+        const std::vector<succ_support_v<1>> &succs_reap = m_succs_reap;
+        const size_type &period_snapshot = m_period_snapshot;
+        const size_type &total_objects = m_total_objects;
+        const size_type &speed_max = m_speed_max;
+        const size_type &x_max = m_x_max;
+        const size_type &y_max = m_y_max;
+
 
         rct_index() = default;
 
@@ -122,9 +133,10 @@ namespace rct {
             std::ifstream in(dataset_file);
             std::ofstream factors_log("factors.log");
             std::vector<uint32_t> input_reference;
-            uint32_t id, old_id = (uint32_t) -1, t, x, old_x = 0, y, old_y = 0;
+            uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, old_x = 0, y, old_y = 0;
             size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             std::vector<k2_tree_representation_lite<k> > trees(n_snapshots, k2_tree_representation_lite<k>(m_level_max));
+            m_reap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
             std::cout << "Array of movements: " << std::flush;
             while (in) {
                 in >> id >> t >> x >> y;
@@ -135,17 +147,23 @@ namespace rct {
                     input_reference.push_back(spiral_matrix_coder::encode(diff_x, diff_y));
                 }
                 if(t % m_period_snapshot == 0){
-                    trees[t/period_snapshot].insertObject(x, y, id);
+                    trees[t/m_period_snapshot].insertObject(x, y, id);
+                }else if (old_id != id || old_t / m_period_snapshot != t / m_period_snapshot){
+                    m_reap[t / m_period_snapshot][id] = 1;
                 }
+
                 old_id = id;
                 old_x = x;
                 old_y = y;
+                old_t = t;
             }
             in.close();
             std::cout << "Compressing snapshots. " << std::endl;
             m_snapshots = std::vector<snapshot<k>>(n_snapshots);
+            m_succs_reap.resize(n_snapshots);
             for(size_type i = 0; i < n_snapshots; i++) {
                 m_snapshots[i] = snapshot<k>(trees[i], m_total_objects);
+                m_succs_reap[i] = succ_support_v<1>(&m_reap[i]);
             }
             trees.clear();
             std::cout << "Done." << std::endl;
@@ -171,8 +189,8 @@ namespace rct {
             auto start = util::time::user::now();
             while (!in.eof() && id != -1) {
                 in >> id >> t >> x >> y;
-                //if (in.eof()) id = (uint32_t) -1;
-                if (in.eof() || id > 99) id = (uint32_t) -1;
+                if (in.eof()) id = (uint32_t) -1;
+                //if (in.eof() || id > 99) id = (uint32_t) -1;
                 if (id == old_id) {
                     int32_t diff_x = x - old_x;
                     int32_t diff_y = y - old_y;
@@ -240,6 +258,8 @@ namespace rct {
                 m_log_reference = std::move(o.m_log_reference);
                 m_log_objects = std::move(o.m_log_objects);
                 m_snapshots = std::move(o.m_snapshots);
+                m_reap = std::move(o.m_reap);
+                m_succs_reap = std::move(o.m_succs_reap);
             }
             return *this;
         }
@@ -255,6 +275,8 @@ namespace rct {
             std::swap(m_log_objects, o.m_log_objects);
             m_log_reference.swap(o.m_log_reference);
             std::swap(m_snapshots, o.m_snapshots);
+            std::swap(m_reap, o.m_reap);
+            std::swap(m_succs_reap, o.m_succs_reap);
         }
 
         size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="") const {
@@ -273,6 +295,8 @@ namespace rct {
             written_bytes += sdsl::serialize_vector(m_log_objects, out, child, "log_objects");
             written_bytes += m_log_reference.serialize(out, child, "log_reference");
             written_bytes += sdsl::serialize_vector(m_snapshots, out, child, "snapshots");
+            written_bytes += sdsl::serialize_vector(m_reap, out, child, "reap");
+            written_bytes += sdsl::serialize_vector(m_succs_reap, out, child, "succs_reap");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
         }
@@ -291,8 +315,16 @@ namespace rct {
             m_log_objects.resize(log_size);
             sdsl::load_vector(m_log_objects, in);
             m_log_reference.load(in);
-            m_snapshots.resize(util::math::ceil_div(m_t_max, m_period_snapshot));
+            auto n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
+            m_snapshots.resize(n_snapshots);
+            m_reap.resize(n_snapshots);
+            m_succs_reap.resize(n_snapshots);
             sdsl::load_vector(m_snapshots, in);
+            sdsl::load_vector(m_reap, in);
+            sdsl::load_vector(m_succs_reap, in);
+            for(size_type i = 0; i < m_reap.size(); ++i){
+                m_succs_reap[i].set_vector(&m_reap[i]);
+            }
         }
 
 
