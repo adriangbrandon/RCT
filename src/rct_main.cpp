@@ -79,13 +79,18 @@ int main(int argc, const char* argv[]) {
         std::vector<util::geo::traj_step> traj;
         rct::algorithm::search_trajectory(0, 0, 200, m_rct_index, traj);
 
-        util::geo::region region{util::geo::point{10, 100}, util::geo::point{20, 200}};
-        std::vector<uint32_t >  results;
-        rct::algorithm::time_interval(region, 100, 1000, m_rct_index, results);
+        util::geo::region region{util::geo::point{890, 273100}, util::geo::point{900,273200}};
+        //util::geo::region region{util::geo::point{10, 100}, util::geo::point{20, 200}};
         //rct::algorithm::time_interval()
 
         for(const auto &step : traj){
             std::cout << "t:" << step.t << " x:" << step.x << " y:" << step.y << std::endl;
+        }
+
+        std::vector<uint32_t >  results;
+        rct::algorithm::time_interval(region, 100, 1000, m_rct_index, results);
+        for(const auto &a : results){
+            std::cout << "id: " << a << std::endl;
         }
     }
 

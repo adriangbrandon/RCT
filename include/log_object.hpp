@@ -190,16 +190,7 @@ namespace rct {
 
             //2. Compute the disappearances
             auto last_t = m_time_start;
-            size_type disap_i = 0;
-            /*sdsl::bit_vector aux_disap(trajectory.back().t - m_time_start + 1, 0);
-            for (size_type i = 1; i < trajectory.size(); ++i) {
-                const auto &info = trajectory[i];
-                for (auto t = last_t + 1; t < info.t; ++t) {
-                    aux_disap[disap_i++] = 1;
-                }
-                last_t = info.t;
-                disap_i++; //set to zero
-            }*/
+            size_type disap_i = 1;
             sdsl::bit_vector aux_disap(trajectory.back().t - m_time_start + 1, 0);
             for (size_type i = 1; i < trajectory.size(); ++i) {
                 const auto &info = trajectory[i];
@@ -207,15 +198,11 @@ namespace rct {
                     aux_disap[disap_i++] = 1;
                 }
                 last_t = info.t;
-                disap_i++; //set to zero
+                ++disap_i; //set to zero
             }
             m_disap = disap_type(aux_disap);
             sdsl::util::init_support(m_rank_disap, &m_disap);
             sdsl::util::init_support(m_succ_0_disap, &m_disap);
-
-
-            //3.1 Prepare the arrays of offsets, x and y
-
 
             //3.2 Set offset, length, x and y
             {
@@ -297,26 +284,26 @@ namespace rct {
         }
 
         inline size_type time_end() const {
-            return m_time_start + m_disap.size();
+            return m_time_start + m_disap.size()-1;
         }
 
         inline size_type time_next(const size_type t) const{
-            //t-time_start points to the next position in disap
-            return m_time_start + m_succ_0_disap(t - m_time_start) + 1;
+            return m_time_start + m_succ_0_disap(t - m_time_start+1);
         }
 
         inline bool time_to_movement(const size_type t_q, size_type &movement_q) const {
-            auto idx = t_q - m_time_start - 1;
+            auto idx = t_q - m_time_start;
             if(m_disap[idx]) return false; //Disappeared
-            movement_q = idx - m_rank_disap(idx+1) + 1;//index in length
+            movement_q = idx - m_rank_disap(idx);//index in length
+            //idx-1-rank(idx-1+1)+1
             return true;
         }
 
         inline void time_to_movement(const size_type t_i, const size_type t_j, size_type &movement_i, size_type &movement_j) const{
-            auto i = t_i - m_time_start - 1;
-            auto j = t_j - m_time_start - 1;
-            movement_i = i - m_rank_disap(i+1)+1;//index in length
-            movement_j = j - m_rank_disap(j+1)+1;//index in length
+            auto i = t_i - m_time_start;
+            auto j = t_j - m_time_start;
+            movement_i = i - m_rank_disap(i); //count
+            movement_j = j - m_rank_disap(j); //count
         }
 
         inline size_type start_movement(const size_type phrase) const {
@@ -333,14 +320,15 @@ namespace rct {
                                      size_type &ic_phrase_l, size_type &delta_phrase_l,
                                      size_type &ic_phrase_r, size_type &delta_phrase_r) const {
 
-            ic_phrase_l = m_rank_lengths(movement_i+1);
+           // print_length_vector();
+            ic_phrase_l = m_rank_lengths(movement_i);
             delta_phrase_l = movement_i - start_movement(ic_phrase_l);
             if(!delta_phrase_l){
                 c_phrase_i = ic_phrase_l;
             }else{
                 c_phrase_i = ic_phrase_l+1;
             }
-            ic_phrase_r = m_rank_lengths(movement_j+1);
+            ic_phrase_r = m_rank_lengths(movement_j);
             delta_phrase_r = last_movement(ic_phrase_r) - movement_j;
             if(!delta_phrase_r){
                 c_phrase_j = ic_phrase_r;
@@ -394,10 +382,10 @@ namespace rct {
 
         //Pre: t_i > m_time_start && t_j <= m_time_end
         inline size_type interval_ref(const size_type movement_i, size_type &idx_beg, size_type &idx_end,
-                size_type &phrase_end, util::geo::movement &r) const {
+                size_type &next_phrase_beg, util::geo::movement &r) const {
 
             auto phrase = m_rank_lengths(movement_i);
-            phrase_end = m_select_lengths(phrase+1);
+            next_phrase_beg = m_select_lengths(phrase+1);
             idx_beg = m_offsets[phrase-1];
             idx_end = (movement_i - m_select_lengths(phrase)) + idx_beg;
             r = util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase-1]),
@@ -405,9 +393,9 @@ namespace rct {
             return phrase;
         }
 
-        inline void next_phrase(size_type &phrase, size_type &idx_beg, size_type &phrase_end) const {
+        inline void next_phrase(size_type &phrase, size_type &idx_beg, size_type &next_phrase_beg) const {
             ++phrase;
-            phrase_end = m_select_lengths(phrase+1);
+            next_phrase_beg = m_select_lengths(phrase+1);
             idx_beg = m_offsets[phrase-1];
         }
 
@@ -658,6 +646,17 @@ namespace rct {
                 std::cout << v << ", ";
             }
             std::cout << std::endl;
+        }
+
+        void print_length_vector() const {
+            size_type  i = 0, one = 1;
+            for(const auto &v : m_lengths){
+                if(v == 1) {
+                    std::cout << "one [" << one << "] at position: " << i << std::endl;
+                    ++one;
+                }
+                ++i;
+            }
         }
     };
 
