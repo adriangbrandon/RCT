@@ -205,6 +205,7 @@ namespace rct {
     using rlz_csa_sada_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_sada_int<> >;
     using rlz_csa_sada_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::csa_sada_int<> >;
     using rlz_csa_bc_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
+    using rlz_csa_bc_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
 
 }
 
