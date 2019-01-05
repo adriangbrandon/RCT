@@ -37,8 +37,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rct_index.hpp>
 #include <rct_algorithm.hpp>
 #include <vector>
+#include <spiral_matrix_coder.hpp>
 
 int main(int argc, const char* argv[]) {
+
+    /*auto number = rct::spiral_matrix_coder::encode(404, -33497);
+    auto pair = rct::spiral_matrix_coder::decode(number);
+    std::cout << number << std::endl;
+    std::cout << pair.first << ", " << pair.second << std::endl;
+    exit(9);*/
 
     if(argc == 4){
         uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
@@ -60,9 +67,19 @@ int main(int argc, const char* argv[]) {
         std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
         util::geo::point r;
-        /*while(in){
+        /*
+         * Error looking for: id=134 t=16678
+         * Expected: 404, 248994
+         * Obtained: 6950, 276802
+         */
+
+
+
+        rct::algorithm::search_object(134, 10972, m_rct_index, r);
+        rct::algorithm::search_object(134, 16678, m_rct_index, r);
+        while(in){
             in >> id >> t >> x >> y;
-            if(in.eof() || id > 99) break;
+            if(in.eof()) break;
             rct::algorithm::search_object(id, t, m_rct_index, r);
             std::cout << "Obtained: " << r.x << ", " << r.y << std::endl;
             if(r.x != x || r.y != y){
@@ -72,7 +89,7 @@ int main(int argc, const char* argv[]) {
                 exit(0);
             }
         }
-        in.close();*/
+        in.close();
 
 
         std::cout << "Search trajectory id=0 t_i=0 t_j=200: " << std::endl;

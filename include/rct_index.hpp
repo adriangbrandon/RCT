@@ -19,7 +19,7 @@
 namespace rct {
 
     template <uint64_t k = 2, class t_log_reference = log_reference<>, class t_log_object = log_object<>,
-            class t_rlz = rlz_csa_sada_int >
+            class t_rlz = rlz_csa_sada_int64 >
     class rct_index {
 
     public:
@@ -132,7 +132,7 @@ namespace rct {
 
             std::ifstream in(dataset_file);
             std::ofstream factors_log("factors.log");
-            std::vector<uint32_t> input_reference;
+            std::vector<uint64_t> input_reference;
             uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, old_x = 0, y, old_y = 0;
             size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             std::vector<k2_tree_representation_lite<k> > trees(n_snapshots, k2_tree_representation_lite<k>(m_level_max));
@@ -183,7 +183,7 @@ namespace rct {
 
             id = 0, old_id = (uint32_t) -1, old_x = 0, old_y = 0;
             in.open(dataset_file);
-            std::vector<uint32_t> movements;
+            std::vector<uint64_t> movements;
             std::vector<util::geo::traj_step> trajectory;
 
             auto start = util::time::user::now();

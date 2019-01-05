@@ -400,6 +400,7 @@ namespace rct {
                                       util::geo::movement &r) const {
 
             auto phrase = m_rank_lengths(movement_q);
+            std::cout << "movement: " <<  movement_q << " last_phrase: " << m_select_lengths(phrase) << std::endl;
             idx_beg = m_offsets[phrase-1];
             idx_end = (movement_q - m_select_lengths(phrase)) + idx_beg;
             r = util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase-1]),
