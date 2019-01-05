@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define GEO_UTIL_HPP
 
 #include <cstdint>
+#include <iostream>
 
 namespace util {
 
@@ -66,6 +67,17 @@ namespace util {
             uint32_t x;
             uint32_t y;
         };
+
+
+        std::ostream& operator<<(std::ostream& os, const point& pr)
+        {
+            return os << "(" << pr.x << ", " << pr.y << ")";
+        }
+
+        std::ostream& operator<<(std::ostream& os, const region& pr)
+        {
+            return os << "[" << pr.min << ", " << pr.max << "]";
+        }
 
         inline bool contains(const region &r_q, const point &p){
             return (r_q.min.x <= p.x && p.x <= r_q.max.x && r_q.min.y <= p.y && p.y <= r_q.max.y);

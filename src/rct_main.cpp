@@ -60,7 +60,7 @@ int main(int argc, const char* argv[]) {
         std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
         util::geo::point r;
-        while(in){
+        /*while(in){
             in >> id >> t >> x >> y;
             if(in.eof() || id > 99) break;
             rct::algorithm::search_object(id, t, m_rct_index, r);
@@ -72,7 +72,7 @@ int main(int argc, const char* argv[]) {
                 exit(0);
             }
         }
-        in.close();
+        in.close();*/
 
 
         std::cout << "Search trajectory id=0 t_i=0 t_j=200: " << std::endl;

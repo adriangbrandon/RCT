@@ -163,11 +163,6 @@ int main(int argc, const char* argv[]) {
         std::cout << sdsl::size_in_bytes(m_runs) << std::endl;
         std::cout << sdsl::size_in_bytes(m_oz) << std::endl;*/
 
-        diff = 0;
-        for(const auto &log : m_rct_index.log_objects){
-            diff += log.size_element(log.info);
-        }
-        std::cout << "Size Runs Bitvector: " << diff << std::endl;
     }
 
 }

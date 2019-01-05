@@ -46,6 +46,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "geo_util.hpp"
 #include <runs_bitvector.hpp>
 
+#define VERBOSE 1
+
 namespace rct {
 
     template <class t_offsets = sdsl::dac_vector_dp<sdsl::bit_vector>,
@@ -343,27 +345,52 @@ namespace rct {
             if(phrase_i > phrase_j) return false;
             std::queue<std::pair<size_type, size_type>> queue_index;
             queue_index.push({phrase_i, phrase_j});
+#if VERBOSE
+    std::cout << "Push: <" << phrase_i << ", " << phrase_j << ">" << std::endl;
+#endif
             while(!queue_index.empty()){
                 const auto pair = queue_index.front();
                 queue_index.pop();
+#if VERBOSE
+                std::cout << "Processing: <" << pair.first << ", " << pair.second << ">" << std::endl;
+#endif
                 if(pair.first < pair.second){
                     auto mbr_region = MBR(pair.first, pair.second);
+#if VERBOSE
+                    std::cout << "Region: " << mbr_region << std::endl;
+#endif
                     if(util::geo::contains(r, mbr_region)){
+#if VERBOSE
+                        std::cout << "Contains region "<< std::endl;
+#endif
                         return true;
                     }
                     if(util::geo::touches(r, mbr_region)){
-                        auto mid = (phrase_j - phrase_i) / 2;
-                        queue_index.push({phrase_i, mid});
-                        queue_index.push({mid+1, phrase_j});
+                        auto mid = (pair.second - pair.first) / 2 + pair.first;
+                        queue_index.push({pair.first, mid});
+                        queue_index.push({mid+1, pair.second});
+#if VERBOSE
+                        std::cout << "Push: <" << pair.first << ", " << mid << ">" << std::endl;
+                        std::cout << "Push: <" << mid+1 << ", " << pair.second << ">" << std::endl;
+#endif
                     }
                 }else{
                     auto mbr_region = MBR(pair.first);
                     if(util::geo::contains(r, mbr_region)){
+#if VERBOSE
+                        std::cout << "Contains region " << mbr_region << std::endl;
+#endif
                         return true;
                     }
                     phrases_to_check.push_back(pair.first);
+#if VERBOSE
+                    std::cout << "Phrases to check: " << pair.first << std::endl;
+#endif
                 }
             }
+#if VERBOSE
+            std::cout << "Doesn't contain region " << std::endl;
+#endif
             return false;
 
         }

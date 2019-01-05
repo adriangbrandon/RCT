@@ -216,30 +216,33 @@ namespace rct {
                 if(processed_ids.count(oid) == 0){
                     auto t_end = std::min(t_j, rctIndex.log_objects[oid].time_end());
                     auto traj_step = rctIndex.log_objects[oid].start_traj_step();
-                    if(t_j >= traj_step.t) {
-                        if(t_i <= traj_step.t){
+                    if(t_beg >= traj_step.t) {
+                        if(t_beg <= traj_step.t){
                             if(util::geo::contains(region_q, util::geo::point{traj_step.x, traj_step.y})){
                                 r.push_back(oid);
                                 processed_ids[oid]=1;
                                 return;
                             };
+                            t_beg = traj_step.t +1;
                         }
-                        t_beg = std::max(t_beg, traj_step.t+1);
-                        rctIndex.log_objects[oid].time_to_movement(t_beg, t_end, movement_i, movement_j);
-                        if (movement_i <= movement_j) {
-                            rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
-                                                                       ic_phrase_l, delta_phrase_l,
-                                                                       ic_phrase_r, delta_phrase_r);
-                            std::vector<typename RCTIndex::size_type> phrases_to_check;
-                            if (!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q,
-                                                                           phrases_to_check)) {
-                                time_interval_reference(oid, region_q, movement_i, movement_j, phrases_to_check,
-                                                        ic_phrase_l, delta_phrase_l,
-                                                        ic_phrase_r, delta_phrase_r, rctIndex, r);
-                            } else {
-                                r.push_back(oid);
+                        if(t_beg <= t_end){
+                            rctIndex.log_objects[oid].time_to_movement(t_beg, t_end, movement_i, movement_j);
+                            if (movement_i <= movement_j) {
+                                rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
+                                                                           ic_phrase_l, delta_phrase_l,
+                                                                           ic_phrase_r, delta_phrase_r);
+                                std::vector<typename RCTIndex::size_type> phrases_to_check;
+                                if (!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q,
+                                                                               phrases_to_check)) {
+                                    time_interval_reference(oid, region_q, movement_i, movement_j, phrases_to_check,
+                                                            ic_phrase_l, delta_phrase_l,
+                                                            ic_phrase_r, delta_phrase_r, rctIndex, r);
+                                } else {
+                                    r.push_back(oid);
+                                }
                             }
                         }
+
                     }
                     processed_ids[oid]=1;
                 }
