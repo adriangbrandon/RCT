@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -82,3 +82,6 @@ target_link_libraries(runs_bitvector_test sdsl divsufsort divsufsort64)
 
 add_executable(cut_dataset src/cut_dataset.cpp)
 target_link_libraries(cut_dataset sdsl divsufsort divsufsort64)
+
+add_executable(rct_test src/rct_test.cpp)
+target_link_libraries(rct_test sdsl divsufsort divsufsort64)

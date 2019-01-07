@@ -287,6 +287,27 @@ namespace rct {
             m_size = c.size();
             m_sample = best_sample_dp(c, best_sampling, best_start, best_end, length_result);
 
+           /* size_type index = 0;
+            std::cout << std::endl << "Sampling: " << std::endl;
+            for(const auto &v : best_sampling){
+                std::cout << "i: " << index << " value: " << (size_type) v << std::endl;
+                ++index;
+            }
+
+            index =0;
+            std::cout << std::endl << "Start: " << std::endl;
+            for(const auto &v : best_start){
+                std::cout << "i: " << index << " value: " << (size_type) v << std::endl;
+                ++index;
+            }
+
+            index =0;
+            std::cout << std::endl << "End: " << std::endl;
+            for(const auto &v : best_end){
+                std::cout << "i: " << index << " value: " << (size_type) v << std::endl;
+                ++index;
+            }*/
+
             std::vector<size_type> pos, offsets;
             m_sampling.resize(best_sampling.size());
             for(size_type i = 0; i < best_sampling.size(); ++i){
@@ -592,17 +613,17 @@ namespace rct {
         void set_vector(const bit_vector_type* v=nullptr)
         {
             m_v = v;
+            m_succ_sampling.set_vector(&(m_v->sampling));
+            m_succ_values.set_vector(&(m_v->values));
         }
 
         succ_support_runs_bitvector& operator=(const succ_support_runs_bitvector& ss)
         {
             if (this != &ss) {
-                set_vector(ss.m_v);
                 m_succ_sampling = ss.m_succ_sampling;
-                m_succ_sampling.set_vector(&m_v->sampling);
                 m_succ_values = ss.m_succ_values;
-                m_succ_values.set_vector(&m_v->values);
                 m_delta_next_0 = ss.m_delta_next_0;
+                set_vector(ss.m_v);
             }
             return *this;
         }
@@ -610,12 +631,10 @@ namespace rct {
         succ_support_runs_bitvector& operator=(succ_support_runs_bitvector&& ss)
         {
             if (this != &ss) {
-                set_vector(ss.m_v);
                 m_succ_sampling = std::move(ss.m_succ_sampling);
-                m_succ_sampling.set_vector(&m_v->sampling);
                 m_succ_values = std::move(ss.m_succ_values);
-                m_succ_values.set_vector(&m_v->values);
                 m_delta_next_0 = std::move(ss.m_delta_next_0);
+                set_vector(ss.m_v);
             }
             return *this;
         }
@@ -624,14 +643,14 @@ namespace rct {
             if (this != &ss) {
                 std::swap(m_v, ss.m_v);
                 m_succ_sampling.swap(ss.m_succ_sampling);
-                m_succ_values.swap(ss.m_succ_sampling);
+                m_succ_values.swap(ss.m_succ_values);
                 if(m_v != nullptr){
-                    m_succ_sampling.set_vector(&m_v->sampling);
-                    m_succ_values.set_vector(&m_v->values);
+                    m_succ_sampling.set_vector(&(m_v->sampling));
+                    m_succ_values.set_vector(&(m_v->values));
                 }
                 if(ss.m_v != nullptr){
-                    ss.m_succ_sampling.set_vector(&ss.m_v->sampling);
-                    ss.m_succ_values.set_vector(&ss.m_v->values);
+                    ss.m_succ_sampling.set_vector(&(ss.m_v->sampling));
+                    ss.m_succ_values.set_vector(&(ss.m_v->values));
                 }
                 m_delta_next_0.swap(ss.m_delta_next_0);
             }
@@ -639,9 +658,9 @@ namespace rct {
 
         void load(std::istream& in, const bit_vector_type* v=nullptr)
         {
-            set_vector(v);
-            m_succ_sampling.load(in, &m_v->sampling);
-            m_succ_values.load(in, &m_v->values);
+            m_v = v;
+            m_succ_sampling.load(in, &(m_v->sampling));
+            m_succ_values.load(in, &(m_v->values));
             m_delta_next_0.load(in);
         }
 
@@ -681,8 +700,8 @@ namespace rct {
                 }
             }
         }
-        sdsl::util::init_support(m_succ_sampling, &m_v->sampling);
-        sdsl::util::init_support(m_succ_values, &m_v->values);
+        sdsl::util::init_support(m_succ_sampling, &(m_v->sampling));
+        sdsl::util::init_support(m_succ_values, &(m_v->values));
     }
 
     template<>
@@ -714,7 +733,7 @@ namespace rct {
             ++i;
         }
         sdsl::util::bit_compress(m_delta_next_0);
-        sdsl::util::init_support(m_succ_values, &m_v->values);
+        sdsl::util::init_support(m_succ_values, &(m_v->values));
     }
 
     //! Returns the position of the i-th occurrence in the bit vector.
@@ -771,25 +790,34 @@ namespace rct {
                 return beg + length;
             }
             if(next_0_value > m_v->values.size()) return m_v->size();
-            if(next_0_value < next_pos){
-                return beg + (next_0_value - pos);
-            }else {
-                auto delta = m_delta_next_0[ones-1];
-                if(delta == 0) return m_v->size();
-                auto new_index = sample_index + delta;
-                if (!m_v->sampling[new_index]) return new_index * m_v->sample;
-                auto offset = m_v->offset[ones + delta - 1];
+            auto delta = m_delta_next_0[ones-1];
+            if(delta == 0) return m_v->size();
+            auto new_index = sample_index + delta;
+            if (!m_v->sampling[new_index]) return new_index * m_v->sample;
+            auto offset = m_v->offset[ones + delta - 1];
+            if(offset > 0){
+                return new_index * m_v->sample;
+            }else{
                 pos = m_v->pos[ones + delta - 1];
                 next_pos = m_v->pos[ones + delta];
                 beg = new_index * m_v->sample + offset;
-                if (pos <= next_0_value && next_0_value < next_pos) {
-                    return (next_0_value - pos) + beg;
-                } else if (next_0_value < pos) {
-                    return beg;
-                } else {
+                if(next_0_value < next_pos){
+                    return beg + (next_0_value - pos);
+                }else{
                     return beg + (next_pos - pos);
                 }
             }
+            /*pos = m_v->pos[ones + delta - 1];
+            next_pos = m_v->pos[ones + delta];
+            beg = new_index * m_v->sample + offset;
+            if (pos <= next_0_value && next_0_value < next_pos) {
+                return (next_0_value - pos) + beg;
+            } else if (next_0_value < pos) {
+                return beg;
+            } else {
+                return beg + (next_pos - pos);
+            }*/
+
         }
     }
 

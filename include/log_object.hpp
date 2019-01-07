@@ -304,8 +304,8 @@ namespace rct {
         inline void time_to_movement(const size_type t_i, const size_type t_j, size_type &movement_i, size_type &movement_j) const{
             auto i = t_i - m_time_start;
             auto j = t_j - m_time_start;
-            movement_i = i - m_rank_disap(i); //count
-            movement_j = j - m_rank_disap(j); //count
+            movement_i = i - m_rank_disap(i+1); //count
+            movement_j = j - m_rank_disap(j+1); //count
         }
 
         inline size_type start_movement(const size_type phrase) const {
@@ -400,7 +400,6 @@ namespace rct {
                                       util::geo::movement &r) const {
 
             auto phrase = m_rank_lengths(movement_q);
-            std::cout << "movement: " <<  movement_q << " last_phrase: " << m_select_lengths(phrase) << std::endl;
             idx_beg = m_offsets[phrase-1];
             idx_end = (movement_q - m_select_lengths(phrase)) + idx_beg;
             r = util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase-1]),

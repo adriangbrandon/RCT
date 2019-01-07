@@ -64,7 +64,10 @@ namespace rct {
 
 
     public:
-        explicit succ_support_v(const sdsl::bit_vector* v = nullptr) {
+
+        succ_support_v(){};
+
+        succ_support_v(const sdsl::bit_vector* v) {
             set_vector(v);
             if (v == nullptr || v->empty()) {
                 m_basic_blocks = sdsl::int_vector<>(1 ,0, 1);
@@ -96,7 +99,6 @@ namespace rct {
             }
             sdsl::util::bit_compress(m_super_blocks);
             sdsl::util::bit_compress(m_basic_blocks);
-
 
         }
 
@@ -133,25 +135,7 @@ namespace rct {
             return (bits >> idx) << idx;
         }
 
-        uint64_t succ(const size_type idx)const {
-            /* assert(m_v != nullptr);
-             assert(idx <= m_v->size());*/
-            const uint64_t* data = m_v->data();
-            uint64_t b_block_idx = (idx >> 6); //basic block index
-            uint64_t d = (t_b) ? data[b_block_idx] : (~data[b_block_idx]);
-            uint64_t b_clear = clear_rev(d, (idx & 63));
-            if(b_clear) {//if there are 1s
-                long rmb = sdsl::bits::lo(b_clear); //left most bit
-                return (b_block_idx << 6) + rmb;
-            }else if(b_block_idx == m_basic_blocks.size()-1){
-                return m_v->size();
-            }else if(m_basic_blocks[b_block_idx] < 64*64){
-                return (b_block_idx+1)*64-1 + m_basic_blocks[b_block_idx];
-            }else{
-                uint64_t s_block_idx = (idx >> 12);
-                return m_super_blocks[s_block_idx];
-            }
-        }
+        uint64_t succ(const size_type idx) const;
 
 
 
@@ -191,6 +175,48 @@ namespace rct {
             m_super_blocks.load(in);
         }
     };
+
+     template <uint8_t t_b>
+     uint64_t succ_support_v<t_b>::succ(const size_type idx)const {
+        /* assert(m_v != nullptr);
+         assert(idx <= m_v->size());*/
+        const uint64_t* data = m_v->data();
+        uint64_t b_block_idx = (idx >> 6); //basic block index
+        uint64_t d = data[b_block_idx];
+        uint64_t b_clear = clear_rev(d, (idx & 63));
+        if(b_clear) {//if there are 1s
+            long rmb = sdsl::bits::lo(b_clear); //left most bit
+            return (b_block_idx << 6) + rmb;
+        }else if(b_block_idx == m_basic_blocks.size()-1){
+            return m_v->size();
+        }else if(m_basic_blocks[b_block_idx] < 64*64){
+            return (b_block_idx+1)*64-1 + m_basic_blocks[b_block_idx];
+        }else{
+            uint64_t s_block_idx = (idx >> 12);
+            return m_super_blocks[s_block_idx];
+        }
+    }
+
+    template <>
+    uint64_t succ_support_v<0>::succ(const size_type idx)const {
+        /* assert(m_v != nullptr);
+         assert(idx <= m_v->size());*/
+        const uint64_t* data = m_v->data();
+        uint64_t b_block_idx = (idx >> 6); //basic block index
+        uint64_t d = ~data[b_block_idx];
+        uint64_t b_clear = clear_rev(d, (idx & 63));
+        if(b_clear) {//if there are 1s
+            long rmb = sdsl::bits::lo(b_clear); //left most bit
+            return (b_block_idx << 6) + rmb;
+        }else if(b_block_idx == m_basic_blocks.size()-1){
+            return m_v->size();
+        }else if(m_basic_blocks[b_block_idx] < 64*64){
+            return (b_block_idx+1)*64-1 + m_basic_blocks[b_block_idx];
+        }else{
+            uint64_t s_block_idx = (idx >> 12);
+            return m_super_blocks[s_block_idx];
+        }
+    }
 }
 
 #endif //RCT_SUCC_SUPPORT_V_HPP

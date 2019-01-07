@@ -61,10 +61,20 @@ int main(int argc, const char* argv[]) {
             std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".html");
             sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
             sdsl::store_to_file(m_rct_index, index_file);
+            std::vector<util::geo::traj_step> results;
+            rct::algorithm::search_trajectory(0, 2427, 4597, m_rct_index, results);
+            std::cout << "Search Trajectory 1" << std::endl;
         }
+
         std::cout << "Loading index" << std::endl;
         rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
         sdsl::load_from_file(m_rct_index, index_file);
+
+        std::vector<util::geo::traj_step> results;
+        rct::algorithm::search_trajectory(0, 2427, 4597, m_rct_index, results);
+        std::cout << "Search Trajectory 2" << std::endl;
+
+        exit(0);
 
 
         std::ifstream in(argv[1]);
@@ -78,7 +88,7 @@ int main(int argc, const char* argv[]) {
 
 
 
-       /* rct::algorithm::search_object(134, 10972, m_rct_index, r);
+        rct::algorithm::search_object(134, 10972, m_rct_index, r);
         rct::algorithm::search_object(134, 16678, m_rct_index, r);
         while(in){
             in >> id >> t >> x >> y;
@@ -107,7 +117,7 @@ int main(int argc, const char* argv[]) {
             std::cout << "t:" << step.t << " x:" << step.x << " y:" << step.y << std::endl;
         }
 
-        std::vector<uint32_t >  results;
+       /* std::vector<uint32_t >  results;
         rct::algorithm::time_interval(region, 100, 1000, m_rct_index, results);
         for(const auto &a : results){
             std::cout << "id: " << a << std::endl;

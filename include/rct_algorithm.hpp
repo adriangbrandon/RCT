@@ -169,31 +169,38 @@ namespace rct {
                     phrase_start = 0, next_phrase_beg = 0, x_p_prev, x_n_prev, y_p_prev, y_n_prev, phrase;
             uint32_t t = 0;
             util::geo::movement movement_phrase, movement;
-            rctIndex.log_objects[oid].time_to_movement(t_temp_i, t_temp_j, movement_i, movement_j);
-            if(movement_i <= movement_j){
-                t = rctIndex.log_objects[oid].time_next(t_temp_i-1);
-                phrase = rctIndex.log_objects[oid].interval_ref(movement_i, idx_beg, idx_end,
-                                                                next_phrase_beg, movement_phrase);
-                movement = rctIndex.log_reference.compute_movement_init(idx_beg, idx_end, x_p_prev, x_n_prev,
-                                                                        y_p_prev, y_n_prev);
-                r.emplace_back(util::geo::traj_step{t, traj_step.x + movement_phrase.x + movement.x,
-                                                    traj_step.y + movement_phrase.y + movement.y});
-            }
-            auto prev = idx_end-1;
-            while (movement_i < movement_j) {
-                ++movement_i;
-                ++prev;
-                t = rctIndex.log_objects[oid].time_next(t);
-                if (next_phrase_beg < movement_i) { //next_phrase_beg is index, and movement_i count
-                    rctIndex.log_objects[oid].next_phrase(phrase, prev, next_phrase_beg);
-                    movement = rctIndex.log_reference.compute_movement_init_next(prev, x_p_prev,
-                                                                                 x_n_prev, y_p_prev, y_n_prev);
-                } else {
-                    movement = rctIndex.log_reference.compute_movement_next(prev, x_p_prev,
-                                                                            x_n_prev, y_p_prev, y_n_prev);
+            if(t_temp_i <= t_temp_j){
+                rctIndex.log_objects[oid].time_to_movement(t_temp_i, t_temp_j, movement_i, movement_j);
+                if(movement_i <= movement_j){
+                    t = rctIndex.log_objects[oid].time_next(t_temp_i-1);
+                    phrase = rctIndex.log_objects[oid].interval_ref(movement_i, idx_beg, idx_end,
+                                                                    next_phrase_beg, movement_phrase);
+                    movement = rctIndex.log_reference.compute_movement_init(idx_beg, idx_end, x_p_prev, x_n_prev,
+                                                                            y_p_prev, y_n_prev);
+                    r.emplace_back(util::geo::traj_step{t, traj_step.x + movement_phrase.x + movement.x,
+                                                        traj_step.y + movement_phrase.y + movement.y});
+                    ++movement_i; //next movement
                 }
-                r.emplace_back(util::geo::traj_step{t, r.back().x + movement.x, r.back().y + movement.y});
+                std::cout << "size: " << movement_j - movement_i << std::endl;
+                auto prev = idx_end;
+                while (movement_i <= movement_j) {
+                    t = rctIndex.log_objects[oid].time_next(t);
+                    if (next_phrase_beg < movement_i) { //next_phrase_beg is index, and movement_i count
+                        rctIndex.log_objects[oid].next_phrase(phrase, prev, next_phrase_beg);
+                        movement = rctIndex.log_reference.compute_movement_init_next(prev, x_p_prev,
+                                                                                     x_n_prev, y_p_prev, y_n_prev);
+                    } else {
+                        movement = rctIndex.log_reference.compute_movement_next(prev, x_p_prev,
+                                                                                x_n_prev, y_p_prev, y_n_prev);
+                    }
+                    r.emplace_back(util::geo::traj_step{t, r.back().x + movement.x, r.back().y + movement.y});
+                    ++movement_i;
+                    ++prev;
+                }
             }
+            std::cout << "last_t: " << t << std::endl;
+            /*t = rctIndex.log_objects[oid].time_next(t);
+            std::cout << "next_t " << t << std::endl;*/
 
         }
 
