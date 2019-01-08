@@ -485,12 +485,19 @@ namespace rct {
         size_type rank(size_type i)const
         {
             assert(i >= 0); assert(i <= m_v->size());
-            auto ones = m_v->rank_sampling(i/m_v->sample + 1);
+            //auto ones = m_v->rank_sampling(i/m_v->sample + 1);
             size_type r;
+            if(i == m_v->size()){
+                r = m_v->rank_values(m_v->values.size());
+                return rank_support_runs_bitvector_trait<t_b>::adjust_rank(r, i);
+            }
+            auto ones = m_v->rank_sampling(i/m_v->sample+1);
+            //sampling[i] = 0
             if(!m_v->sampling[i/m_v->sample]){
                 r = m_v->rank_values(m_v->pos[ones]);
                 return rank_support_runs_bitvector_trait<t_b>::adjust_rank(r, i);
             }
+            //sampling[i] = 1
             auto pos = m_v->pos[ones-1];
             auto length = m_v->pos[ones] - pos;
             auto beg = i/m_v->sample* m_v->sample + m_v->offset[ones-1];
@@ -508,15 +515,19 @@ namespace rct {
         size_type rank(size_type i, next_info_type &next_info)const
         {
             assert(i >= 0); assert(i <= m_v->size());
+            size_type r;
+            if(i == m_v->size()){
+                r = m_v->rank_values(m_v->values.size());
+                return rank_support_runs_bitvector_trait<t_b>::adjust_rank(r, i);
+            }
             auto ones = m_v->rank_sampling(i/m_v->sample + 1);
             auto pos = m_v->pos[ones-1];
             auto beg = i/m_v->sample* m_v->sample + m_v->offset[ones-1];
             auto next_pos = m_v->pos[ones];
             auto length = next_pos - pos;
             next_info = {i/m_v->sample, ones, beg, pos, next_pos, length};
-            size_type r;
             if(!m_v->sampling[i/m_v->sample]){
-                r = m_v->rank_values(m_v->pos[ones]);
+                r = m_v->rank_values(next_pos);
                 return rank_support_runs_bitvector_trait<t_b>::adjust_rank(r, i);
             }
             if(beg > i){
@@ -873,22 +884,20 @@ namespace rct {
                 return beg + length;
             }
             if(next_0_value > m_v->values.size()) return m_v->size();
-            if(next_0_value < next_pos){
-                return beg + (next_0_value - pos);
-            }else {
-                auto delta = m_delta_next_0[ones-1];
-                if(delta == 0) return m_v->size();
-                auto new_index = sample_index + delta;
-                if (!m_v->sampling[new_index]) return new_index * m_v->sample;
-                auto offset = m_v->offset[ones + delta - 1];
+            auto delta = m_delta_next_0[ones-1];
+            if(delta == 0) return m_v->size();
+            auto new_index = sample_index + delta;
+            if (!m_v->sampling[new_index]) return new_index * m_v->sample;
+            auto offset = m_v->offset[ones + delta - 1];
+            if(offset > 0){
+                return new_index * m_v->sample;
+            }else{
                 pos = m_v->pos[ones + delta - 1];
                 next_pos = m_v->pos[ones + delta];
                 beg = new_index * m_v->sample + offset;
-                if (pos <= next_0_value && next_0_value < next_pos) {
-                    return (next_0_value - pos) + beg;
-                } else if (next_0_value < pos) {
-                    return beg;
-                } else {
+                if(next_0_value < next_pos){
+                    return beg + (next_0_value - pos);
+                }else{
                     return beg + (next_pos - pos);
                 }
             }

@@ -39,9 +39,9 @@ int main(int argc, char **argv) {
     rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
     sdsl::load_from_file(m_rct_index, index_file);
 
-   // Id: 28 TStart: 26887 TEnd: 28888
+   // Id: 162 TStart: 11572 TEnd: 13746
     std::vector<util::geo::traj_step> resultados_3;
-    rct::algorithm::search_trajectory(28, 26887, 28888, m_rct_index, resultados_3);
+    rct::algorithm::search_trajectory(162, 11572, 13746, m_rct_index, resultados_3);
 
     struct ids_sort
     {
@@ -53,11 +53,11 @@ int main(int argc, char **argv) {
 
 
     std::vector<std::string> queries_array;
-    queries_array.emplace_back("../queries/traj.txt");
+    //queries_array.emplace_back("../queries/traj.txt");
     /*queries_array.push_back("ts_s.txt");
-    queries_array.push_back("ts_l.txt");
-    queries_array.push_back("ti_s.txt");
-    queries_array.push_back("ti_l.txt");*/
+    queries_array.push_back("ts_l.txt");*/
+    queries_array.emplace_back("../queries/ti_s.txt");
+   // queries_array.push_back("ti_l.txt");
 
     /*Consulta MBR: oid: 313 tStart: 37566 tEnd:41408
 It exists */

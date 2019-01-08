@@ -230,11 +230,11 @@ namespace rct {
                                 processed_ids[oid]=1;
                                 return;
                             };
-                            t_beg = traj_step.t +1;
+                            t_beg = traj_step.t+1;
                         }
                         if(t_beg <= t_end){
                             rctIndex.log_objects[oid].time_to_movement(t_beg, t_end, movement_i, movement_j);
-                            if (movement_i <= movement_j) {
+                            if (movement_i > 0 && movement_i <= movement_j) {
                                 rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
                                                                            ic_phrase_l, delta_phrase_l,
                                                                            ic_phrase_r, delta_phrase_r);
