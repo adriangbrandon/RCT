@@ -46,7 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "geo_util.hpp"
 #include <runs_bitvector.hpp>
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 namespace rct {
 
@@ -281,6 +281,11 @@ namespace rct {
             return util::geo::traj_step{m_time_start, m_x_start, m_y_start};
         };
 
+        inline util::geo::point phrase_point(const size_type phrase) const {
+            return util::geo::point{(uint32_t) (alternative_code::decode(x_values[phrase-1]) + m_x_start),
+                                    (uint32_t) (alternative_code::decode(y_values[phrase-1]) + m_y_start)};
+        };
+
         inline size_type time_start() const {
             return m_time_start;
         }
@@ -304,16 +309,17 @@ namespace rct {
         inline void time_to_movement(const size_type t_i, const size_type t_j, size_type &movement_i, size_type &movement_j) const{
             auto i = t_i - m_time_start;
             auto j = t_j - m_time_start;
-            movement_i = i - m_rank_disap(i+1); //count
+           // movement_i = i - m_rank_disap(i+1); //count
+            movement_i = (i-1) - m_rank_disap(i)+1; //count
             movement_j = j - m_rank_disap(j+1); //count
         }
 
         inline size_type start_movement(const size_type phrase) const {
-            return m_select_lengths(phrase);
+            return m_select_lengths(phrase)+1;
         }
 
         inline size_type last_movement(const size_type phrase) const {
-            return m_select_lengths(phrase+1)-1;
+            return m_select_lengths(phrase+1);
         }
 
 

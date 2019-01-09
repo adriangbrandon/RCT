@@ -320,7 +320,7 @@ namespace rct {
 
         };
 
-        util::geo::movement compute_movement_next(const size_type j, size_type &x_p_prev,
+        util::geo::movement compute_movement_next(size_type &x_p_prev,
                                                   size_type &x_n_prev, size_type &y_p_prev, size_type &y_n_prev) const {
 
             auto x_p = m_succ_x_p(x_p_prev+1);
@@ -346,11 +346,25 @@ namespace rct {
             return m_select_y_p(i) - m_select_y_n(i);
         }
 
+
         util::geo::movement compute_movement_deltas(const size_type i, const int32_t delta_x, const int32_t delta_y) const {
 
             if(!i) return util::geo::movement{0, 0};
             auto inc_x = (int32_t) (m_select_x_p(i) - m_select_x_n(i) - delta_x);
             auto inc_y = (int32_t) (m_select_y_p(i) - m_select_y_n(i) - delta_y);
+            return util::geo::movement{inc_x, inc_y};
+        };
+
+        util::geo::movement compute_movement_deltas(const size_type i, const int32_t delta_x, const int32_t delta_y,
+                size_type &sel_x_p, size_type &sel_x_n, size_type &sel_y_p, size_type &sel_y_n) const {
+
+            if(!i) return util::geo::movement{0, 0};
+            sel_x_p = m_select_x_p(i);
+            sel_x_n = m_select_x_n(i);
+            sel_y_p = m_select_y_p(i);
+            sel_y_n = m_select_y_n(i);
+            auto inc_x = (int32_t) (sel_x_p - sel_x_n - delta_x);
+            auto inc_y = (int32_t) (sel_y_p - sel_y_n - delta_y);
             return util::geo::movement{inc_x, inc_y};
         };
 
@@ -485,8 +499,8 @@ namespace rct {
 
             p_min_x_index = 0, p_max_x_index = 0, p_min_y_index = 0, p_max_y_index = 0;
             //Adding extra 1 caused by the flag bit
-            size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s+1);
-            size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e+2);//move_e + 1 + flag
+            size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s-1);
+            size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e);//move_e + 1 + flag
 
             //2. Computing the minimum at x-axis
             size_type rmq_x_s = _rank_min(rMmq_x_s)+1;  //rank_x(ms)+1 counts the number of samples before
@@ -515,8 +529,8 @@ namespace rct {
 
             if(min_x > r_q.max.x || max_x < r_q.min.x) return false;
 
-            size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s+1);
-            size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e+2);
+            size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s-1);
+            size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e);
 
             //3. Computing the minimum at y-axis
             size_type rmq_y_s = _rank_min(rMmq_y_s)+1;
@@ -574,14 +588,14 @@ namespace rct {
             }
 
             //Check if the local maximum and minimum was computed, during the computation of the parent's MBR
-            if(move_s < p_min_x_index && move_e > p_min_x_index && move_s < p_max_x_index && move_e > p_max_x_index){
+            if(move_s-1 < p_min_x_index && move_e-1 > p_min_x_index && move_s-1 < p_max_x_index && move_e-1 > p_max_x_index){
                 r = parent_region;
             }else{
                 //Adding extra 1 caused by the flag bit
-                size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s+1);
-                size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e+2);//move_e + 1 + flag
+                size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s-1);
+                size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e);//move_e + 1 + flag
                 //2. Computing the minimum at x-axis
-                if(move_s < p_min_x_index && move_e > p_min_x_index){
+                if(move_s-1 < p_min_x_index && move_e-1 > p_min_x_index){
                     r.min.x = parent_region.min.x;
                 }else{
                     size_type rmq_x_s = _rank_min(rMmq_x_s)+1;  //rank_x(ms)+1 counts the number of samples before
@@ -598,7 +612,7 @@ namespace rct {
                     r.min.x = min_x;
                 }
 
-                if(move_s < p_max_x_index && move_e > p_max_x_index){
+                if(move_s-1 < p_max_x_index && move_e-1 > p_max_x_index){
                     r.max.x = parent_region.max.x;
                 }else{
                     //4. Computing the maximum at x-axis
@@ -616,13 +630,13 @@ namespace rct {
             }
             if(r.min.x > r_q.max.x || r.max.x < r_q.min.x) return false;
 
-            if(move_s < p_min_y_index && move_e > p_min_y_index && move_s < p_max_y_index && move_e > p_max_y_index){
+            if(move_s-1 < p_min_y_index && move_e-1 > p_min_y_index && move_s-1 < p_max_y_index && move_e-1 > p_max_y_index){
                 r.min.y = parent_region.min.y;
                 r.max.y = parent_region.max.y;
             }else{
-                size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s+1);
-                size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e+2);//move_e + 1 + flag
-                if(move_s < p_min_y_index && move_e > p_min_y_index){
+                size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s-1);
+                size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e);//move_e + 1 + flag
+                if(move_s-1 < p_min_y_index && move_e-1 > p_min_y_index){
                     r.min.y = parent_region.min.y;
                 }else{
                     //3. Computing the minimum at y-axis
@@ -637,7 +651,7 @@ namespace rct {
                     r.min.y = min_y;
                 }
 
-                if(move_s < p_max_y_index && move_e > p_max_y_index){
+                if(move_s-1 < p_max_y_index && move_e-1 > p_max_y_index){
                     r.max.y = parent_region.max.y;
                 }else{
                     size_type rMq_y_s = _rank_max(rMmq_y_s, m_rMmq_y_sample)+1;
@@ -726,7 +740,7 @@ namespace rct {
                             std::cout << "(leaf) sel_p_x: " << sel_p_x << " sel_n_x: " << sel_n_x << " sel_p_y: " << sel_p_y << " sel_n_y: " << sel_n_y << std::endl;
                                 std::cout << "move_index: " << move_index << std::endl;
 #endif
-                            util::geo::point p_m = compute_movement_next(move_index, sel_p_x, sel_n_x, sel_p_y, sel_n_y);
+                            util::geo::point p_m = compute_movement_next(sel_p_x, sel_n_x, sel_p_y, sel_n_y);
                             p_m.x += x;
                             p_m.y += y;
 #if VERBOSE_AGB
@@ -758,10 +772,11 @@ namespace rct {
                                 const size_type move_s, const size_type move_e, const util::geo::region &r_q) const {
 
             //1. Compute p_s and p_e
+            size_type sel_p_x, sel_n_x, sel_p_y, sel_n_y;
             int32_t delta_x = compute_delta_x(phrase_start);
             int32_t delta_y = compute_delta_y(phrase_start);
 
-            auto m_s = compute_movement_deltas(move_s, delta_x, delta_y);
+            auto m_s = compute_movement_deltas(move_s, delta_x, delta_y, sel_p_x, sel_n_x, sel_p_y, sel_n_y);
             util::geo::point p_s{m_s.x + phrase_x, m_s.y + phrase_y};
             if(util::geo::contains(r_q, p_s)) return true;
 
@@ -773,8 +788,9 @@ namespace rct {
             util::geo::region mbr;
             std::queue<mbr_q_type> mbrs;
             size_type p_min_x_index = 0, p_max_x_index = 0, p_min_y_index = 0, p_max_y_index = 0;
-            size_type sel_p_x, sel_n_x, sel_p_y, sel_n_y;
-            mbrs.push(mbr_q_type{p_s, p_e, util::geo::region(), move_s-1, move_e-1, sel_p_x, sel_n_x, sel_p_y, sel_n_y,
+
+            //TODO: Check -1 because the first position (-1)
+            mbrs.push(mbr_q_type{p_s, p_e, util::geo::region(), move_s, move_e, sel_p_x, sel_n_x, sel_p_y, sel_n_y,
                                  p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index});
             size_type i = 0;
             bool intersects;
@@ -799,9 +815,9 @@ namespace rct {
                     if(util::geo::contains(r_q, mbr)){
                         return true;
                     }
-                    if((q_e.beg - q_e.end) > leaf_width){
-                        size_type move_m_count = (q_e.beg - q_e.end+1) / 2 + q_e.beg + 1; //index -1
-                        util::geo::movement movement = compute_movement_init(q_e.beg, q_e.end, sel_p_x, sel_n_x, sel_p_y, sel_n_y);
+                    if((q_e.end - q_e.beg) > leaf_width){
+                        size_type move_m_count = (q_e.end - q_e.beg) / 2 + q_e.beg; //count
+                        auto movement = compute_movement_deltas(move_m_count, delta_x, delta_y, sel_p_x, sel_n_x, sel_p_y, sel_n_y);
                         util::geo::point p_m {movement.x + phrase_x, movement.y + phrase_y};
 #if VERBOSE_AGB
                         std::cout << "m_index = " << move_m_count << std::endl;
@@ -813,10 +829,10 @@ namespace rct {
 #endif
                             return true;
                         }
-                        mbrs.push(mbr_q_type{q_e.p_s, p_m, mbr, q_e.beg, move_m_count-1,
+                        mbrs.push(mbr_q_type{q_e.p_s, p_m, mbr, q_e.beg, move_m_count,
                                              q_e.sel_p_x, q_e.sel_n_x, q_e.sel_p_y, q_e.sel_n_y,
                                              p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index});
-                        mbrs.push(mbr_q_type{p_m, q_e.p_e, mbr, move_m_count-1, q_e.end, sel_p_x, sel_n_x, sel_p_y,
+                        mbrs.push(mbr_q_type{p_m, q_e.p_e, mbr, move_m_count, q_e.end, sel_p_x, sel_n_x, sel_p_y,
                                              sel_n_y, p_min_x_index, p_max_x_index, p_min_y_index, p_max_y_index});
                     }else{
                         sel_p_x = q_e.sel_p_x;
@@ -825,17 +841,18 @@ namespace rct {
                         sel_n_y = q_e.sel_n_y;
 
                         size_type move_index = q_e.beg+1;
-                        while(move_index < q_e.end){
+                        util::geo::point p_i = q_e.p_s;
+                        while(move_index <= q_e.end){
 #if VERBOSE_AGB
                             std::cout << "(leaf) sel_p_x: " << sel_p_x << " sel_n_x: " << sel_n_x << " sel_p_y: " << sel_p_y << " sel_n_y: " << sel_n_y << std::endl;
                                 std::cout << "move_index: " << move_index << std::endl;
 #endif
-                            util::geo::movement movement = compute_movement_next(move_index, sel_p_x, sel_n_x, sel_p_y, sel_n_y);
-                            util::geo::point p_m {movement.x + phrase_x, movement.y + phrase_y};
+                            util::geo::movement movement = compute_movement_next(sel_p_x, sel_n_x, sel_p_y, sel_n_y);
+                            p_i = util::geo::point{movement.x + p_i.x, movement.y + p_i.y};
 #if VERBOSE_AGB
                             std::cout << "p_m leaf: (" << p_m.m_x << ", " << p_m.m_y << ")" << std::endl;
 #endif
-                            if(util::geo::contains(r_q, p_m)) {
+                            if(util::geo::contains(r_q, p_i)) {
 #if VERBOSE_AGB
                                 std::cout << "the r_q contains p_m leaf" << std::endl;
 #endif

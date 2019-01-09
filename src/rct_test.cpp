@@ -40,8 +40,22 @@ int main(int argc, char **argv) {
     sdsl::load_from_file(m_rct_index, index_file);
 
    // Id: 162 TStart: 11572 TEnd: 13746
-    std::vector<util::geo::traj_step> resultados_3;
-    rct::algorithm::search_trajectory(162, 11572, 13746, m_rct_index, resultados_3);
+   /* std::vector<util::geo::traj_step> resultados_3;
+    rct::algorithm::search_trajectory(162, 11572, 13746, m_rct_index, resultados_3);*/
+
+    /* Consulta FAIL: tStart: 37982 tEnd:38782 minX:1383 maxX: 1703 minY:254629 maxY:254949
+     * Valor esperado: id: 228
+     * Valor obtido: id: 64
+     *
+     * */
+
+    /*util::geo::region region{util::geo::point{1383, 254629}, util::geo::point{1703, 254949}};
+    std::vector<uint32_t> resultados_2;
+    rct::algorithm::time_interval(region, 37982, 38782, m_rct_index, resultados_2);
+    for(const auto &r : resultados_2){
+        std::cout << r << std::endl;
+    }
+    exit(10);*/
 
     struct ids_sort
     {
@@ -53,11 +67,11 @@ int main(int argc, char **argv) {
 
 
     std::vector<std::string> queries_array;
-    //queries_array.emplace_back("../queries/traj.txt");
-    /*queries_array.push_back("ts_s.txt");
-    queries_array.push_back("ts_l.txt");*/
+    queries_array.emplace_back("../queries/traj.txt");
+    queries_array.emplace_back("../queries/ts_s.txt");
+    queries_array.emplace_back("../queries/ts_l.txt");
     queries_array.emplace_back("../queries/ti_s.txt");
-   // queries_array.push_back("ti_l.txt");
+    queries_array.emplace_back("../queries/ti _l.txt");
 
     /*Consulta MBR: oid: 313 tStart: 37566 tEnd:41408
 It exists */
@@ -91,11 +105,11 @@ It exists */
             if (!finQ.good()) continue; // skip newlines, etc.
             std::vector<util::geo::id_point> resultados;
             if (type == -1) {
-                /*finQ >> t >> minX >> maxX >> minY >> maxY;
+                finQ >> t >> minX >> maxX >> minY >> maxY;
                 std::cout << "T: " << t << " minX: " << minX << " maxX: " << maxX << " minY: " << minY << " maxY: " <<
                           maxY << std::endl;
                 util::geo::region r{util::geo::point{minX, minY}, util::geo::point{maxX, maxY}};
-                resultados = m_index1_ct.time_slice(t, r);
+                rct::algorithm::time_slice(r, t, m_rct_index, resultados);
                 std::sort(resultados.begin(), resultados.end(), ids_sort());
                 finR >> id;
                 finR >> id;
@@ -103,13 +117,12 @@ It exists */
                 bool faltalog = false;
                 while (id != -1) {
                     finR >> x >> y;
-                    if (index < resultados.size()
-                        && (id != resultados[index].m_id || x != resultados[index].m_point.m_x) ||
-                        y != resultados[index].m_point.m_y) {
+                    if (index < resultados.size() && (id != resultados[index].id
+                        || x != resultados[index].x || y != resultados[index].y)) {
                         std::cout << "Consulta FAIL: t: " << t << " id:" << id << std::endl;
                         std::cout << "Valor esperado: id: " << id << "x: " << x << " y:" << y << std::endl;
-                        std::cout << "Valor obtido: id: " << resultados[index].m_id << "x: " <<
-                                  resultados[index].m_point.m_x << " y: " << resultados[index].m_point.m_y << std::endl;
+                        std::cout << "Valor obtido: id: " << resultados[index].id << "x: " <<
+                                  resultados[index].x << " y: " << resultados[index].y << std::endl;
                         exit(10);
                     }
                     finR >> id;
@@ -123,13 +136,13 @@ It exists */
                 } else {
                     std::cout << "Incorrecto. Sobran " << resultados.size() - index << " resultados" << std::endl;
                     for(auto res : resultados){
-                        std::cout << "id: " << res.m_id << " point: " << res.m_point.m_x << ", " << res.m_point.m_y << std::endl;
+                        std::cout << "id: " << res.id << " point: " << res.x << ", " << res.y << std::endl;
                     }
                     exit(10);
                 }
-                finQ >> t;
+                finQ >> type;
                 resultados.clear();
-                resultados.shrink_to_fit();*/
+                resultados.shrink_to_fit();
             } else if (type == -2) {
                 uint tStart, tDiff, tResult;
                 finQ >> tStart >> tDiff >> id;
@@ -206,7 +219,7 @@ It exists */
                 if (index == resultados_2.size()) {
                     std::cout << "Correcto" << std::endl;
                 } else if (index > resultados_2.size()) {
-                    std::cout << "Incorrecto. Faltan " << index - resultados.size() << " resultados" << std::endl;
+                    std::cout << "Incorrecto. Faltan " << index - resultados_2.size() << " resultados" << std::endl;
                     exit(10);
                 }
                 finQ >> type;
