@@ -47,18 +47,22 @@ int main(int argc, const char* argv[]) {
     std::cout << pair.first << ", " << pair.second << std::endl;
     exit(9);*/
 
-    if(argc == 4){
+    if(argc == 5){
         uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
         uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
-        std::string index_file = "rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".idx";
+        uint32_t period = (uint32_t) atoi(argv[4]);
+        std::string index_file = "rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
+                + "_" + std::to_string(period) + ".idx";
 
         if(!util::file::file_exists(index_file)){
             std::cout << "Building index" << std::endl;
             auto t1 = util::time::user::now();
-            rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index(argv[1], size_reference, size_block_bytes, 120);
+            rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index(argv[1], size_reference,
+                                                                                            size_block_bytes, period);
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
-            std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".html");
+            std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
+                              + "_" + std::to_string(period) + ".html");
             sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
             sdsl::store_to_file(m_rct_index, index_file);
             std::vector<util::geo::traj_step> results;
@@ -70,26 +74,11 @@ int main(int argc, const char* argv[]) {
         rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
         sdsl::load_from_file(m_rct_index, index_file);
 
-        std::vector<util::geo::traj_step> results;
-        rct::algorithm::search_trajectory(0, 2427, 4597, m_rct_index, results);
-        std::cout << "Search Trajectory 2" << std::endl;
-
-        exit(0);
 
 
         std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
         util::geo::point r;
-        /*
-         * Error looking for: id=134 t=16678
-         * Expected: 404, 248994
-         * Obtained: 6950, 276802
-         */
-
-
-
-        rct::algorithm::search_object(134, 10972, m_rct_index, r);
-        rct::algorithm::search_object(134, 16678, m_rct_index, r);
         while(in){
             in >> id >> t >> x >> y;
             if(in.eof()) break;
@@ -104,24 +93,6 @@ int main(int argc, const char* argv[]) {
         }
         in.close();
 
-
-        std::cout << "Search trajectory id=0 t_i=0 t_j=200: " << std::endl;
-        std::vector<util::geo::traj_step> traj;
-        rct::algorithm::search_trajectory(0, 0, 200, m_rct_index, traj);
-
-        util::geo::region region{util::geo::point{890, 273100}, util::geo::point{900,273200}};
-        //util::geo::region region{util::geo::point{10, 100}, util::geo::point{20, 200}};
-        //rct::algorithm::time_interval()
-
-        for(const auto &step : traj){
-            std::cout << "t:" << step.t << " x:" << step.x << " y:" << step.y << std::endl;
-        }
-
-       /* std::vector<uint32_t >  results;
-        rct::algorithm::time_interval(region, 100, 1000, m_rct_index, results);
-        for(const auto &a : results){
-            std::cout << "id: " << a << std::endl;
-        }*/
     }
 
 }
