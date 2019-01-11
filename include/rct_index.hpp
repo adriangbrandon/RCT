@@ -159,7 +159,8 @@ namespace rct {
                     m_reap[t / m_period_snapshot][id] = 1;
                 }
 
-                if(old_t % m_period_snapshot && (t / m_period_snapshot > old_t / m_period_snapshot || old_id != id)){
+                if(old_id != -1 && (old_t % m_period_snapshot > 0 &&
+                (t / m_period_snapshot > old_t / m_period_snapshot || old_id != id))){
                     m_disap[old_t / m_period_snapshot][old_id] = 1;
                 }
 
