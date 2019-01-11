@@ -75,7 +75,10 @@ int main(int argc, const char* argv[]) {
         sdsl::load_from_file(m_rct_index, index_file);
 
 
-
+        std::vector<util::geo::id_point> res;
+        rct::algorithm::time_slice(util::geo::region{util::geo::point{1273, 282949}, util::geo::point{1313, 282989}},
+                20706, m_rct_index, res);
+        std::cout << "Size: " << res.size() << std::endl;
         std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
         util::geo::point r;

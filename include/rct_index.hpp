@@ -119,7 +119,7 @@ namespace rct {
         const std::vector<log_object_type> &log_objects = m_log_objects;
         const std::vector<snapshot_type> &snapshots = m_snapshots;
         const std::vector<succ_support_v<1>> &succs_reap = m_succs_reap;
-        const std::vector<succ_support_v<1>> &succs_disap = m_succs_reap;
+        const std::vector<succ_support_v<1>> &succs_disap = m_succs_disap;
         const size_type &period_snapshot = m_period_snapshot;
         const size_type &total_objects = m_total_objects;
         const size_type &speed_max = m_speed_max;
