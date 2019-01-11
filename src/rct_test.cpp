@@ -34,7 +34,9 @@ int main(int argc, char **argv) {
 
     uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
     uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
-    std::string index_file = "rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".idx";
+    uint32_t period = (uint32_t) atoi(argv[4]);
+    std::string index_file = "rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
+            + "_" + std::to_string(period) + ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
     sdsl::load_from_file(m_rct_index, index_file);
@@ -67,11 +69,11 @@ int main(int argc, char **argv) {
 
 
     std::vector<std::string> queries_array;
-    queries_array.emplace_back("../queries/traj.txt");
-    queries_array.emplace_back("../queries/ts_s.txt");
-    queries_array.emplace_back("../queries/ts_l.txt");
-    queries_array.emplace_back("../queries/ti_s.txt");
-    queries_array.emplace_back("../queries/ti _l.txt");
+    //queries_array.emplace_back("queries/traj.txt");
+    queries_array.emplace_back("queries/ts_s.txt");
+    queries_array.emplace_back("queries/ts_l.txt");
+    queries_array.emplace_back("queries/ti_s.txt");
+    queries_array.emplace_back("queries/ti_l.txt");
 
     /*Consulta MBR: oid: 313 tStart: 37566 tEnd:41408
 It exists */
@@ -150,7 +152,6 @@ It exists */
                 std::vector<util::geo::traj_step> resultados_3;
                 rct::algorithm::search_trajectory(id, tStart, tStart+ tDiff, m_rct_index, resultados_3);
                 int index = 0;
-                std::cout << finR.good() << std::endl;
                 finR >> id;
                 finR >> id;
                 std::cout << "Resultados: " << resultados_3.size() << std::endl;

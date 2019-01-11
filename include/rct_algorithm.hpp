@@ -179,7 +179,6 @@ namespace rct {
                                                         traj_step.y + movement_phrase.y + movement.y});
                     ++movement_i; //next movement
                 }
-                std::cout << "size: " << movement_j - movement_i << std::endl;
                 auto prev = idx_end;
                 while (movement_i <= movement_j) {
                     t = rctIndex.log_objects[oid].time_next(t);
@@ -196,9 +195,6 @@ namespace rct {
                     ++prev;
                 }
             }
-            std::cout << "last_t: " << t << std::endl;
-            /*t = rctIndex.log_objects[oid].time_next(t);
-            std::cout << "next_t " << t << std::endl;*/
 
         }
 
@@ -215,27 +211,48 @@ namespace rct {
                 return;
             }
 
-            auto region_expanded = util::geo::expand(region_q, rctIndex.speed_max, t_q - snap_q * rctIndex.period_snapshot,
-                                                     rctIndex.x_max, rctIndex.y_max);
-            //std::cout << "Expanded region: " << region_expanded << std::endl;
-            auto data = rctIndex.snapshots[snap_q].find_objects_in_region(region_expanded.min.x, region_expanded.max.x,
-                                                                           region_expanded.min.y, region_expanded.max.y);
+            std::vector<util::geo::id_point> data;
+
+            if(t_q - snap_q * rctIndex.period_snapshot > rctIndex.period_snapshot / 2
+               && snap_q < rctIndex.last_snapshot() ){
+                auto region_expanded = util::geo::expand(region_q, rctIndex.speed_max,
+                        (snap_q+1) * rctIndex.period_snapshot - t_q,
+                        rctIndex.x_max, rctIndex.y_max);
+                //std::cout << "Expanded region: " << region_expanded << std::endl;
+                data = rctIndex.snapshots[snap_q+1].find_objects_in_region(region_expanded.min.x, region_expanded.max.x,
+                        region_expanded.min.y, region_expanded.max.y);
+            }else{
+                auto region_expanded = util::geo::expand(region_q, rctIndex.speed_max, t_q - snap_q * rctIndex.period_snapshot,
+                                                         rctIndex.x_max, rctIndex.y_max);
+                //std::cout << "Expanded region: " << region_expanded << std::endl;
+                data = rctIndex.snapshots[snap_q].find_objects_in_region(region_expanded.min.x, region_expanded.max.x,
+                                                                              region_expanded.min.y, region_expanded.max.y);
+            }
             util::geo::point p;
+            std::cerr << " [candidates_snap: " << data.size() << " ] " << std::endl;
+            std::unordered_map<typename RCTIndex::value_type, char> processed_ids;
             for(const auto &d : data){
                 if(search_object(d.id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
                     r.emplace_back(util::geo::id_point{d.id, p.x, p.y});
                 }
+                processed_ids[d.id]=1;
             }
 
+            std::cerr << "snap done" << std::endl;
             typename RCTIndex::value_type id = 0;
+            uint64_t succs = 0;
             while(id < rctIndex.total_objects){
                 id = rctIndex.succs_reap[snap_q](id);
-                if(id >= rctIndex.total_objects) break;
-                if(search_object(id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
-                    r.emplace_back(util::geo::id_point{id, p.x, p.y});
+                if(!processed_ids.count(id)){
+                    if(id >= rctIndex.total_objects) break;
+                    if(search_object(id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
+                        r.emplace_back(util::geo::id_point{id, p.x, p.y});
+                    }
                 }
                 ++id;
+                ++succs;
             }
+            //std::cerr << " [candidates_reap: " << succs << " ] " << std::endl;
         }
 
 
