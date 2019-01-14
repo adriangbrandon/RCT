@@ -160,8 +160,8 @@ namespace rct {
                 }
 
                 if(old_id != -1
-                   && (old_id == id && t - old_t > 1 && old_t / m_period_snapshot < t / m_period_snapshot)
-                   && (old_id != id && old_t % m_period_snapshot > 0)) {
+                   && ((old_id == id && t - old_t > 1 && old_t / m_period_snapshot < t / m_period_snapshot)
+                       || (old_id != id && old_t % m_period_snapshot > 0))) {
                     m_disap[old_t / m_period_snapshot][old_id] = 1;
                 }
 
@@ -324,6 +324,35 @@ namespace rct {
             written_bytes += sdsl::serialize_vector(m_succs_disap, out, child, "succs_disap");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
+        }
+
+        void fix_disap(const std::string &dataset_file){
+            std::ifstream in(dataset_file);
+            uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, y;
+            size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
+            m_disap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
+            while (in) {
+                in >> id >> t >> x >> y;
+                if (in.eof()) break;
+                if(old_id != -1
+                   && ((old_id == id && old_t / m_period_snapshot < t / m_period_snapshot
+                   && t != (old_t / m_period_snapshot+1) * m_period_snapshot
+                   && t - old_t > 1 )
+                   || (old_id != id && old_t % m_period_snapshot > 0))) {
+                    if(old_id == 2156){
+                        std::cout << "t: " << t << " old_t: " << old_t << std::endl;
+                        std::cout << "id: " << id << " old_id: " << old_id << std::endl;
+                    }
+                    m_disap[old_t / m_period_snapshot][old_id] = 1;
+                }
+                old_id = id;
+                old_t = t;
+            }
+            in.close();
+            m_succs_disap.resize(n_snapshots);
+            for(size_type i = 0; i < n_snapshots; i++) {
+                m_succs_disap[i] = succ_support_v<1>(&m_disap[i]);
+            }
         }
 
         void load(std::istream& in) {

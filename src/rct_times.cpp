@@ -138,14 +138,14 @@ int main(int argc, char **argv) {
     }
     finQ.close();
 
-    std::ofstream log_ts("log_ts_RCT.txt");
+    //std::ofstream log_ts("log_ts_RCT.txt");
     double_t t_slice_s = 0;
     for(uint64_t j = 0; j < TIMES; j++){
         auto start = high_resolution_clock::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
             std::vector<util::geo::id_point> res_t_s;
             rct::algorithm::time_slice(regions[i], t_starts[i], m_rct_index, res_t_s);
-            log_ts << " " << t_starts[i] << " " << regions[i] << "[results.size = " << res_t_s.size() << "]" << std::endl;
+            //log_ts << " " << t_starts[i] << " " << regions[i] << "[results.size = " << res_t_s.size() << "]" << std::endl;
         }
         auto stop = high_resolution_clock::now();
         auto milli = duration_cast<milliseconds>(stop-start).count();
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
         for(uint64_t i = 0; i < t_starts.size(); i++){
             std::vector<util::geo::id_point> res_t_s;
             rct::algorithm::time_slice(regions[i], t_starts[i], m_rct_index, res_t_s);
-            log_ts << " " << t_starts[i] << " " << regions[i] << "[results.size = " << res_t_s.size() << "]" << std::endl;
+            //log_ts << " " << t_starts[i] << " " << regions[i] << "[results.size = " << res_t_s.size() << "]" << std::endl;
         }
         auto stop = high_resolution_clock::now();
         auto milli = duration_cast<milliseconds>(stop-start).count();
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
     regions.clear();
     ids.clear();
     finQ.close();
-    log_ts.close();
+    //log_ts.close();
     finQ.open(argv[9]);
     finQ >> type >> tstart >> tend >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
