@@ -159,8 +159,9 @@ namespace rct {
                     m_reap[t / m_period_snapshot][id] = 1;
                 }
 
-                if(old_id != -1 && (old_t % m_period_snapshot > 0 &&
-                (t / m_period_snapshot > old_t / m_period_snapshot || old_id != id))){
+                if(old_id != -1
+                   && (old_id == id && t - old_t < 1 && old_t / m_period_snapshot < t / m_period_snapshot)
+                   && (old_id != id && old_t % m_period_snapshot > 0)) {
                     m_disap[old_t / m_period_snapshot][old_id] = 1;
                 }
 
@@ -342,7 +343,9 @@ namespace rct {
             auto n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             m_snapshots.resize(n_snapshots);
             m_reap.resize(n_snapshots);
+            m_disap.resize(n_snapshots);
             m_succs_reap.resize(n_snapshots);
+            m_succs_disap.resize(n_snapshots);
             sdsl::load_vector(m_snapshots, in);
             sdsl::load_vector(m_reap, in);
             sdsl::load_vector(m_succs_reap, in);
@@ -352,7 +355,7 @@ namespace rct {
             sdsl::load_vector(m_disap, in);
             sdsl::load_vector(m_succs_disap, in);
             for(size_type i = 0; i < m_disap.size(); ++i){
-                m_succs_reap[i].set_vector(&m_disap[i]);
+                m_succs_disap[i].set_vector(&m_disap[i]);
             }
         }
 
