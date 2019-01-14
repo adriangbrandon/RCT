@@ -160,7 +160,7 @@ namespace rct {
                 }
 
                 if(old_id != -1
-                   && (old_id == id && t - old_t < 1 && old_t / m_period_snapshot < t / m_period_snapshot)
+                   && (old_id == id && t - old_t > 1 && old_t / m_period_snapshot < t / m_period_snapshot)
                    && (old_id != id && old_t % m_period_snapshot > 0)) {
                     m_disap[old_t / m_period_snapshot][old_id] = 1;
                 }
