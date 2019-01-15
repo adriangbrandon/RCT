@@ -13,6 +13,7 @@
 #include <string>
 #include "spiral_matrix_coder.hpp"
 #include "time_util.hpp"
+#include <sdsl/int_vector.hpp>
 
 #define PRINT_STATS 1
 
@@ -42,10 +43,12 @@ namespace rct {
         log_reference_type m_log_reference;
         std::vector<log_object_type> m_log_objects;
         std::vector<snapshot_type> m_snapshots;
-        std::vector<sdsl::bit_vector> m_reap;
+        std::vector<sdsl::int_vector<>> m_reap;
+        std::vector<sdsl::int_vector<>> m_disap;
+        /*std::vector<sdsl::bit_vector> m_reap;
         std::vector<sdsl::bit_vector> m_disap;
         std::vector<succ_support_v<1>> m_succs_reap;
-        std::vector<succ_support_v<1>> m_succs_disap;
+        std::vector<succ_support_v<1>> m_succs_disap;*/
 
         void copy(const rct_index &o){
             m_total_objects = o.m_total_objects;
@@ -59,9 +62,7 @@ namespace rct {
             m_log_objects = o.m_log_objects;
             m_snapshots = o.m_snapshots;
             m_reap = o.m_reap;
-            m_succs_reap = o.m_succs_reap;
             m_disap = o.m_disap;
-            m_succs_disap = o.m_succs_disap;
         }
 
         void _get_stats(const std::string &infile){
@@ -76,8 +77,6 @@ namespace rct {
                 if(i > 0){
                     if(prev_id == id){
                         //std::cout << v.m_id << " " << prev_t << " " << v.m_t << std::endl;
-
-
 
                         uint64_t x_diff = std::abs((x - prev_x)) / (t - prev_t);
                         uint64_t y_diff = std::abs((y - prev_y)) / (t - prev_t);
@@ -118,8 +117,10 @@ namespace rct {
         const log_reference_type &log_reference = m_log_reference;
         const std::vector<log_object_type> &log_objects = m_log_objects;
         const std::vector<snapshot_type> &snapshots = m_snapshots;
-        const std::vector<succ_support_v<1>> &succs_reap = m_succs_reap;
-        const std::vector<succ_support_v<1>> &succs_disap = m_succs_disap;
+        //const std::vector<succ_support_v<1>> &succs_reap = m_succs_reap;
+        //const std::vector<succ_support_v<1>> &succs_disap = m_succs_disap;
+        const std::vector<sdsl::int_vector<>> &reap = m_reap;
+        const std::vector<sdsl::int_vector<>> &disap = m_disap;
         const size_type &period_snapshot = m_period_snapshot;
         const size_type &total_objects = m_total_objects;
         const size_type &speed_max = m_speed_max;
@@ -141,8 +142,10 @@ namespace rct {
             uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, old_x = 0, y, old_y = 0;
             size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             std::vector<k2_tree_representation_lite<k> > trees(n_snapshots, k2_tree_representation_lite<k>(m_level_max));
-            m_reap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
-            m_disap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
+            std::vector<std::vector<size_type>> reap_temp(n_snapshots);
+            std::vector<std::vector<size_type>> disap_temp(n_snapshots);
+            //m_reap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
+            //m_disap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
             std::cout << "Array of movements: " << std::flush;
             while (in) {
                 in >> id >> t >> x >> y;
@@ -156,13 +159,15 @@ namespace rct {
                 if(t % m_period_snapshot == 0){
                     trees[t/m_period_snapshot].insertObject(x, y, id);
                 }else if (old_id != id || old_t / m_period_snapshot != t / m_period_snapshot){
-                    m_reap[t / m_period_snapshot][id] = 1;
+                    reap_temp[t / m_period_snapshot].push_back(id);
                 }
 
                 if(old_id != -1
-                   && ((old_id == id && t - old_t > 1 && old_t / m_period_snapshot < t / m_period_snapshot)
-                       || (old_id != id && old_t % m_period_snapshot > 0))) {
-                    m_disap[old_t / m_period_snapshot][old_id] = 1;
+                   && ((old_id == id && old_t / m_period_snapshot < t / m_period_snapshot
+                        && t != (old_t / m_period_snapshot+1) * m_period_snapshot
+                        && t - old_t > 1 )
+                        || (old_id != id && old_t % m_period_snapshot > 0))) {
+                    disap_temp[old_t / m_period_snapshot].push_back(old_id);
                 }
 
                 old_id = id;
@@ -173,12 +178,26 @@ namespace rct {
             in.close();
             std::cout << "Compressing snapshots. " << std::endl;
             m_snapshots = std::vector<snapshot<k>>(n_snapshots);
-            m_succs_reap.resize(n_snapshots);
-            m_succs_disap.resize(n_snapshots);
+            m_reap.resize(n_snapshots);
+            m_disap.resize(n_snapshots);
             for(size_type i = 0; i < n_snapshots; i++) {
                 m_snapshots[i] = snapshot<k>(trees[i], m_total_objects);
-                m_succs_reap[i] = succ_support_v<1>(&m_reap[i]);
-                m_succs_disap[i] = succ_support_v<1>(&m_disap[i]);
+                m_reap[i].resize(reap_temp[i].size());
+                m_disap[i].resize(disap_temp[i].size());
+                size_type j = 0;
+                for(const auto &v : reap_temp[i]){
+                    m_reap[i][j] = v;
+                    ++j;
+                }
+                j = 0;
+                for(const auto &v : disap_temp[i]){
+                    m_disap[i][j] = v;
+                    ++j;
+                }
+                sdsl::util::bit_compress(m_reap[i]);
+                sdsl::util::bit_compress(m_disap[i]);
+                //m_succs_reap[i] = succ_support_v<1>(&m_reap[i]);
+                //m_succs_disap[i] = succ_support_v<1>(&m_disap[i]);
             }
             trees.clear();
             std::cout << "Done." << std::endl;
@@ -278,9 +297,9 @@ namespace rct {
                 m_log_objects = std::move(o.m_log_objects);
                 m_snapshots = std::move(o.m_snapshots);
                 m_reap = std::move(o.m_reap);
-                m_succs_reap = std::move(o.m_succs_reap);
+                //m_succs_reap = std::move(o.m_succs_reap);
                 m_disap = std::move(o.m_disap);
-                m_succs_disap = std::move(o.m_succs_disap);
+                //m_succs_disap = std::move(o.m_succs_disap);
             }
             return *this;
         }
@@ -297,9 +316,9 @@ namespace rct {
             m_log_reference.swap(o.m_log_reference);
             std::swap(m_snapshots, o.m_snapshots);
             m_reap.swap(o.m_reap);
-            m_succs_reap.swap(o.m_succs_reap);
+            //m_succs_reap.swap(o.m_succs_reap);
             m_disap.swap(o.m_disap);
-            m_succs_disap.swap(o.m_succs_disap);
+            //m_succs_disap.swap(o.m_succs_disap);
         }
 
         size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="") const {
@@ -319,15 +338,15 @@ namespace rct {
             written_bytes += m_log_reference.serialize(out, child, "log_reference");
             written_bytes += sdsl::serialize_vector(m_snapshots, out, child, "snapshots");
             written_bytes += sdsl::serialize_vector(m_reap, out, child, "reap");
-            written_bytes += sdsl::serialize_vector(m_succs_reap, out, child, "succs_reap");
+            //written_bytes += sdsl::serialize_vector(m_succs_reap, out, child, "succs_reap");
             written_bytes += sdsl::serialize_vector(m_disap, out, child, "disap");
-            written_bytes += sdsl::serialize_vector(m_succs_disap, out, child, "succs_disap");
+            //written_bytes += sdsl::serialize_vector(m_succs_disap, out, child, "succs_disap");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
         }
 
         void fix_disap(const std::string &dataset_file){
-            std::ifstream in(dataset_file);
+            /*std::ifstream in(dataset_file);
             uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, y;
             size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             m_disap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
@@ -352,7 +371,7 @@ namespace rct {
             m_succs_disap.resize(n_snapshots);
             for(size_type i = 0; i < n_snapshots; i++) {
                 m_succs_disap[i] = succ_support_v<1>(&m_disap[i]);
-            }
+            }*/
         }
 
         void load(std::istream& in) {
@@ -373,19 +392,19 @@ namespace rct {
             m_snapshots.resize(n_snapshots);
             m_reap.resize(n_snapshots);
             m_disap.resize(n_snapshots);
-            m_succs_reap.resize(n_snapshots);
-            m_succs_disap.resize(n_snapshots);
+           // m_succs_reap.resize(n_snapshots);
+            //m_succs_disap.resize(n_snapshots);
             sdsl::load_vector(m_snapshots, in);
             sdsl::load_vector(m_reap, in);
-            sdsl::load_vector(m_succs_reap, in);
+            /*sdsl::load_vector(m_succs_reap, in);
             for(size_type i = 0; i < m_reap.size(); ++i){
                 m_succs_reap[i].set_vector(&m_reap[i]);
-            }
+            }*/
             sdsl::load_vector(m_disap, in);
-            sdsl::load_vector(m_succs_disap, in);
+            /*sdsl::load_vector(m_succs_disap, in);
             for(size_type i = 0; i < m_disap.size(); ++i){
                 m_succs_disap[i].set_vector(&m_disap[i]);
-            }
+            }*/
         }
 
 

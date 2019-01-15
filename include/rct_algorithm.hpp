@@ -213,6 +213,7 @@ namespace rct {
             }
 
             std::vector<util::geo::id_point> data;
+            uint64_t total = 0;
             if(t_q - snap_q * rctIndex.period_snapshot > rctIndex.period_snapshot / 2
                && snap_q < rctIndex.last_snapshot() ){
                 //std::cout << "right" << std::endl;
@@ -226,6 +227,7 @@ namespace rct {
                 //std::cerr << " [candidates_snap: " << data.size() << " ] " << std::endl;
                 //sdsl::bit_vector processed_ids(rctIndex.total_objects, 0);;
                 for(const auto &d : data){
+                    ++total;
                     if(search_object(d.id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
                         r.emplace_back(util::geo::id_point{d.id, p.x, p.y});
                     }
@@ -233,20 +235,24 @@ namespace rct {
                 }
 
                 //std::cerr << "snap done" << std::endl;
-                typename RCTIndex::value_type id = 0;
+                /*typename RCTIndex::value_type id = rctIndex.succs_disap[snap_q](0);
                 uint64_t succs = 0;
                 while(id < rctIndex.total_objects){
-                    id = rctIndex.succs_disap[snap_q](id);
-                    //if(!processed_ids[id]){
-                        if(id >= rctIndex.total_objects) break;
-                        if(search_object(id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
-                            r.emplace_back(util::geo::id_point{id, p.x, p.y});
-                        }
-                    //}
-                    ++id;
+                    if(search_object(id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
+                        r.emplace_back(util::geo::id_point{id, p.x, p.y});
+                    }
+                    ++total;
+                    id = rctIndex.succs_disap[snap_q](++id);
                     ++succs;
+                }*/
+
+                for(const uint32_t &id : rctIndex.disap[snap_q]){
+                    if(search_object(id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
+                        r.emplace_back(util::geo::id_point{id, p.x, p.y});
+                    }
                 }
                 //std::cerr << "[candidates_disap: " << succs << "]" << std::endl;
+                //std::cerr << "time_slice_right: " << total << std::endl;
             }else{
                 //std::cout << "left" << std::endl;
                 auto region_expanded = util::geo::expand(region_q, rctIndex.speed_max, t_q - snap_q * rctIndex.period_snapshot,
@@ -258,7 +264,9 @@ namespace rct {
                 util::geo::point p;
                 //std::cerr << " [candidates_snap: " << data.size() << " ] " << std::endl;
                 //std::unordered_map<typename RCTIndex::value_type, char> processed_ids;
+                uint64_t total = 0;
                 for(const auto &d : data){
+                    ++total;
                     if(search_object(d.id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
                         r.emplace_back(util::geo::id_point{d.id, p.x, p.y});
                     }
@@ -266,20 +274,23 @@ namespace rct {
                 }
 
                 //std::cerr << "snap done" << std::endl;
-                typename RCTIndex::value_type id = 0;
+               /* typename RCTIndex::value_type id = rctIndex.succs_reap[snap_q](0);
                 uint64_t succs = 0;
                 while(id < rctIndex.total_objects){
-                    id = rctIndex.succs_reap[snap_q](id);
-                    //if(!processed_ids.count(id)){
-                        if(id >= rctIndex.total_objects) break;
-                        if(search_object(id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
-                            r.emplace_back(util::geo::id_point{id, p.x, p.y});
-                        }
-                    //}
-                    ++id;
+                    ++total;
+                    if(search_object(id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
+                        r.emplace_back(util::geo::id_point{id, p.x, p.y});
+                    }
+                    id = rctIndex.succs_reap[snap_q](++id);
                     ++succs;
+                }*/
+                for(const uint32_t &id : rctIndex.reap[snap_q]){
+                    if(search_object(id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
+                        r.emplace_back(util::geo::id_point{id, p.x, p.y});
+                    }
                 }
                 //std::cerr << "[candidates_reap: " << succs << "]" << std::endl;
+                //std::cerr << "time_slice_right: " << total << std::ednl;
             }
 
             //std::cerr << " [candidates_reap: " << succs << " ] " << std::endl;
@@ -353,7 +364,7 @@ namespace rct {
                     }
 
                 }
-                auto id = 0;
+                /*auto id = 0;
                 while(id < rctIndex.total_objects){
                     id = rctIndex.succs_reap[snap_id](id);
                     if(processed_ids.count(id) == 0){
@@ -363,6 +374,13 @@ namespace rct {
                     }
                     ++id;
 
+                }*/
+                for(const uint32_t &id : rctIndex.reap[snap_id]){
+                    if(processed_ids.count(id) == 0){
+                        // std::cout << "succ: " << id << std::endl;
+                        if(id >= rctIndex.total_objects) break;
+                        time_interval_object(id);
+                    }
                 }
                 t_beg = snap_id * rctIndex.period_snapshot;
             }

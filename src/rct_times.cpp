@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rct_index.hpp>
 #include <rct_algorithm.hpp>
 
-#define TIMES 1
+#define TIMES 4
 
 using namespace std;
 using namespace std::chrono;
