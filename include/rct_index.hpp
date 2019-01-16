@@ -28,6 +28,7 @@ namespace rct {
         typedef uint32_t value_type;
         typedef t_log_reference log_reference_type;
         typedef t_log_object log_object_type;
+        typedef typename t_log_object::next_info_type next_info_type;
         typedef t_rlz rlz_type;
         typedef typename rlz_type::factor_type factor_type;
         typedef snapshot<k> snapshot_type;

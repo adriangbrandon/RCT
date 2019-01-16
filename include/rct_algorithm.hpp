@@ -201,6 +201,62 @@ namespace rct {
 
 
         template<class RCTIndex>
+        static void search_trajectory_fast(const typename RCTIndex::size_type oid, const typename RCTIndex::value_type t_i,
+                                      const typename RCTIndex::size_type t_j, const RCTIndex &rctIndex,
+                                      std::vector<util::geo::traj_step> &r) {
+
+            auto t_start = rctIndex.log_objects[oid].time_start();
+            auto t_end = rctIndex.log_objects[oid].time_end();
+
+
+            if (t_end < t_i || t_start > t_j) return;
+            auto traj_step = rctIndex.log_objects[oid].start_traj_step();
+            typename RCTIndex::size_type t_temp_i = t_i, t_temp_j = t_j;
+            if (t_i <= t_start) {
+                r.push_back(traj_step);
+                t_temp_i = t_start + 1;
+            }
+            if (t_temp_j > t_end) {
+                t_temp_j = t_end;
+            }
+
+            typename RCTIndex::size_type movement_i = 0, movement_j = 0, idx_beg = 0, idx_end = 0,
+                    phrase_start = 0, next_phrase_beg = 0, x_p_prev, x_n_prev, y_p_prev, y_n_prev, phrase;
+            uint32_t t = 0;
+            util::geo::movement movement_phrase, movement;
+            typename RCTIndex::next_info_type next_info = {false};
+            if(t_temp_i <= t_temp_j){
+                rctIndex.log_objects[oid].time_to_movement(t_temp_i, t_temp_j, movement_i, movement_j);
+                if(movement_i <= movement_j){
+                    t = rctIndex.log_objects[oid].time_next_fast(t_temp_i-1, next_info);
+                    phrase = rctIndex.log_objects[oid].interval_ref(movement_i, idx_beg, idx_end,
+                                                                    next_phrase_beg, movement_phrase);
+                    movement = rctIndex.log_reference.compute_movement_init(idx_beg, idx_end, x_p_prev, x_n_prev,
+                                                                            y_p_prev, y_n_prev);
+                    r.emplace_back(util::geo::traj_step{t, traj_step.x + movement_phrase.x + movement.x,
+                                                        traj_step.y + movement_phrase.y + movement.y});
+                    ++movement_i; //next movement
+                }
+                auto prev = idx_end;
+                while (movement_i <= movement_j) {
+                    t = rctIndex.log_objects[oid].time_next_fast(t, next_info);
+                    if (next_phrase_beg < movement_i) { //next_phrase_beg is index, and movement_i count
+                        rctIndex.log_objects[oid].next_phrase(phrase, prev, next_phrase_beg);
+                        movement = rctIndex.log_reference.compute_movement_init_next(prev, x_p_prev,
+                                                                                     x_n_prev, y_p_prev, y_n_prev);
+                    } else {
+                        movement = rctIndex.log_reference.compute_movement_next(x_p_prev,
+                                                                                x_n_prev, y_p_prev, y_n_prev);
+                    }
+                    r.emplace_back(util::geo::traj_step{t, r.back().x + movement.x, r.back().y + movement.y});
+                    ++movement_i;
+                    ++prev;
+                }
+            }
+
+        }
+
+        template<class RCTIndex>
         static void time_slice(const util::geo::region& region_q, const typename RCTIndex::value_type t_q,
                                   const RCTIndex &rctIndex,
                                   std::vector<util::geo::id_point> &r) {
@@ -227,7 +283,6 @@ namespace rct {
                 //std::cerr << " [candidates_snap: " << data.size() << " ] " << std::endl;
                 //sdsl::bit_vector processed_ids(rctIndex.total_objects, 0);;
                 for(const auto &d : data){
-                    ++total;
                     if(search_object(d.id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){
                         r.emplace_back(util::geo::id_point{d.id, p.x, p.y});
                     }
@@ -264,7 +319,6 @@ namespace rct {
                 util::geo::point p;
                 //std::cerr << " [candidates_snap: " << data.size() << " ] " << std::endl;
                 //std::unordered_map<typename RCTIndex::value_type, char> processed_ids;
-                uint64_t total = 0;
                 for(const auto &d : data){
                     ++total;
                     if(search_object(d.id, t_q, rctIndex, p) && util::geo::contains(region_q, p)){

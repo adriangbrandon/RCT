@@ -69,11 +69,11 @@ int main(int argc, char **argv) {
 
 
     std::vector<std::string> queries_array;
-    //queries_array.emplace_back("queries/traj.txt");
-    queries_array.emplace_back("queries/ts_s.txt");
+    queries_array.emplace_back("queries/traj.txt");
+    /*queries_array.emplace_back("queries/ts_s.txt");
     queries_array.emplace_back("queries/ts_l.txt");
     queries_array.emplace_back("queries/ti_s.txt");
-    queries_array.emplace_back("queries/ti_l.txt");
+    queries_array.emplace_back("queries/ti_l.txt");*/
 
     /*Consulta MBR: oid: 313 tStart: 37566 tEnd:41408
 It exists */
@@ -150,7 +150,7 @@ It exists */
                 finQ >> tStart >> tDiff >> id;
                 std::cout << "Id: " << id << " TStart: " << tStart << " TEnd: " << tStart+tDiff << std::endl;
                 std::vector<util::geo::traj_step> resultados_3;
-                rct::algorithm::search_trajectory(id, tStart, tStart+ tDiff, m_rct_index, resultados_3);
+                rct::algorithm::search_trajectory_fast(id, tStart, tStart+ tDiff, m_rct_index, resultados_3);
                 int index = 0;
                 finR >> id;
                 finR >> id;

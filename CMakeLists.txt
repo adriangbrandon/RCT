@@ -91,3 +91,5 @@ target_link_libraries(rct_times sdsl divsufsort divsufsort64)
 
 add_executable(rct_fix_disap src/rct_fix_disap.cpp)
 target_link_libraries(rct_fix_disap sdsl divsufsort divsufsort64)
+
+add_executable(proba src/proba.cpp)

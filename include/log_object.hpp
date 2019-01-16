@@ -71,6 +71,7 @@ namespace rct {
         typedef typename t_lengths::select_1_type select_1_lengths_type;
         typedef t_disap_rank_1 rank_1_disap_type;
         typedef t_disap_succ_0 succ_0_disap_type;
+        typedef typename t_disap::next_info_type next_info_type;
 
     private:
         value_type m_time_start = 0;
@@ -297,6 +298,11 @@ namespace rct {
         inline size_type time_next(const size_type t) const{
             return m_time_start + m_succ_0_disap(t - m_time_start+1);
         }
+
+        inline size_type time_next_fast(const size_type t, next_info_type &next_info) const{
+            return m_time_start + m_succ_0_disap.succ(t - m_time_start+1, next_info);
+        }
+
 
         inline bool time_to_movement(const size_type t_q, size_type &movement_q) const {
             auto idx = t_q - m_time_start;

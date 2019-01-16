@@ -57,7 +57,8 @@ namespace rct {
         typedef t_values_rank rank_values_type;
         typedef uint64_t size_type;
         typedef uint64_t value_type;
-        typedef struct {
+        typedef struct next_info{
+            bool init;
             size_type sample_index;
             size_type ones;
             size_type beg;
@@ -525,7 +526,7 @@ namespace rct {
             auto beg = i/m_v->sample* m_v->sample + m_v->offset[ones-1];
             auto next_pos = m_v->pos[ones];
             auto length = next_pos - pos;
-            next_info = {i/m_v->sample, ones, beg, pos, next_pos, length};
+            next_info = {true, i/m_v->sample, ones, beg, pos, next_pos, length};
             if(!m_v->sampling[i/m_v->sample]){
                 r = m_v->rank_values(next_pos);
                 return rank_support_runs_bitvector_trait<t_b>::adjust_rank(r, i);
@@ -859,13 +860,13 @@ namespace rct {
         auto sample_index = i/m_v->sample;
         if(!m_v->sampling[sample_index]) return i;
         size_type ones, beg, pos, next_pos, length;
-        if(sample_index != next_info.sample_index){
+        if(sample_index != next_info.sample_index || !next_info.init){
             ones = m_v->rank_sampling(sample_index + 1);
             beg = sample_index * m_v->sample + m_v->offset[ones-1];
             pos = m_v->pos[ones-1];
             next_pos = m_v->pos[ones];
             length = next_pos - pos;
-            next_info = {i/m_v->sample, ones, beg, pos, next_pos, length};
+            next_info = {true, i/m_v->sample, ones, beg, pos, next_pos, length};
         }else{
             ones = next_info.ones;
             beg = next_info.beg;

@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rct_index.hpp>
 #include <rct_algorithm.hpp>
 
-#define TIMES 4
+#define TIMES 1
 
 using namespace std;
 using namespace std::chrono;
@@ -104,10 +104,10 @@ int main(int argc, char **argv) {
     finQ.close();
 
     double_t t_traj = 0;
-    std::vector<util::geo::traj_step> results;
     for(uint64_t j = 0; j < TIMES; j++){
         auto start = high_resolution_clock::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
+            std::vector<util::geo::traj_step> results;
             rct::algorithm::search_trajectory(ids[i], t_starts[i], t_ends[i], m_rct_index, results);
         }
         auto stop = high_resolution_clock::now();
