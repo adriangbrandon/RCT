@@ -2,11 +2,10 @@
 // Created by adrian on 15/11/18.
 //
 
-#ifndef RCT_RCT_INDEX_HPP
-#define RCT_RCT_INDEX_HPP
+#ifndef RCT_INDEX_RTREE_HPP
+#define RCT_INDEX_RTREE_HPP
 
 #include <vector>
-#include <snapshot.hpp>
 #include <log_object.hpp>
 #include <log_reference.hpp>
 #include <geo_util.hpp>
@@ -14,14 +13,15 @@
 #include "spiral_matrix_coder.hpp"
 #include "time_util.hpp"
 #include <sdsl/int_vector.hpp>
+#include <rtree.hpp>
 
 #define PRINT_STATS 1
 
 namespace rct {
 
-    template <uint64_t k = 2, class t_log_reference = log_reference<>, class t_log_object = log_object<>,
-            class t_rlz = rlz_csa_bc_int64 >
-    class rct_index {
+    template <class t_log_reference = log_reference<>, class t_log_object = log_object<>,
+              class t_rlz = rlz_csa_bc_int64 >
+    class rct_index_rtree {
 
     public:
         typedef uint64_t size_type;
@@ -31,7 +31,7 @@ namespace rct {
         typedef typename t_log_object::next_info_type next_info_type;
         typedef t_rlz rlz_type;
         typedef typename rlz_type::factor_type factor_type;
-        typedef snapshot<k> snapshot_type;
+        typedef rtree snapshot_type;
 
     private:
         size_type m_total_objects;
@@ -39,31 +39,25 @@ namespace rct {
         size_type m_t_max;
         size_type m_x_max;
         size_type m_y_max;
-        size_type m_level_max;
         size_type m_period_snapshot;
         log_reference_type m_log_reference;
         std::vector<log_object_type> m_log_objects;
         std::vector<snapshot_type> m_snapshots;
-        std::vector<sdsl::int_vector<>> m_reap;
-        std::vector<sdsl::int_vector<>> m_disap;
         /*std::vector<sdsl::bit_vector> m_reap;
         std::vector<sdsl::bit_vector> m_disap;
         std::vector<succ_support_v<1>> m_succs_reap;
         std::vector<succ_support_v<1>> m_succs_disap;*/
 
-        void copy(const rct_index &o){
+        void copy(const rct_index_rtree &o){
             m_total_objects = o.m_total_objects;
             m_speed_max = o.m_speed_max;
             m_t_max = o.m_t_max;
             m_x_max = o.m_x_max;
             m_y_max = o.m_y_max;
-            m_level_max = o.m_level_max;
             m_period_snapshot = o.m_period_snapshot;
             m_log_reference = o.m_log_reference;
             m_log_objects = o.m_log_objects;
             m_snapshots = o.m_snapshots;
-            m_reap = o.m_reap;
-            m_disap = o.m_disap;
         }
 
         void _get_stats(const std::string &infile){
@@ -101,17 +95,55 @@ namespace rct {
             in.close();
             m_x_max++; m_y_max++;
             size_type max_xy = std::max(m_x_max, m_y_max);
-            m_level_max = (size_type) std::ceil(log2(max_xy)/log2(k));
 #if PRINT_STATS
             std::cout << "Total objects: " << m_total_objects << std::endl;
             std::cout << "Max speed: " << m_speed_max << std::endl;
             std::cout << "Max x: " << m_x_max << std::endl;
             std::cout << "Max y: " << m_y_max << std::endl;
             std::cout << "Max t: " << m_t_max << std::endl;
-            std::cout << "Level max: " << m_level_max << std::endl;
 #endif
         }
 
+
+        void _init_snapshots(const string& dataset, const size_type n_snapshots){
+            uint32_t id, old_id = (uint32_t) -1, t, old_t = (uint32_t) -1, x, y;
+            uint32_t min_x = INT_MAX, min_y = INT_MAX, max_x = 0, max_y = 0;
+            std::ifstream in(dataset);
+            std::vector<std::vector<std::pair<value_type, util::geo::region>>> mbrs(n_snapshots);
+            while (in) {
+                in >> id >> t >> x >> y;
+                if (in.eof()) break;
+                if (id == old_id && t / m_period_snapshot == old_t / m_period_snapshot) {
+                    if(x < min_x) min_x = x;
+                    if(y < min_y) min_y = y;
+                    if(x > max_x) max_x = x;
+                    if(y > max_y) max_y = y;
+                }else{
+                    if(old_id != -1){
+                        mbrs[old_t/m_period_snapshot].push_back({old_id,
+                                                                 util::geo::region{util::geo::point{min_x, min_y},
+                                                                                   util::geo::point{max_x, max_y}}});
+                    }
+                    min_x = x;
+                    min_y = y;
+                    max_x = x;
+                    max_y = y;
+                }
+                old_t = t;
+                old_id = id;
+            }
+            mbrs[old_t/m_period_snapshot].push_back({old_id,
+                                                     util::geo::region{util::geo::point{min_x, min_y},
+                                                                       util::geo::point{max_x, max_y}}});
+            in.close();
+            size_type i = 0;
+
+            for(const auto &mbrs_info : mbrs){
+                std::cout << "(" << i << " snapshot size: " << mbrs_info.size() <<  " ) " << std::endl;
+                m_snapshots[i++] = snapshot_type(mbrs_info);
+            }
+
+        }
 
     public:
 
@@ -120,8 +152,6 @@ namespace rct {
         const std::vector<snapshot_type> &snapshots = m_snapshots;
         //const std::vector<succ_support_v<1>> &succs_reap = m_succs_reap;
         //const std::vector<succ_support_v<1>> &succs_disap = m_succs_disap;
-        const std::vector<sdsl::int_vector<>> &reap = m_reap;
-        const std::vector<sdsl::int_vector<>> &disap = m_disap;
         const size_type &period_snapshot = m_period_snapshot;
         const size_type &total_objects = m_total_objects;
         const size_type &speed_max = m_speed_max;
@@ -130,9 +160,9 @@ namespace rct {
         const size_type &t_max = m_t_max;
 
 
-        rct_index() = default;
+        rct_index_rtree() = default;
 
-        rct_index(const std::string &dataset_file, const size_type size_reference, const size_type size_block,
+        rct_index_rtree(const std::string &dataset_file, const size_type size_reference, const size_type size_block,
                   const size_type period_snapshot) {
 
             m_period_snapshot = period_snapshot;
@@ -143,7 +173,6 @@ namespace rct {
             std::vector<uint64_t> input_reference;
             uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, old_x = 0, y, old_y = 0;
             size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
-            std::vector<k2_tree_representation_lite<k> > trees(n_snapshots, k2_tree_representation_lite<k>(m_level_max));
             std::vector<std::vector<size_type>> reap_temp(n_snapshots);
             std::vector<std::vector<size_type>> disap_temp(n_snapshots);
             //m_reap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
@@ -159,7 +188,7 @@ namespace rct {
                 }
 
                 if(t % m_period_snapshot == 0){
-                    trees[t/m_period_snapshot].insertObject(x, y, id);
+                    //trees[t/m_period_snapshot].insertObject(x, y, id);
                 }else if (old_id != id || old_t / m_period_snapshot != t / m_period_snapshot){
                     reap_temp[t / m_period_snapshot].push_back(id);
                 }
@@ -179,29 +208,14 @@ namespace rct {
             }
             in.close();
             std::cout << "Compressing snapshots. " << std::endl;
-            m_snapshots = std::vector<snapshot<k>>(n_snapshots);
-            m_reap.resize(n_snapshots);
-            m_disap.resize(n_snapshots);
-            for(size_type i = 0; i < n_snapshots; i++) {
+            m_snapshots.resize(n_snapshots);
+            _init_snapshots(dataset_file, n_snapshots);
+            /*for(size_type i = 0; i < n_snapshots; i++) {
                 m_snapshots[i] = snapshot<k>(trees[i], m_total_objects);
-                m_reap[i].resize(reap_temp[i].size());
-                m_disap[i].resize(disap_temp[i].size());
                 size_type j = 0;
-                for(const auto &v : reap_temp[i]){
-                    m_reap[i][j] = v;
-                    ++j;
-                }
-                j = 0;
-                for(const auto &v : disap_temp[i]){
-                    m_disap[i][j] = v;
-                    ++j;
-                }
-                sdsl::util::bit_compress(m_reap[i]);
-                sdsl::util::bit_compress(m_disap[i]);
                 //m_succs_reap[i] = succ_support_v<1>(&m_reap[i]);
                 //m_succs_disap[i] = succ_support_v<1>(&m_disap[i]);
-            }
-            trees.clear();
+            }*/
             std::cout << "Done." << std::endl;
             std::cout << "RLZ: " << std::flush;
             rlz_type rlz(input_reference, size_reference, size_block);
@@ -267,59 +281,51 @@ namespace rct {
         }
 
         //! Copy constructor
-        rct_index(const rct_index& o)
+        rct_index_rtree(const rct_index_rtree& o)
         {
             copy(o);
         }
 
         //! Move constructor
-        rct_index(rct_index&& o)
+        rct_index_rtree(rct_index_rtree&& o)
         {
             *this = std::move(o);
         }
 
 
-        rct_index &operator=(const rct_index &o) {
+        rct_index_rtree &operator=(const rct_index_rtree &o) {
             if (this != &o) {
                 copy(o);
             }
             return *this;
         }
 
-        rct_index &operator=(rct_index &&o) {
+        rct_index_rtree &operator=(rct_index_rtree &&o) {
             if (this != &o) {
                 m_total_objects = o.m_total_objects;
                 m_speed_max = o.m_speed_max;
                 m_t_max = o.m_t_max;
                 m_x_max = o.m_x_max;
                 m_y_max = o.m_y_max;
-                m_level_max = o.m_level_max;
                 m_period_snapshot = o.m_period_snapshot;
                 m_log_reference = std::move(o.m_log_reference);
                 m_log_objects = std::move(o.m_log_objects);
                 m_snapshots = std::move(o.m_snapshots);
-                m_reap = std::move(o.m_reap);
-                //m_succs_reap = std::move(o.m_succs_reap);
-                m_disap = std::move(o.m_disap);
-                //m_succs_disap = std::move(o.m_succs_disap);
             }
             return *this;
         }
 
-        void swap(rct_index &o) {
+        void swap(rct_index_rtree &o) {
             std::swap(m_total_objects, o.m_total_objects);
             std::swap(m_speed_max, o.m_speed_max);
             std::swap(m_t_max, o.m_t_max);
             std::swap(m_x_max, o.m_x_max);
             std::swap(m_y_max, o.m_y_max);
-            std::swap(m_level_max, o.m_level_max);
             std::swap(m_period_snapshot, o.m_period_snapshot);
             std::swap(m_log_objects, o.m_log_objects);
             m_log_reference.swap(o.m_log_reference);
             std::swap(m_snapshots, o.m_snapshots);
-            m_reap.swap(o.m_reap);
             //m_succs_reap.swap(o.m_succs_reap);
-            m_disap.swap(o.m_disap);
             //m_succs_disap.swap(o.m_succs_disap);
         }
 
@@ -332,77 +338,52 @@ namespace rct {
             written_bytes += sdsl::write_member(m_t_max, out, child, "t_max");
             written_bytes += sdsl::write_member(m_x_max, out, child, "x_max");
             written_bytes += sdsl::write_member(m_y_max, out, child, "y_max");
-            written_bytes += sdsl::write_member(m_level_max, out, child, "level_max");
             written_bytes += sdsl::write_member(m_period_snapshot, out, child, "period_snapshot");
-            //TODO: delete next line (log_size)
-            sdsl::write_member(m_log_objects.size(), out, child, "log_size");
             written_bytes += sdsl::serialize_vector(m_log_objects, out, child, "log_objects");
             written_bytes += m_log_reference.serialize(out, child, "log_reference");
             written_bytes += sdsl::serialize_vector(m_snapshots, out, child, "snapshots");
-            written_bytes += sdsl::serialize_vector(m_reap, out, child, "reap");
+            //written_bytes += sdsl::serialize_vector(m_snapshots, out, child, "snapshots");
             //written_bytes += sdsl::serialize_vector(m_succs_reap, out, child, "succs_reap");
-            written_bytes += sdsl::serialize_vector(m_disap, out, child, "disap");
             //written_bytes += sdsl::serialize_vector(m_succs_disap, out, child, "succs_disap");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
         }
 
-        void fix_disap(const std::string &dataset_file){
-            /*std::ifstream in(dataset_file);
-            uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, y;
-            size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
-            m_disap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
-            while (in) {
-                in >> id >> t >> x >> y;
-                if (in.eof()) break;
-                if(old_id != -1
-                   && ((old_id == id && old_t / m_period_snapshot < t / m_period_snapshot
-                   && t != (old_t / m_period_snapshot+1) * m_period_snapshot
-                   && t - old_t > 1 )
-                   || (old_id != id && old_t % m_period_snapshot > 0))) {
-                    if(old_id == 2156){
-                        std::cout << "t: " << t << " old_t: " << old_t << std::endl;
-                        std::cout << "id: " << id << " old_id: " << old_id << std::endl;
-                    }
-                    m_disap[old_t / m_period_snapshot][old_id] = 1;
-                }
-                old_id = id;
-                old_t = t;
-            }
-            in.close();
-            m_succs_disap.resize(n_snapshots);
-            for(size_type i = 0; i < n_snapshots; i++) {
-                m_succs_disap[i] = succ_support_v<1>(&m_disap[i]);
-            }*/
+        template<class Index>
+        void from_v1(const Index &index, const string &dataset){
+            m_total_objects = index.total_objects;
+            m_speed_max = index.speed_max;
+            m_t_max = index.t_max;
+            m_x_max = index.x_max;
+            m_y_max = index.y_max;
+            m_period_snapshot = index.period_snapshot;
+            m_log_reference = index.log_reference;
+            m_log_objects = index.log_objects;
+            auto n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
+            m_snapshots.resize(n_snapshots);
+            _init_snapshots(dataset, n_snapshots);
         }
 
-        void load(std::istream& in) {
+        void load(std::istream& in, std::string &dataset) {
             sdsl::read_member(m_total_objects, in);
             sdsl::read_member(m_speed_max, in);
             sdsl::read_member(m_t_max, in);
             sdsl::read_member(m_x_max, in);
             sdsl::read_member(m_y_max, in);
-            sdsl::read_member(m_level_max, in);
             sdsl::read_member(m_period_snapshot, in);
-            //TODO: delete these two lines and run m_log_objects.resize(m_total_objects);
-            size_type log_size;
-            sdsl::read_member(log_size, in);
-            m_log_objects.resize(log_size);
+            m_log_objects.resize(m_total_objects);
             sdsl::load_vector(m_log_objects, in);
             m_log_reference.load(in);
             auto n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             m_snapshots.resize(n_snapshots);
-            m_reap.resize(n_snapshots);
-            m_disap.resize(n_snapshots);
+            _init_snapshots(dataset, n_snapshots);
            // m_succs_reap.resize(n_snapshots);
             //m_succs_disap.resize(n_snapshots);
-            sdsl::load_vector(m_snapshots, in);
-            sdsl::load_vector(m_reap, in);
+            //sdsl::load_vector(m_snapshots, in);
             /*sdsl::load_vector(m_succs_reap, in);
             for(size_type i = 0; i < m_reap.size(); ++i){
                 m_succs_reap[i].set_vector(&m_reap[i]);
             }*/
-            sdsl::load_vector(m_disap, in);
             /*sdsl::load_vector(m_succs_disap, in);
             for(size_type i = 0; i < m_disap.size(); ++i){
                 m_succs_disap[i].set_vector(&m_disap[i]);
@@ -414,4 +395,4 @@ namespace rct {
 
 }
 
-#endif //RCT_RCT_INDEX_HPP
+#endif //RCT_rct_index_rtree_RTREE_HPP

@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -45,11 +45,17 @@ else()
 endif()
 
 add_subdirectory(external/sdsl-lite)
+add_subdirectory(external/STRRtree)
 
 include_directories("${PROJECT_SOURCE_DIR}/external/googletest/include"
         ${CMAKE_HOME_DIRECTORY}/include
         ${CMAKE_BINARY_DIR}/external/sdsl-lite/include
         ${CMAKE_BINARY_DIR}/external/sdsl-lite/external/libdivsufsort/include/
+        ${CMAKE_HOME_DIRECTORY}/external/STRRtree/include
+        ${CMAKE_HOME_DIRECTORY}/external/STRRtree/rdt_wt
+        ${CMAKE_HOME_DIRECTORY}/external/STRRtree/util
+        ${CMAKE_HOME_DIRECTORY}/external/STRRtree/external/libspatialindex/include/
+        ${CMAKE_HOME_DIRECTORY}/external/STRRtree/external/libspatialindex/src/
         ${CMAKE_HOME_DIRECTORY}/external/googletest/include
         ${CMAKE_HOME_DIRECTORY}/external/sdsl-lite/external/FastPFor/headers/
         ${STXXL_INCLUDE_DIRS}
@@ -92,4 +98,13 @@ target_link_libraries(rct_times sdsl divsufsort divsufsort64)
 add_executable(rct_fix_disap src/rct_fix_disap.cpp)
 target_link_libraries(rct_fix_disap sdsl divsufsort divsufsort64)
 
+add_executable(rct_index_rtree src/rct_main_v2.cpp)
+target_link_libraries(rct_index_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(v1_to_v2 src/v1_to_v2.cpp)
+target_link_libraries(v1_to_v2 sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
 add_executable(proba src/proba.cpp)
+
+add_executable(rct_test_v2 src/rct_test_v2.cpp)
+target_link_libraries(rct_test_v2 sdsl divsufsort divsufsort64 spatialindex STRRtree)
