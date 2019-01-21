@@ -108,3 +108,6 @@ add_executable(proba src/proba.cpp)
 
 add_executable(rct_test_v2 src/rct_test_v2.cpp)
 target_link_libraries(rct_test_v2 sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(rtree_test src/rtree_test.cpp)
+target_link_libraries(rtree_test sdsl divsufsort divsufsort64 spatialindex STRRtree)

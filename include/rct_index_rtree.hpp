@@ -107,7 +107,7 @@ namespace rct {
 
         void _init_snapshots(const string& dataset, const size_type n_snapshots){
             uint32_t id, old_id = (uint32_t) -1, t, old_t = (uint32_t) -1, x, y;
-            uint32_t min_x = INT_MAX, min_y = INT_MAX, max_x = 0, max_y = 0;
+            uint32_t min_x, min_y, max_x, max_y;
             std::ifstream in(dataset);
             std::vector<std::vector<std::pair<value_type, util::geo::region>>> mbrs(n_snapshots);
             while (in) {
@@ -120,9 +120,9 @@ namespace rct {
                     if(y > max_y) max_y = y;
                 }else{
                     if(old_id != -1){
-                        mbrs[old_t/m_period_snapshot].push_back({old_id,
-                                                                 util::geo::region{util::geo::point{min_x, min_y},
-                                                                                   util::geo::point{max_x, max_y}}});
+                        util::geo::region r = {min_x, min_y, max_x, max_y};
+                        mbrs[old_t/m_period_snapshot].push_back({old_id, r});
+                        //std::cout << "Region to insert: " << r << std::endl;
                     }
                     min_x = x;
                     min_y = y;
@@ -132,14 +132,13 @@ namespace rct {
                 old_t = t;
                 old_id = id;
             }
-            mbrs[old_t/m_period_snapshot].push_back({old_id,
-                                                     util::geo::region{util::geo::point{min_x, min_y},
-                                                                       util::geo::point{max_x, max_y}}});
+            util::geo::region r = {min_x, min_y, max_x, max_y};
+            mbrs[old_t/m_period_snapshot].push_back({old_id, r});
+            //std::cout << "Region to insert: " << r << std::endl;
             in.close();
             size_type i = 0;
 
             for(const auto &mbrs_info : mbrs){
-                std::cout << "(" << i << " snapshot size: " << mbrs_info.size() <<  " ) " << std::endl;
                 m_snapshots[i++] = snapshot_type(mbrs_info);
             }
 
@@ -177,7 +176,6 @@ namespace rct {
             std::vector<std::vector<size_type>> disap_temp(n_snapshots);
             //m_reap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
             //m_disap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
-            std::cout << "Array of movements: " << std::flush;
             while (in) {
                 in >> id >> t >> x >> y;
                 if (in.eof()) break;
@@ -210,12 +208,6 @@ namespace rct {
             std::cout << "Compressing snapshots. " << std::endl;
             m_snapshots.resize(n_snapshots);
             _init_snapshots(dataset_file, n_snapshots);
-            /*for(size_type i = 0; i < n_snapshots; i++) {
-                m_snapshots[i] = snapshot<k>(trees[i], m_total_objects);
-                size_type j = 0;
-                //m_succs_reap[i] = succ_support_v<1>(&m_reap[i]);
-                //m_succs_disap[i] = succ_support_v<1>(&m_disap[i]);
-            }*/
             std::cout << "Done." << std::endl;
             std::cout << "RLZ: " << std::flush;
             rlz_type rlz(input_reference, size_reference, size_block);
@@ -267,9 +259,6 @@ namespace rct {
             }
             auto end = util::time::user::now();
             std::cout << "Parsing in: " << end - start << " µs" << std::endl;
-
-
-
             std::cout << "Everything Done." << std::endl;
 
 

@@ -9,6 +9,8 @@
 #include <queue>
 #include <geo_util.hpp>
 #include <SRTree.h>
+#include <sdsl/structure_tree.hpp>
+#include <sdsl/util.hpp>
 
 using namespace SpatialIndex;
 
@@ -119,7 +121,6 @@ namespace rct {
             long * results = new long[m_tSRTree->getNumObj()];
             m_tSRTree->range_query(r_q.min.x, r_q.min.y, r_q.max.x, r_q.max.y, results, &size);
             ret = std::vector<value_type>(results, results+size);
-            std::cout << "size: " << size << std::endl;
             delete [] results;
         }
 
@@ -165,7 +166,7 @@ namespace rct {
         //! Assignment move operation
         rtree& operator=(rtree&& p) {
             if (this != &p) {
-                std::swap(m_tSRTree, p.m_tSRTree);
+                m_tSRTree = p.m_tSRTree;
             }
             return *this;
         }
