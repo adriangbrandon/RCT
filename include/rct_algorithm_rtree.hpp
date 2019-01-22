@@ -273,84 +273,74 @@ namespace rct {
         }
 
 
-        /*template<class RCTIndex>
-        static void time_interval(const util::geo::region& region_q, const typename RCTIndex::value_type t_i,
-                           const typename RCTIndex::size_type t_j, const RCTIndex &rctIndex,
-                           std::vector<typename  RCTIndex::value_type> &r) {
+        template<class RCTIndex>
+        static void time_interval(const util::geo::region& region_q, const typename RCTIndex::size_type t_i,
+                                  const typename RCTIndex::size_type t_j, const RCTIndex &rctIndex,
+                                  std::vector<typename  RCTIndex::value_type> &r) {
 
             auto snap_start = t_i / rctIndex.period_snapshot;
-            auto snap_end = t_j /  rctIndex.period_snapshot;
+            auto snap_end = t_j /  rctIndex.period_snapshot+1;
 
-            std::unordered_map<typename RCTIndex::value_type, char> processed_ids;
+            //std::unordered_map<typename RCTIndex::value_type, char> processed_ids;
+            sdsl::bit_vector processed_ids(rctIndex.total_objects, 0);
             typename RCTIndex::size_type movement_i = 0, movement_j = 0, c_phrase_i = 0, c_phrase_j = 0,
                     ic_phrase_l = 0, ic_phrase_r = 0, delta_phrase_l = 0, delta_phrase_r = 0;
-            typename RCTIndex::value_type t_beg = t_i;
+            typename RCTIndex::size_type t_beg = t_i, t_end = t_j;
 
             auto time_interval_object = [&] (typename RCTIndex::value_type oid){
-                    auto beg = t_beg;
-                    auto end = std::min(t_j, rctIndex.log_objects[oid].time_end());
-                    auto traj_step = rctIndex.log_objects[oid].start_traj_step();
-                    if(end >= traj_step.t) {
-                        if(beg <= traj_step.t){
-                            if(util::geo::contains(region_q, util::geo::point{traj_step.x, traj_step.y})){
+                auto beg = std::max(t_beg, rctIndex.log_objects[oid].time_start());
+                auto end = std::min(t_end, rctIndex.log_objects[oid].time_end());
+                auto traj_step = rctIndex.log_objects[oid].start_traj_step();
+                if(end >= traj_step.t) {
+                    if(beg <= traj_step.t){
+                        if(util::geo::contains(region_q, util::geo::point{traj_step.x, traj_step.y})){
+                            r.push_back(oid);
+                            processed_ids[oid]=1;
+                            return;
+                        };
+                        beg = traj_step.t+1;
+                    }
+                    if(beg <= end){
+                        rctIndex.log_objects[oid].time_to_movement(beg, end, movement_i, movement_j);
+                        if (movement_i > 0 && movement_i <= movement_j) {
+                            rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
+                                                                       ic_phrase_l, delta_phrase_l,
+                                                                       ic_phrase_r, delta_phrase_r);
+                            std::vector<typename RCTIndex::size_type> phrases_to_check;
+                            if (!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q,
+                                                                           phrases_to_check)) {
+                                time_interval_reference(oid, region_q, movement_i, movement_j, phrases_to_check,
+                                                        ic_phrase_l, delta_phrase_l,
+                                                        ic_phrase_r, delta_phrase_r, rctIndex, r);
+                            } else {
                                 r.push_back(oid);
-                                processed_ids[oid]=1;
-                                return;
-                            };
-                            beg = traj_step.t+1;
-                        }
-                        if(beg <= end){
-                            rctIndex.log_objects[oid].time_to_movement(beg, end, movement_i, movement_j);
-                            if (movement_i > 0 && movement_i <= movement_j) {
-                                rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
-                                                                           ic_phrase_l, delta_phrase_l,
-                                                                           ic_phrase_r, delta_phrase_r);
-                                std::vector<typename RCTIndex::size_type> phrases_to_check;
-                                if (!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q,
-                                                                               phrases_to_check)) {
-                                    time_interval_reference(oid, region_q, movement_i, movement_j, phrases_to_check,
-                                                            ic_phrase_l, delta_phrase_l,
-                                                            ic_phrase_r, delta_phrase_r, rctIndex, r);
-                                } else {
-                                    r.push_back(oid);
-                                }
                             }
                         }
-
-                    }
-                    processed_ids[oid]=1;
-            };
-
-            for(auto snap_id = snap_start; snap_id <= snap_end; ++snap_id){
-                auto region_expanded = util::geo::expand(region_q, rctIndex.speed_max, t_j - snap_id * rctIndex.period_snapshot,
-                                                         rctIndex.x_max, rctIndex.y_max);
-                //std::cout << "Expanded region: " << region_expanded << std::endl;
-                auto data = rctIndex.snapshots[snap_id].find_objects_in_region(region_expanded.min.x, region_expanded.max.x,
-                                                                               region_expanded.min.y, region_expanded.max.y);
-                for(const auto &e: data){
-                    //std::cout << "normal: " << e.id << std::endl;
-                    if(processed_ids.count(e.id) == 0){
-                        if(t_i <= snap_id*rctIndex.period_snapshot && snap_id*rctIndex.period_snapshot <= t_j
-                           && util::geo::contains(region_q, util::geo::point{e.x, e.y})){
-                            r.push_back(e.id);
-                            processed_ids[e.id]=1;
-                            continue;
-                        }
-                        time_interval_object(e.id);
                     }
 
                 }
+                processed_ids[oid]=1;
+            };
 
-                for(const uint32_t &id : rctIndex.reap[snap_id]){
-                    if(processed_ids.count(id) == 0){
+            auto time_interval_left = [&] (typename RCTIndex::value_type snap_id) {
+                std::vector<uint32_t > data;
+                rctIndex.snapshots[snap_id].intersection(region_q, data);
+                //std::cerr << "snapshot: " << data.size() << std::endl;
+                for(const auto &id: data){
+                    if(!processed_ids[id]){
                         // std::cout << "succ: " << id << std::endl;
-                        if(id >= rctIndex.total_objects) break;
                         time_interval_object(id);
                     }
                 }
-                t_beg = snap_id * rctIndex.period_snapshot;
+            };
+
+            int64_t snap_id = snap_start;
+            while(snap_id < snap_end){
+                time_interval_left(snap_id);
+                t_beg = ++snap_id * rctIndex.period_snapshot;
             }
-        }*/
+
+        }
     };
 }
 

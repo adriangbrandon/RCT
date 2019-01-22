@@ -77,8 +77,8 @@ int main(int argc, char **argv) {
     //queries_array.emplace_back("queries/traj.txt");
     queries_array.emplace_back("queries/ts_s.txt");
     queries_array.emplace_back("queries/ts_l.txt");
-    /*queries_array.emplace_back("queries/ti_s.txt");
-    queries_array.emplace_back("queries/ti_l.txt");*/
+    queries_array.emplace_back("queries/ti_s.txt");
+    queries_array.emplace_back("queries/ti_l.txt");
 
     /*Consulta MBR: oid: 313 tStart: 37566 tEnd:41408
 It exists */
@@ -205,7 +205,7 @@ It exists */
                           " maxX: " << maxX << " minY:" << minY << " maxY:" << maxY << std::endl;
 
                 std::vector<uint32_t> resultados_2;
-                //rct::algorithm::time_interval(region, tStart, tEnd, m_rct_index, resultados_2);
+                rct::algorithm::time_interval(region, tStart, tEnd, m_rct_index, resultados_2);
                 std::sort(resultados_2.begin(), resultados_2.end());
                 finR >> id;
                 finR >> id;
