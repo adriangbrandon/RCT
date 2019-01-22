@@ -45,15 +45,13 @@ int main(int argc, char **argv) {
    /* std::vector<util::geo::traj_step> resultados_3;
     rct::algorithm::search_trajectory(162, 11572, 13746, m_rct_index, resultados_3);*/
 
-    /* Consulta FAIL: tStart: 37982 tEnd:38782 minX:1383 maxX: 1703 minY:254629 maxY:254949
-     * Valor esperado: id: 228
-     * Valor obtido: id: 64
+    /* Consulta: tStart: 11894 tEnd:11994 minX:1669 maxX: 1709 minY:280290 maxY:280330
      *
      * */
 
-    /*util::geo::region region{util::geo::point{1383, 254629}, util::geo::point{1703, 254949}};
+    /*util::geo::region region{util::geo::point{1669, 280290}, util::geo::point{1709, 280330}};
     std::vector<uint32_t> resultados_2;
-    rct::algorithm::time_interval(region, 37982, 38782, m_rct_index, resultados_2);
+    rct::algorithm::time_interval(region, 11894, 11994, m_rct_index, resultados_2);
     for(const auto &r : resultados_2){
         std::cout << r << std::endl;
     }
@@ -69,11 +67,11 @@ int main(int argc, char **argv) {
 
 
     std::vector<std::string> queries_array;
-    queries_array.emplace_back("queries/traj.txt");
-    /*queries_array.emplace_back("queries/ts_s.txt");
-    queries_array.emplace_back("queries/ts_l.txt");
+    /*queries_array.emplace_back("queries/traj.txt");
+    queries_array.emplace_back("queries/ts_s.txt");
+    queries_array.emplace_back("queries/ts_l.txt");*/
     queries_array.emplace_back("queries/ti_s.txt");
-    queries_array.emplace_back("queries/ti_l.txt");*/
+    queries_array.emplace_back("queries/ti_l.txt");
 
     /*Consulta MBR: oid: 313 tStart: 37566 tEnd:41408
 It exists */

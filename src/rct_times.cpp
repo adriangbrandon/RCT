@@ -211,11 +211,11 @@ int main(int argc, char **argv) {
     }
     finQ.close();
 
-    std::vector<uint32_t > res_t_i;
     double_t t_interval_s = 0;
     for(uint64_t j = 0; j < TIMES; j++){
         auto start = high_resolution_clock::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
+            std::vector<uint32_t > res_t_i;
             rct::algorithm::time_interval(regions[i], t_starts[i], t_ends[i], m_rct_index, res_t_i);
         }
         auto stop = high_resolution_clock::now();
@@ -229,7 +229,6 @@ int main(int argc, char **argv) {
     double_t avg_interval_s = t_interval_s/(double) TIMES;
 
 
-    res_t_i.clear();
     t_starts.clear();
     t_ends.clear();
     regions.clear();
@@ -253,6 +252,7 @@ int main(int argc, char **argv) {
     for(uint64_t j = 0; j < TIMES; j++){
         auto start = high_resolution_clock::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
+            std::vector<uint32_t > res_t_i;
             rct::algorithm::time_interval(regions[i], t_starts[i], t_ends[i], m_rct_index, res_t_i);
         }
         auto stop = high_resolution_clock::now();
