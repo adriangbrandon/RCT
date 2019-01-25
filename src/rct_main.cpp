@@ -61,25 +61,17 @@ int main(int argc, const char* argv[]) {
                                                                                             size_block_bytes, period);
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
-            
-            std::vector<util::geo::traj_step> results;
-            rct::algorithm::search_trajectory(0, 2427, 4597, m_rct_index, results);
-            std::cout << "Search Trajectory 1" << std::endl;
+            sdsl::store_to_file(m_rct_index, index_file);
+            std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
+                              + "_" + std::to_string(period) + ".html");
+            sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
         }
 
         std::cout << "Loading index" << std::endl;
         rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
         sdsl::load_from_file(m_rct_index, index_file);
-        std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
-                          + "_" + std::to_string(period) + ".html");
-        sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
-        sdsl::store_to_file(m_rct_index, index_file);
 
 
-        std::vector<util::geo::id_point> res;
-        rct::algorithm::time_slice(util::geo::region{util::geo::point{1273, 282949}, util::geo::point{1313, 282989}},
-                20706, m_rct_index, res);
-        std::cout << "Size: " << res.size() << std::endl;
         std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
         util::geo::point r;
