@@ -680,7 +680,7 @@ namespace rct {
                 return true;
             }
             util::geo::region mbr;
-            std::queue<mbr_q_type> mbrs;
+            std::stack<mbr_q_type> mbrs;
             size_type p_min_x_index = 0, p_max_x_index = 0, p_min_y_index = 0, p_max_y_index = 0;
             size_type sel_p_x, sel_n_x, sel_p_y, sel_n_y;
             mbrs.push(mbr_q_type{p_s, p_e, util::geo::region(), move_s-1, move_e-1, sel_p_x, sel_n_x, sel_p_y, sel_n_y,
@@ -786,7 +786,7 @@ namespace rct {
 
 
             util::geo::region mbr;
-            std::queue<mbr_q_type> mbrs;
+            std::stack<mbr_q_type> mbrs;
             size_type p_min_x_index = 0, p_max_x_index = 0, p_min_y_index = 0, p_max_y_index = 0;
 
             //TODO: Check -1 because the first position (-1)
@@ -795,7 +795,8 @@ namespace rct {
             size_type i = 0;
             bool intersects;
             while(!mbrs.empty()){
-                mbr_q_type q_e = mbrs.front();
+                //mbr_q_type q_e = mbrs.front();
+                mbr_q_type q_e = mbrs.top();
                 mbrs.pop();
                 if(i == 0){
                     intersects = contains_region_init(phrase_x, phrase_y, move_s, move_e, p_s, p_e, r_q, delta_x, delta_y,

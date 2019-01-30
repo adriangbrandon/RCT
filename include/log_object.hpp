@@ -355,13 +355,14 @@ namespace rct {
                                         std::vector<size_type> &phrases_to_check) const {
 
             if(phrase_i > phrase_j) return false;
-            std::queue<std::pair<size_type, size_type>> queue_index;
+            std::stack<std::pair<size_type, size_type>> queue_index;
             queue_index.push({phrase_i, phrase_j});
 #if VERBOSE
     std::cout << "Push: <" << phrase_i << ", " << phrase_j << ">" << std::endl;
 #endif
             while(!queue_index.empty()){
-                const auto pair = queue_index.front();
+                //const auto pair = queue_index.front();
+                const auto pair = queue_index.top();
                 queue_index.pop();
 #if VERBOSE
                 std::cout << "Processing: <" << pair.first << ", " << pair.second << ">" << std::endl;
