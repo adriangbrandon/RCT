@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
         auto start = high_resolution_clock::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
             std::vector<util::geo::traj_step> results;
-            rct::algorithm::search_trajectory(ids[i], t_starts[i], t_ends[i], m_rct_index, results);
+            rct::algorithm::search_trajectory_fast(ids[i], t_starts[i], t_ends[i], m_rct_index, results);
         }
         auto stop = high_resolution_clock::now();
         auto milli = duration_cast<milliseconds>(stop-start).count();
@@ -277,6 +277,20 @@ int main(int argc, char **argv) {
     cout << "Time Slice L (ms): " << avg_slice_l <<  endl;
     cout << "Time Interval S (ms): " << avg_interval_s << endl;
     cout << "Time Interval L (ms): " << avg_interval_l <<  endl;
+    cout << "-----------------------------------------------------------------" << endl;
+
+    struct decimal_comma : std::numpunct<char> {
+        char do_decimal_point()   const { return ','; }  // separate with slash
+    };
+    std::cout.imbue(std::locale(std::cout.getloc(), new decimal_comma));
+    cout << "TO EXCEL" << endl;
+    cout << "-----------------------------------------------------------------" << endl;
+    cout <<  avg_object << endl;
+    cout <<  avg_traj <<  endl;
+    cout <<  avg_slice_s <<  endl;
+    cout <<  avg_slice_l <<  endl;
+    cout <<  avg_interval_s << endl;
+    cout <<  avg_interval_l <<  endl;
     cout << "-----------------------------------------------------------------" << endl;
 
 

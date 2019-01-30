@@ -52,7 +52,7 @@ int main(int argc, const char* argv[]) {
         uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
         uint32_t period = (uint32_t) atoi(argv[4]);
         std::string dataset = argv[1];
-        std::string index_file = "rct_index_rtree" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
+        std::string index_file = "rct_index_rtree_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
                 + "_" + std::to_string(period) + ".idx";
 
         if(!util::file::file_exists(index_file)){
@@ -63,15 +63,16 @@ int main(int argc, const char* argv[]) {
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
             sdsl::store_to_file(m_rct_index, index_file);
-            std::ofstream out("rct_index_rtree" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
-                              + "_" + std::to_string(period) + ".html");
-            sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
         }
 
         std::cout << "Loading index" << std::endl;
         rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
         std::ifstream index_stream(index_file);
         m_rct_index.load(index_stream, dataset);
+        std::ofstream out("rct_index_rtree_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
+                          + "_" + std::to_string(period) + ".html");
+        sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
+        out.close();
 
         std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
