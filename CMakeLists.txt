@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -46,6 +46,7 @@ endif()
 
 add_subdirectory(external/sdsl-lite)
 add_subdirectory(external/STRRtree)
+add_subdirectory(external/repair_gn)
 
 include_directories("${PROJECT_SOURCE_DIR}/external/googletest/include"
         ${CMAKE_HOME_DIRECTORY}/include
@@ -58,6 +59,7 @@ include_directories("${PROJECT_SOURCE_DIR}/external/googletest/include"
         ${CMAKE_HOME_DIRECTORY}/external/STRRtree/external/libspatialindex/src/
         ${CMAKE_HOME_DIRECTORY}/external/googletest/include
         ${CMAKE_HOME_DIRECTORY}/external/sdsl-lite/external/FastPFor/headers/
+        ${CMAKE_HOME_DIRECTORY}/external/repair_gn
         ${STXXL_INCLUDE_DIRS}
         )
 
@@ -114,3 +116,6 @@ target_link_libraries(rtree_test sdsl divsufsort divsufsort64 spatialindex STRRt
 
 add_executable(rct_times_v2 src/rct_times_v2.cpp)
 target_link_libraries(rct_times_v2 sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(rct_repair src/rct_main_repair.cpp)
+target_link_libraries(rct_repair libRepairGN sdsl divsufsort divsufsort64 spatialindex STRRtree)

@@ -7,3 +7,6 @@
 [submodule "external/STRRtree"]
 	path = external/STRRtree
 	url = https://github.com/adriangbrandon/STRRtree.git
+[submodule "external/repair_gn"]
+	path = external/repair_gn
+	url = https://gitlab.lbd.org.es/agomez/repair_gn.git

@@ -698,6 +698,17 @@ namespace rct {
                 ++i;
             }
         }
+
+        void print_lengths() const {
+            size_type  i = 0, last_i = 0, one = 1;
+            for(const auto &v : m_lengths){
+                if(v == 1) {
+                    std::cerr << i - last_i << std::endl;
+                    last_i = i;
+                }
+                ++i;
+            }
+        }
     };
 
     using log_object_dac_vector = log_object< sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::sd_vector<>,

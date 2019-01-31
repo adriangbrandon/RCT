@@ -2,11 +2,10 @@
 // Created by adrian on 13/11/18.
 //
 
-#ifndef RCT_RLZ_NAIVE_HPP
-#define RCT_RLZ_NAIVE_HPP
+#ifndef RCT_RLZ_REPAIR_HPP
+#define RCT_RLZ_REPAIR_HPP
 
 #include <file_util.hpp>
-#include <reference_uniform_sample.hpp>
 #include <reference_repair.hpp>
 #include <sdsl/suffix_arrays.hpp>
 #include <sdsl/wavelet_trees.hpp>
@@ -16,9 +15,9 @@
 
 namespace rct {
 
-    template <class t_value = uint32_t, class t_reference = reference_uniform_sample<t_value>,
+    template <class t_value = uint32_t, class t_reference = reference_repair<t_value>,
               class t_csa = sdsl::csa_wt_int<> >
-    class rlz_naive {
+    class rlz_repair {
 
     public:
 
@@ -43,7 +42,7 @@ namespace rct {
         size_type m_input_pos = 0;
         const std::vector<value_type>* m_input;
 
-        void copy(const rlz_naive &n){
+        void copy(const rlz_repair &n){
             m_reference = n.m_reference;
             m_csa = n.m_csa;
             m_input_size = n.m_input_size;
@@ -54,21 +53,22 @@ namespace rct {
     public:
         const reference_type &reference = m_reference;
 
-        rlz_naive() = default;
+        rlz_repair() = default;
 
-        rlz_naive(std::vector<value_type> &container, const size_type reference_size, const size_type block_size){
+        rlz_repair(std::vector<value_type> &container){
 
             m_reference = reference_type(container);
             sdsl::int_vector<> rev_reference;
             //std::vector<uint32_t> rev_reference;
             // rev_reference.width((uint8_t) (sizeof(value_type)*8));
-            /* for(size_type i = 0; i < m_reference.size(); ++i){
-                 std::cout << "ref[" << i << "]=" << m_reference[i] << std::endl;
-             }*/
             rev_reference.resize(m_reference.size());
             std::reverse_copy(m_reference.begin(), m_reference.end(), rev_reference.begin());
-            // util::file::write_to_file("rev_ref.txt", rev_reference);
+            //util::file::write_to_file("rev_ref.txt", rev_reference);
+            for(size_type i = 0; i < rev_reference.size(); ++i){
+                std::cout << "ref[" << i << "]=" << rev_reference[i] << std::endl;
+            }
             sdsl::construct_im(m_csa, rev_reference);
+
         }
 
 
@@ -134,19 +134,19 @@ namespace rct {
         }
 
         //! Copy constructor
-        rlz_naive(const rlz_naive& o)
+        rlz_repair(const rlz_repair& o)
         {
             copy(o);
         }
 
         //! Move constructor
-        rlz_naive(rlz_naive&& o)
+        rlz_repair(rlz_repair&& o)
         {
             *this = std::move(o);
         }
 
 
-        void swap(rlz_naive& r)
+        void swap(rlz_repair& r)
         {
             if (this != &r) {
                 m_reference.swap(r.m_reference);
@@ -156,7 +156,7 @@ namespace rct {
             }
         }
 
-        rlz_naive& operator=(const rlz_naive& v)
+        rlz_repair& operator=(const rlz_repair& v)
         {
             if (this != &v) {
                 copy(v);
@@ -164,7 +164,7 @@ namespace rct {
             return *this;
         }
 
-        rlz_naive& operator=(rlz_naive&& v)
+        rlz_repair& operator=(rlz_repair&& v)
         {
             if (this != &v) {
                 m_reference = std::move(v.m_reference);
@@ -203,11 +203,7 @@ namespace rct {
         }
     };
 
-    using rlz_fm_index_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_wt_int<> >;
-    using rlz_csa_sada_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_sada_int<> >;
-    using rlz_csa_sada_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::csa_sada_int<> >;
-    using rlz_csa_bc_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
-    using rlz_csa_bc_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
+    using rlz_repair_csa_bc_int64 = rlz_repair<int64_t , reference_repair<int64_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
 
 }
 
