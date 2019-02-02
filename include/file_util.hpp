@@ -10,6 +10,7 @@
 #include <fstream>
 #include <cctype>
 #include <sys/stat.h>
+#include <stdio.h>
 #include <config_util.hpp>
 
 
@@ -29,6 +30,10 @@ namespace util {
         bool file_exists(const std::string &file){
             struct stat fs;
             return (stat(file.c_str(), &fs) == 0);
+        }
+
+        bool remove_file(const std::string &file){
+            return (remove(file.c_str())==0);
         }
 
         template<class t_value>

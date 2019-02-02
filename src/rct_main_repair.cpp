@@ -69,9 +69,11 @@ int main(int argc, const char* argv[]) {
         sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
         out.close();
 
+
         std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
         util::geo::point r;
+        //rct::algorithm::search_object(73, 44058, m_rct_index, r);
         while(in){
             in >> id >> t >> x >> y;
             if(in.eof()) break;

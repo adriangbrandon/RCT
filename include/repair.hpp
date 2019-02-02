@@ -149,6 +149,8 @@ namespace rct {
             read_c_repair(fileC.c_str());
 
             std::cout << "Alpha: " << alpha << std::endl;
+            util::file::remove_file(fileR);
+            util::file::remove_file(fileC);
             //Unmapping values
 
         }

@@ -59,14 +59,8 @@ namespace rct {
 
             m_reference = reference_type(container);
             sdsl::int_vector<> rev_reference;
-            //std::vector<uint32_t> rev_reference;
-            // rev_reference.width((uint8_t) (sizeof(value_type)*8));
             rev_reference.resize(m_reference.size());
             std::reverse_copy(m_reference.begin(), m_reference.end(), rev_reference.begin());
-            //util::file::write_to_file("rev_ref.txt", rev_reference);
-            for(size_type i = 0; i < rev_reference.size(); ++i){
-                std::cout << "ref[" << i << "]=" << rev_reference[i] << std::endl;
-            }
             sdsl::construct_im(m_csa, rev_reference);
 
         }
@@ -86,6 +80,8 @@ namespace rct {
             while(m_input_pos < m_input_size){
 
                 auto sym = m_input->at(m_input_pos);
+                //auto movement = spiral_matrix_coder::decode(sym);
+                //std::cout << "movement: " << movement.first << ", " << movement.second << std::endl;
                 size_type res_start, res_end;
                 if(start == 0 && end == m_csa.size()-1){
                     auto sym_comp = m_csa.char2comp[sym];
@@ -98,7 +94,7 @@ namespace rct {
                     length_type length = m_input_pos - start_input;
                     if(length == 0) {
                         ++m_input_pos;
-                        offset_type offset = m_reference.size() - m_csa[res_start]-1;
+                        offset_type offset = m_reference.size() - m_csa[res_start] -1;
                         return rlz_factor{offset, 1};
                     }
                     offset_type offset = m_reference.size() - (m_csa[start] + length);

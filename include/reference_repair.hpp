@@ -88,6 +88,17 @@ namespace rct {
             std::map<value_type, u_char> map_terminals;
             split_repair_helper split_helper(&container, &terminals, &map_terminals);
 
+            std::unordered_map<value_type, char> voc_map_container;
+            std::vector<value_type> vocab;
+            for(auto &value : container){
+                if(value > 0 && voc_map_container.count(value) == 0){
+                    voc_map_container[value] = 'a';
+                    vocab.push_back(value);
+                }
+            }
+            voc_map_container.clear();
+
+
             //1.Prepare log
             for(size_type i = 0; i < container.size(); ++i){
                 if(container[i] > std::numeric_limits<int>::max() || container[i] < 0){
@@ -121,14 +132,16 @@ namespace rct {
                 }
                 decoded[m_repair_algo.c[i]] = 'a';
             }
+            decoded.clear();
             //4. Adding values not included in the reference
             std::cout << "Adding extra values to the reference" << std::endl;
             std::unordered_map<value_type, char> voc_reference;
             for(auto &value : m_reference){
                 if(voc_reference.count(value) == 0) voc_reference[value] = 1;
             }
-            for(auto &value : container){
-                if(voc_reference.count(value) == 0){
+            for(auto &value : vocab){
+                //std::cout << "value=" << value << std::endl;
+                if(value > 0 && voc_reference.count(value) == 0){
                     voc_reference[value] = 1;
                     m_reference.push_back(value);
                 }
