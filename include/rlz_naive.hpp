@@ -58,7 +58,7 @@ namespace rct {
 
         rlz_naive(std::vector<value_type> &container, const size_type reference_size, const size_type block_size){
 
-            m_reference = reference_type(container);
+            m_reference = reference_type(container, reference_size, block_size);
             sdsl::int_vector<> rev_reference;
             //std::vector<uint32_t> rev_reference;
             // rev_reference.width((uint8_t) (sizeof(value_type)*8));
