@@ -47,15 +47,21 @@ int main(int argc, const char* argv[]) {
     std::cout << pair.first << ", " << pair.second << std::endl;
     exit(9);*/
 
-    if(argc == 3){
+    if(argc ==3 || argc == 4){
         uint32_t period = (uint32_t) atoi(argv[2]);
+        uint32_t reference_size = 0;
         std::string dataset = argv[1];
-        std::string index_file = "rct_index_repair_" + std::to_string(period) + ".idx";
+        std::string index_file = "rct_index_repair_" + std::to_string(period);
+        if(argc == 4){
+            reference_size = (uint32_t) atoi(argv[3]) * 1024*1024;
+            index_file += "_" + std::to_string(reference_size);
+        }
+        index_file += ".idx";
 
         if(!util::file::file_exists(index_file)){
             std::cout << "Building index" << std::endl;
             auto t1 = util::time::user::now();
-            rct::rct_index_grammar<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index(dataset, period);
+            rct::rct_index_grammar<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index(dataset, reference_size, period);
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
             sdsl::store_to_file(m_rct_index, index_file);
@@ -87,6 +93,10 @@ int main(int argc, const char* argv[]) {
             }
         }
         in.close();
+
+        /*for(auto &log : m_rct_index.log_objects){
+            log.print_lengths();
+        }*/
 
     }
 

@@ -133,7 +133,7 @@ namespace rct {
 
         rct_index_grammar() = default;
 
-        rct_index_grammar(const std::string &dataset_file, const size_type period_snapshot) {
+        rct_index_grammar(const std::string &dataset_file, const size_type size_reference, const size_type period_snapshot) {
 
             m_period_snapshot = period_snapshot;
             _get_stats(dataset_file);
@@ -206,7 +206,7 @@ namespace rct {
             trees.clear();
             std::cout << "Done." << std::endl;
             std::cout << "RLZ: " << std::flush;
-            rlz_type rlz(input_reference);
+            rlz_type rlz(input_reference, size_reference);
             std::cout << "Done." << std::endl;
             input_reference.clear();
             input_reference.shrink_to_fit();
@@ -216,7 +216,7 @@ namespace rct {
                 auto pair = rct::spiral_matrix_coder::decode(rlz.reference[i]);
                 ref_movements.emplace_back(util::geo::movement{pair.first, pair.second});
             }
-            m_log_reference = log_reference_type (ref_movements);
+            m_log_reference = log_reference_type(ref_movements);
             ref_movements.clear();
 
             id = 0, old_id = (uint32_t) -1, old_x = 0, old_y = 0;

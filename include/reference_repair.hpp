@@ -77,12 +77,35 @@ namespace rct {
             }
         }
 
+        void decode_all(repair &m_repair_algo){
+            std::unordered_map<int, char> decoded;
+            for(size_type i = 0; i < m_repair_algo.lenC; ++i){
+                if(decoded.count(m_repair_algo.c[i]) == 0){
+                    decode_movements(m_repair_algo.c[i], m_repair_algo);
+                    decoded[m_repair_algo.c[i]] = 'a';
+                }
+            }
+            decoded.clear();
+        }
+
+        void decode_size(const uint64_t size, repair &m_repair_algo){
+            std::sort(m_repair_algo.c, m_repair_algo.c + m_repair_algo.lenC, std::greater<int>());
+            std::unordered_map<int, char> decoded;
+            for(size_type i = 0; i < m_repair_algo.lenC && sizeof(value_type)*m_reference.size() < size; ++i){
+                if(decoded.count(m_repair_algo.c[i]) == 0){
+                    decode_movements(m_repair_algo.c[i], m_repair_algo);
+                    decoded[m_repair_algo.c[i]] = 'a';
+                }
+            }
+            decoded.clear();
+        }
 
     public:
 
         reference_repair() = default;
 
-        reference_repair(std::vector<value_type> &container){
+        reference_repair(std::vector<value_type> &container, const size_type reference_size = 0,
+                         const size_type block_size = 0){
 
             std::vector<value_type > terminals;
             std::map<value_type, u_char> map_terminals;
@@ -117,22 +140,20 @@ namespace rct {
 
             //2. Running repair
             repair m_repair_algo;
-            int total_MB = util::memory::total_memory_megabytes() * 0.8;
-            m_repair_algo.run(log_repair, length_log, terminals, total_MB);
+            auto total_MB = util::memory::total_memory_megabytes() * 0.8;
+            m_repair_algo.run(log_repair, length_log, terminals, (int) total_MB);
 
             //3. Decode log_repair
             m_alpha =  (uint32_t) m_repair_algo.alpha;
             m_translate_table = std::vector<value_type>(terminals.begin()+ m_one_value, terminals.end());
             std::vector<value_type> reference;
-            std::cout << "Decoding movemnts" << std::endl;
-            std::unordered_map<int, char> decoded;
-            for(size_type i = 0; i < m_repair_algo.lenC; ++i){
-                if(decoded.count(m_repair_algo.c[i]) == 0){
-                    decode_movements(m_repair_algo.c[i], m_repair_algo);
-                }
-                decoded[m_repair_algo.c[i]] = 'a';
+            std::cout << "Decoding movements" << std::endl;
+
+            if(reference_size){
+                decode_size(reference_size, m_repair_algo);
+            }else{
+                decode_all(m_repair_algo);
             }
-            decoded.clear();
             //4. Adding values not included in the reference
             std::cout << "Adding extra values to the reference" << std::endl;
             std::unordered_map<value_type, char> voc_reference;

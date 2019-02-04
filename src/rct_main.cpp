@@ -54,7 +54,7 @@ int main(int argc, const char* argv[]) {
         std::string index_file = "rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
                 + "_" + std::to_string(period) + ".idx";
 
-        //if(!util::file::file_exists(index_file)){
+        if(!util::file::file_exists(index_file)){
             std::cout << "Building index" << std::endl;
             auto t1 = util::time::user::now();
             rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index(argv[1], size_reference,
@@ -65,11 +65,11 @@ int main(int argc, const char* argv[]) {
             std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
                               + "_" + std::to_string(period) + ".html");
             sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
-        //}
+        }
 
         std::cout << "Loading index" << std::endl;
-        //rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
-        //sdsl::load_from_file(m_rct_index, index_file);
+        rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+        sdsl::load_from_file(m_rct_index, index_file);
 
 
         for(auto &log : m_rct_index.log_objects){

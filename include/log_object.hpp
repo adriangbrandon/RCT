@@ -703,7 +703,9 @@ namespace rct {
             size_type  i = 0, last_i = 0, one = 1;
             for(const auto &v : m_lengths){
                 if(v == 1) {
-                    std::cerr << i - last_i << std::endl;
+                    if(i-last_i > 0){
+                        std::cerr << i - last_i << std::endl;
+                    }
                     last_i = i;
                 }
                 ++i;

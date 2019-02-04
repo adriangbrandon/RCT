@@ -55,9 +55,9 @@ namespace rct {
 
         rlz_repair() = default;
 
-        rlz_repair(std::vector<value_type> &container){
+        rlz_repair(std::vector<value_type> &container, const size_type reference_size, const size_type block_size = 0){
 
-            m_reference = reference_type(container);
+            m_reference = reference_type(container, reference_size);
             sdsl::int_vector<> rev_reference;
             rev_reference.resize(m_reference.size());
             std::reverse_copy(m_reference.begin(), m_reference.end(), rev_reference.begin());
