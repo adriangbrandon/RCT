@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sdsl/int_vector.hpp>
 #include <include/irepair.h>
+#include <file_util.hpp>
 #include <vector>
 
 namespace rct {

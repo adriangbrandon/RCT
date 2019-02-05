@@ -76,7 +76,7 @@ int main(int argc, const char* argv[]) {
         out.close();
 
 
-        std::ifstream in(argv[1]);
+        /*std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
         util::geo::point r;
         //rct::algorithm::search_object(73, 44058, m_rct_index, r);
@@ -92,11 +92,13 @@ int main(int argc, const char* argv[]) {
                 exit(0);
             }
         }
-        in.close();
+        in.close();*/
 
-        /*for(auto &log : m_rct_index.log_objects){
-            log.print_lengths();
-        }*/
+        uint64_t phrases = 0;
+        for(auto &log : m_rct_index.log_objects){
+            phrases += log.offsets.size();
+        }
+        std::cout << "Phrases: " << phrases << std::endl;
 
     }
 

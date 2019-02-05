@@ -119,3 +119,6 @@ target_link_libraries(rct_times_v2 sdsl divsufsort divsufsort64 spatialindex STR
 
 add_executable(rct_repair src/rct_main_repair.cpp)
 target_link_libraries(rct_repair libRepairGN sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(lz_parser_repair_test src/lz_parser_repair_test.cpp)
+target_link_libraries(lz_parser_repair_test  libRepairGN sdsl divsufsort divsufsort64)

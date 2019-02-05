@@ -711,6 +711,8 @@ namespace rct {
                 ++i;
             }
         }
+
+
     };
 
     using log_object_dac_vector = log_object< sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::sd_vector<>,
