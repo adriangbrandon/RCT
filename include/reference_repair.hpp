@@ -17,21 +17,36 @@
 namespace rct {
 
 
-    template<class t_value = int64_t>
+    template<class t_value = int64_t, class t_factor=  std::pair<uint64_t , uint64_t>>
     class reference_repair {
 
     public:
         typedef uint64_t size_type;
         typedef t_value value_type;
+        typedef t_factor rlz_factor_type;
         typedef typename std::vector<value_type>::iterator iterator;
     private:
         std::vector<value_type> m_reference;
+        std::unordered_map<value_type, rlz_factor_type> m_value_factor;
+        std::vector<size_type> m_lengths;
+        std::vector<util::geo::mbr> m_mbrs;
+
+        std::vector<value_type> m_sequence;
+        std::vector<value_type> m_translate_table;
+        std::vector<std::pair<value_type, value_type>> m_rules;
         size_type m_alpha;
         size_type m_one_value;
-        std::vector<value_type> m_translate_table;
 
         void copy(const reference_repair &n){
             m_reference = n.m_reference;
+            m_value_factor = n.m_value_factor;
+            m_lengths = n.m_lengths;
+            m_mbrs = n.m_mbrs;
+            m_alpha = n.m_alpha;
+            m_one_value = n.m_one_value;
+            m_translate_table = n.m_translate_table;
+            m_sequence = n.m_sequence;
+            m_rules = n.m_rules;
         }
 
         uint32_t _translate_log(const std::vector<value_type> &log, const std::vector<value_type> &terminals,
@@ -63,44 +78,123 @@ namespace rct {
             return one_value;
         }
 
-        void decode_movements(int i, const repair &m_repair_algo) {
+        void decode_movements(value_type i, uint32_t &size, util::geo::movement &movement, util::geo::mbr &mbr) {
             //Skip values lower than 0
             if(i < m_one_value) return;
             while (i >= m_alpha) {
-                decode_movements(m_repair_algo.rules[i-m_alpha].left, m_repair_algo);
-                i =  m_repair_algo.rules[i-m_alpha].right;
+                decode_movements(m_rules[i-m_alpha].first, size, movement, mbr);
+                i =  m_rules[i-m_alpha].second;
             }
             //Leaves
             if(i < m_alpha){
                 //Translate and decode the positions
-                m_reference.emplace_back(m_translate_table[i-m_one_value]);
+                auto value = m_translate_table[i-m_one_value];
+                m_reference.emplace_back(value);
+                auto pair = rct::spiral_matrix_coder::decode(value);
+                movement.x += pair.first;
+                movement.y += pair.second;
+                if(mbr.min.x > movement.x){
+                    mbr.min.x = movement.x;
+                }
+                if(mbr.min.y > movement.y){
+                    mbr.min.y = movement.y;
+                }
+                if(mbr.max.x < movement.x){
+                    mbr.max.x = movement.x;
+                }
+                if(mbr.max.y < movement.y){
+                    mbr.max.y = movement.y;
+                }
+                ++size;
             }
         }
 
-        void decode_all(repair &m_repair_algo){
-            std::unordered_map<int, char> decoded;
-            for(size_type i = 0; i < m_repair_algo.lenC; ++i){
-                if(decoded.count(m_repair_algo.c[i]) == 0){
-                    decode_movements(m_repair_algo.c[i], m_repair_algo);
-                    decoded[m_repair_algo.c[i]] = 'a';
+        void extend_factors(value_type i, uint32_t &start_pos, uint32_t &size) {
+           // std::cout << "start_pos: " << start_pos << std::endl;
+            //Skip values lower than 0
+            if(i < m_one_value) return;
+            if(i >= m_alpha) {
+                uint32_t size_first = 0, pos_first = start_pos;
+                extend_factors(m_rules[i-m_alpha].first, start_pos, size_first);
+                if(m_rules[i-m_alpha].first >= m_alpha && m_value_factor.count(m_rules[i-m_alpha].first) == 0){
+                    m_value_factor[m_rules[i-m_alpha].first] = rlz_factor_type{pos_first, size_first};
                 }
+                uint32_t size_second = 0, pos_second = start_pos;
+                extend_factors(m_rules[i-m_alpha].second, start_pos, size_second);
+                if(m_rules[i-m_alpha].second >= m_alpha && m_value_factor.count(m_rules[i-m_alpha].second) == 0){
+                    m_value_factor[m_rules[i-m_alpha].second] = rlz_factor_type{pos_second, size_second};
+                }
+                size = size_first + size_second;
+            }else{
+                //Translate and decode the positions
+                if(m_value_factor.count(i) == 0){
+                    m_value_factor[i] = rlz_factor_type{start_pos, 1};
+                }
+                size=1;
+                ++start_pos;
             }
-            decoded.clear();
         }
 
-        void decode_size(const uint64_t size, repair &m_repair_algo){
-            std::sort(m_repair_algo.c, m_repair_algo.c + m_repair_algo.lenC, std::greater<int>());
-            std::unordered_map<int, char> decoded;
-            for(size_type i = 0; i < m_repair_algo.lenC && sizeof(value_type)*m_reference.size() < size; ++i){
-                if(decoded.count(m_repair_algo.c[i]) == 0){
-                    decode_movements(m_repair_algo.c[i], m_repair_algo);
-                    decoded[m_repair_algo.c[i]] = 'a';
+        void size_movements_rec(value_type i, size_type &size) {
+            //Skip values lower than 0
+            if(i < m_one_value) return;
+            while (i >= m_alpha) {
+                size_movements_rec(m_rules[i-m_alpha].first, size);
+                i =  m_rules[i-m_alpha].second;
+            }
+            //Leaves
+            if(i < m_alpha){
+                //Translate and decode the positions
+                ++size;
+            }
+        }
+
+
+        void decode_all(){
+            uint32_t size;
+            uint32_t pos = 0;
+            for(uint32_t i = 0; i < m_sequence.size(); ++i){
+                if(m_value_factor.count(m_sequence[i]) == 0){
+                    size = 0;
+                    util::geo::mbr mbr{0,0,0,0};
+                    util::geo::movement movement{0,0};
+                    decode_movements(m_sequence[i], size, movement, mbr);
+                    m_value_factor[m_sequence[i]] = rlz_factor_type{pos, size};
+                    m_mbrs.push_back(mbr);
+                    m_lengths.push_back(size);
+                    //size = 0;
+                    //extend_factors(m_sequence[i], pos, size);
+                    pos += size;
                 }
             }
-            decoded.clear();
+        }
+
+
+
+        void decode_size(const uint64_t size){
+            std::vector<value_type> sequence_sorted(m_sequence);
+            std::sort(sequence_sorted.begin(), sequence_sorted.end(), std::greater<value_type >());
+            uint32_t size_factor, pos = 0;
+            for(uint32_t i = 0; i < sequence_sorted.size() && sizeof(value_type)*m_reference.size() < size; ++i){
+                if(m_value_factor.count(sequence_sorted[i]) == 0){
+                    size_factor = 0;
+                    util::geo::mbr mbr{0,0,0,0};
+                    util::geo::movement movement{0,0};
+                    decode_movements(m_sequence[i], size_factor, movement, mbr);
+                    m_value_factor[sequence_sorted[i]] = rlz_factor_type{pos, size_factor};
+                    m_lengths.push_back(size_factor);
+                    pos += size_factor;
+                }
+            }
         }
 
     public:
+
+
+        const size_type &one_value = m_one_value;
+        const std::vector<value_type> &sequence = m_sequence;
+        const std::vector<size_type> &lengths = m_lengths;
+        const std::vector<util::geo::mbr> &mbrs = m_mbrs;
 
         reference_repair() = default;
 
@@ -149,25 +243,41 @@ namespace rct {
             std::vector<value_type> reference;
             std::cout << "Decoding movements" << std::endl;
 
+            m_sequence.resize(m_repair_algo.lenC);
+            for(size_type i = 0; i < m_repair_algo.lenC; ++i){
+                m_sequence[i] = m_repair_algo.c[i];
+            }
+            std::cout << "Sequence done" << std::endl;
+
+            m_rules.resize(m_repair_algo.lenR);
+            for(size_type i = 0; i < m_repair_algo.lenR; ++i){
+                m_rules[i] = {m_repair_algo.rules[i].left, m_repair_algo.rules[i].right};
+            };
+            std::cout << "Rules done" << std::endl;
+            m_repair_algo.clear();
+
             if(reference_size){
-                decode_size(reference_size, m_repair_algo);
+                decode_size(reference_size);
             }else{
-                decode_all(m_repair_algo);
+                decode_all();
             }
             //4. Adding values not included in the reference
             std::cout << "Adding extra values to the reference" << std::endl;
-            std::unordered_map<value_type, char> voc_reference;
-            for(auto &value : m_reference){
-                if(voc_reference.count(value) == 0) voc_reference[value] = 1;
-            }
+
             for(auto &value : vocab){
                 //std::cout << "value=" << value << std::endl;
-                if(value > 0 && voc_reference.count(value) == 0){
-                    voc_reference[value] = 1;
+                if(value > 0 && m_value_factor.count(value) == 0){
+                    m_value_factor[value] = rlz_factor_type{(uint32_t) m_reference.size(),1};
                     m_reference.push_back(value);
                 }
             }
             std::cout << "Reference Done. Size: " << m_reference.size() << std::endl;
+        }
+
+        size_type size_movements(value_type i){
+            size_type size = 0;
+            size_movements_rec(i, size);
+            return size;
         }
 
         inline value_type operator[](const size_type& idx){
@@ -180,6 +290,10 @@ namespace rct {
 
         void* data(const size_type& idx){
             return &m_reference[idx];
+        }
+
+        rlz_factor_type get_factor(const size_type& v){
+            return m_value_factor[v];
         }
 
         inline size_type size() const{
@@ -215,6 +329,14 @@ namespace rct {
         {
             if (this != &r) {
                 std::swap(m_reference, r.m_reference);
+                std::swap(m_mbrs, r.m_mbrs);
+                std::swap(m_lengths, r.m_lengths);
+                std::swap(m_value_factor, r.m_value_factor);
+                std::swap(m_alpha, r.m_alpha);
+                std::swap(m_one_value, r.m_one_value);
+                std::swap(m_translate_table ,r.m_translate_table);
+                std::swap(m_sequence , r.m_sequence);
+                std::swap(m_rules, r.m_rules);
             }
         }
 
@@ -230,6 +352,14 @@ namespace rct {
         {
             if (this != &v) {
                 m_reference = std::move(v.m_reference);
+                m_lengths = std::move(v.m_lengths);
+                m_mbrs = std::move(v.m_mbrs);
+                m_value_factor = std::move(v.m_value_factor);
+                m_alpha = v.m_alpha;
+                m_one_value = v.m_one_value;
+                m_translate_table = std::move(v.m_translate_table);
+                m_sequence = std::move(v.m_sequence);
+                m_rules = std::move(v.m_rules);
             }
             return *this;
         }
@@ -238,17 +368,32 @@ namespace rct {
         {
             sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
             size_type written_bytes = 0;
-            sdsl::write_member(m_reference.size(), out, child, "size");
+            sdsl::write_member(m_reference.size(), out, child, "size_reference");
             written_bytes += sdsl::serialize_vector(m_reference, out, child, "reference");
+            written_bytes += sdsl::write_member(m_alpha, out, child, "alpha");
+            written_bytes += sdsl::write_member(m_one_value, out, child, "one_value");
+            sdsl::write_member(m_translate_table.size(), out, child, "size_translate_table");
+            written_bytes += sdsl::serialize_vector(m_translate_table, out, child, "translate_table");
+            sdsl::write_member(m_sequence.size(), out, child, "size_sequence");
+            written_bytes += sdsl::serialize_vector(m_sequence, out, child, "sequence");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
         }
 
         void load(std::istream& in){
-            size_type size;
-            sdsl::read_member(size, in);
-            m_reference.resize(size);
+            size_type size_reference, size_translate_table, size_sequence;
+            sdsl::read_member(size_reference, in);
+            m_reference.resize(size_reference);
             sdsl::load_vector(m_reference, in);
+            sdsl::read_member(m_alpha, in);
+            sdsl::read_member(m_one_value, in);
+            sdsl::read_member(size_translate_table, in);
+            m_translate_table.resize(size_translate_table);
+            sdsl::load_vector(m_translate_table, in);
+            sdsl::read_member(size_sequence, in);
+            m_sequence.resize(size_sequence);
+            sdsl::load_vector(m_sequence, in);
+
         }
 
     };

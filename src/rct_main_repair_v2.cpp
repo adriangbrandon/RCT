@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdint>
 #include <cstdlib>
-#include <rct_index.hpp>
+#include <rct_index_grammar_v2.hpp>
 #include <rct_algorithm.hpp>
 #include <vector>
 #include <spiral_matrix_coder.hpp>
@@ -47,43 +47,45 @@ int main(int argc, const char* argv[]) {
     std::cout << pair.first << ", " << pair.second << std::endl;
     exit(9);*/
 
-    if(argc == 5){
-        uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
-        uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
-        uint32_t period = (uint32_t) atoi(argv[4]);
-        std::string index_file = "rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
-                + "_" + std::to_string(period) + ".idx";
+    if(argc ==3 || argc == 4){
+        uint32_t period = (uint32_t) atoi(argv[2]);
+        uint32_t reference_size = 0;
+        std::string dataset = argv[1];
+        std::string index_file = "rct_index_repair_v2_" + std::to_string(period);
+        if(argc == 4){
+            reference_size = (uint32_t) atoi(argv[3]) * 1024*1024;
+            index_file += "_" + std::to_string(reference_size);
+        }
+        index_file += ".idx";
 
         if(!util::file::file_exists(index_file)){
             std::cout << "Building index" << std::endl;
             auto t1 = util::time::user::now();
-            rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index(argv[1], size_reference,
-                                                                                            size_block_bytes, period);
+            rct::rct_index_grammar_v2<2, rct::log_reference_v2<>, rct::log_object_v2_int_vector> m_rct_index(dataset, reference_size, period);
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
-            //sdsl::store_to_file(m_rct_index, index_file);
-            std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
-                              + "_" + std::to_string(period) + ".html");
-            sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
+            sdsl::store_to_file(m_rct_index, index_file);
         }
 
         std::cout << "Loading index" << std::endl;
-        rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
-        sdsl::load_from_file(m_rct_index, index_file);
+        rct::rct_index_grammar_v2<2, rct::log_reference_v2<>, rct::log_object_v2_int_vector> m_rct_index;
+        std::ifstream index_stream(index_file);
+        m_rct_index.load(index_stream);
+        std::ofstream out("rct_index_repair_v2_" + std::to_string(period) + ".html");
+        sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
+        out.close();
 
 
-        /*for(auto &log : m_rct_index.log_objects){
-            log.print_lengths();
-        }*/
-
-        /*std::ifstream in(argv[1]);
+        std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
         util::geo::point r;
+        //rct::algorithm::search_object(73, 44058, m_rct_index, r);
         while(in){
             in >> id >> t >> x >> y;
             if(in.eof()) break;
+            //std::cout << "Looking for: id=" << id << " t=" << t << std::endl;
             rct::algorithm::search_object(id, t, m_rct_index, r);
-            std::cout << "Obtained: " << r.x << ", " << r.y << std::endl;
+            //std::cout << "Obtained: " << r.x << ", " << r.y << std::endl;
             if(r.x != x || r.y != y){
                 std::cout << "Error looking for: id=" << id << " t=" << t << std::endl;
                 std::cout << "Expected: " << x << ", " << y << std::endl;
@@ -91,7 +93,7 @@ int main(int argc, const char* argv[]) {
                 exit(0);
             }
         }
-        in.close();*/
+        in.close();
 
         uint64_t phrases = 0;
         for(auto &log : m_rct_index.log_objects){

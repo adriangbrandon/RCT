@@ -56,6 +56,11 @@ namespace util {
             point max;
         };
 
+        struct mbr{
+            movement min;
+            movement max;
+        };
+
         struct traj_step {
             uint32_t t;
             uint32_t x;
