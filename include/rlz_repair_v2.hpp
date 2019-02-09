@@ -23,7 +23,7 @@ namespace rct {
         typedef uint32_t length_type;
         offset_type offset;
         length_type length;
-    } rlz_factor_type;
+    } rlz_factor_t;
 
 
     template <class t_value = uint32_t, class t_reference = reference_repair<t_value, rlz_factor>,
@@ -33,7 +33,7 @@ namespace rct {
     public:
 
         typedef t_reference reference_type;
-        typedef rlz_factor_type rlz_factor_type;
+        typedef rlz_factor_t rlz_factor_type;
         typedef t_value value_type;
         typedef t_csa csa_type;
         typedef typename csa_type::size_type size_type;
