@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Release")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -64,9 +64,6 @@ include_directories("${PROJECT_SOURCE_DIR}/external/googletest/include"
         )
 
 
-add_executable(rlz_file src/rlz_file.cpp)
-target_link_libraries(rlz_file sdsl divsufsort divsufsort64)
-
 add_executable(estimation_size src/estimation_size.cpp)
 target_link_libraries(estimation_size sdsl divsufsort divsufsort64)
 
@@ -81,6 +78,12 @@ target_link_libraries(alternative_code sdsl divsufsort divsufsort64)
 
 add_executable(rlz_test src/rlz_test.cpp)
 target_link_libraries(rlz_test sdsl divsufsort divsufsort64)
+
+add_executable(rlz src/rlz.cpp)
+target_link_libraries(rlz sdsl divsufsort divsufsort64)
+
+add_executable(rlz_file src/rlz_file.cpp)
+target_link_libraries(rlz_file sdsl divsufsort divsufsort64)
 
 add_executable(stats_rct src/stats_rct.cpp)
 target_link_libraries(stats_rct sdsl divsufsort divsufsort64)
