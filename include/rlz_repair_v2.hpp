@@ -159,7 +159,7 @@ namespace rct {
         }
     };
 
-    using rlz_repair_v2_csa_bc_int64 = rlz_repair_v2<int64_t , reference_repair<int64_t, rlz_factor_type>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
+    using rlz_repair_v2_csa_bc_int64 = rlz_repair_v2<int64_t , reference_repair<int64_t, rlz_factor_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
 
 }
 
