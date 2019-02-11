@@ -153,25 +153,28 @@ namespace rct {
         void decode_all(){
             uint32_t size;
             uint32_t pos = 0;
-            for(uint32_t i = 0; i < m_sequence.size(); ++i){
-                if(m_value_factor.count(m_sequence[i]) == 0){
+            //Rules
+            auto last_value = (int64_t) (m_rules.size() + m_alpha - 1);
+            for(int64_t i = last_value; i >= 0; --i){
+                if(m_value_factor.count(i) == 0){
                     size = 0;
                     util::geo::mbr mbr{0,0,0,0};
                     util::geo::movement movement{0,0};
-                    decode_movements(m_sequence[i], size, movement, mbr);
-                    m_value_factor[m_sequence[i]] = rlz_factor_type{pos, size};
+                    decode_movements(i, size, movement, mbr);
+                    m_value_factor[i] = rlz_factor_type{pos, size};
                     m_mbrs.push_back(mbr);
                     m_lengths.push_back(size);
-                    //size = 0;
-                    //extend_factors(m_sequence[i], pos, size);
-                    pos += size;
+                    size = 0;
+                    extend_factors(i, pos, size);
+                    //pos += size;
                 }
             }
+
         }
 
 
 
-        void decode_size(const uint64_t size){
+        /*void decode_size(const uint64_t size){
             std::vector<value_type> sequence_sorted(m_sequence);
             std::sort(sequence_sorted.begin(), sequence_sorted.end(), std::greater<value_type >());
             uint32_t size_factor, pos = 0;
@@ -186,7 +189,7 @@ namespace rct {
                     pos += size_factor;
                 }
             }
-        }
+        }*/
 
     public:
 
@@ -257,7 +260,7 @@ namespace rct {
             m_repair_algo.clear();
 
             if(reference_size){
-                decode_size(reference_size);
+               // decode_size(reference_size);
             }else{
                 decode_all();
             }
