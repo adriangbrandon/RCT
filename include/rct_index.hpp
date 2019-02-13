@@ -155,7 +155,13 @@ namespace rct {
                 if (id == old_id) {
                     int32_t diff_x = x - old_x;
                     int32_t diff_y = y - old_y;
-                    input_reference.push_back(spiral_matrix_coder::encode(diff_x, diff_y));
+                    auto spiral_value = spiral_matrix_coder::encode(diff_x, diff_y);
+                   /* if(spiral_value == 4309543482260){
+                        std::cout << "id: " << id << " t: " << t <<" x: " << x << " y: " << y << std::endl;
+                        std::cout << "old_id: " << old_id << " old_t: " << old_t <<" old_x: " << old_x << " old_y: " << old_y << std::endl;
+                        exit(10);
+                    }*/
+                    input_reference.push_back(spiral_value);
                 }
 
                 if(t % m_period_snapshot == 0){

@@ -280,7 +280,8 @@ namespace rct {
         runs_bitvector() = default;
 
         runs_bitvector(const sdsl::bit_vector &c){
-           // std::cout << "size: " << c.size() << std::endl;
+            std::cout << "size: " << c.size() << std::endl;
+            std::cout << "empty: " << c.empty() << std::endl;
             if(c.empty()) return;
             std::vector<uint8_t> best_sampling;
             std::vector<uint64_t > best_start, best_end;

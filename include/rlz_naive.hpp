@@ -6,6 +6,7 @@
 #define RCT_RLZ_NAIVE_HPP
 
 #include <file_util.hpp>
+#include <unordered_map>
 #include <reference_uniform_sample.hpp>
 #include <reference_repair.hpp>
 #include <sdsl/suffix_arrays.hpp>
@@ -33,11 +34,13 @@ namespace rct {
         typedef t_value value_type;
         typedef t_csa csa_type;
         typedef typename csa_type::size_type size_type;
+        typedef std::unordered_map<size_type, size_type> char2comp_type;
 
     private:
 
         reference_type m_reference;
         csa_type  m_csa;
+        char2comp_type m_char2comp;
 
         size_type m_input_size = 0;
         size_type m_input_pos = 0;
@@ -58,17 +61,34 @@ namespace rct {
 
         rlz_naive(std::vector<value_type> &container, const size_type reference_size, const size_type block_size){
 
+
             m_reference = reference_type(container, reference_size, block_size);
-            sdsl::int_vector<> rev_reference;
-            //std::vector<uint32_t> rev_reference;
-            // rev_reference.width((uint8_t) (sizeof(value_type)*8));
-            /* for(size_type i = 0; i < m_reference.size(); ++i){
-                 std::cout << "ref[" << i << "]=" << m_reference[i] << std::endl;
-             }*/
-            rev_reference.resize(m_reference.size());
-            std::reverse_copy(m_reference.begin(), m_reference.end(), rev_reference.begin());
-            // util::file::write_to_file("rev_ref.txt", rev_reference);
-            sdsl::construct_im(m_csa, rev_reference);
+            std::string file_rev_reference =  std::to_string(getpid()) + ".rev_ref";
+            {
+                std::map<size_type, size_type> D;
+                // count occurrences of each symbol
+                for(auto it = m_reference.begin(); it != m_reference.end(); ++it) {
+                    auto value = *it;
+                    D[value]++;
+                }
+
+                size_type index = 1;
+                for(auto it = D.begin(); it != D.end(); ++it){
+                    m_char2comp[it->first] = index;
+                    ++index;
+                }
+                m_char2comp[0] = 0;
+                sdsl::int_vector<> rev_reference;
+                rev_reference.resize(m_reference.size());
+                for(size_type i = 0; i < rev_reference.size() ; ++i){
+                    auto value = *(m_reference.begin() + m_reference.size()-1-i);
+                    rev_reference[i] = m_char2comp[value];
+                }
+                sdsl::store_to_plain_array<value_type>(rev_reference, file_rev_reference);
+            }
+            std::cout << "building SA " << std::endl;
+            sdsl::construct(m_csa, file_rev_reference.c_str(), sizeof(size_type));
+            std::cout << "done" << std::endl;
         }
 
 
@@ -86,13 +106,13 @@ namespace rct {
             while(m_input_pos < m_input_size){
 
                 auto sym = m_input->at(m_input_pos);
+                auto sym_comp = m_char2comp[sym];
                 size_type res_start, res_end;
                 if(start == 0 && end == m_csa.size()-1){
-                    auto sym_comp = m_csa.char2comp[sym];
                     res_start = m_csa.C[sym_comp];
                     res_end = m_csa.C[sym_comp+1]-1;
                 }else{
-                    sdsl::backward_search(m_csa, start, end, sym, res_start, res_end);
+                    sdsl::backward_search(m_csa, start, end, sym_comp, res_start, res_end);
                 }
                 if(res_end < res_start){
                     length_type length = m_input_pos - start_input;
@@ -208,6 +228,7 @@ namespace rct {
     using rlz_csa_sada_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::csa_sada_int<> >;
     using rlz_csa_bc_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
     using rlz_csa_bc_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
+    //using rlz_csa_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::int_vector<>>;
 
 }
 

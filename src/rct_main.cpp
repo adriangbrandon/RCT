@@ -76,7 +76,7 @@ int main(int argc, const char* argv[]) {
             log.print_lengths();
         }*/
 
-        /*std::ifstream in(argv[1]);
+        std::ifstream in(argv[1]);
         uint32_t id, t, x, y;
         util::geo::point r;
         while(in){
@@ -91,7 +91,7 @@ int main(int argc, const char* argv[]) {
                 exit(0);
             }
         }
-        in.close();*/
+        in.close();
 
         uint64_t phrases = 0;
         for(auto &log : m_rct_index.log_objects){
