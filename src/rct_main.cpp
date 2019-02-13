@@ -61,7 +61,7 @@ int main(int argc, const char* argv[]) {
                                                                                             size_block_bytes, period);
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
-            //sdsl::store_to_file(m_rct_index, index_file);
+            sdsl::store_to_file(m_rct_index, index_file);
             std::ofstream out("rct_index_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
                               + "_" + std::to_string(period) + ".html");
             sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);

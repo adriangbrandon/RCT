@@ -77,6 +77,7 @@ namespace rct {
         value_type m_time_start = 0;
         value_type m_x_start = 0;
         value_type m_y_start = 0;
+        size_type m_sample;
 
         values_type m_x_values;
         values_type m_y_values;
@@ -147,11 +148,11 @@ namespace rct {
             sdsl::util::bit_compress(ref);
         }
 
-        inline util::geo::region MBR(const size_type phrase_i, const size_type phrase_j) const {
-            auto index_min_x = m_rmq_x(phrase_i-1, phrase_j-1);
-            auto index_min_y = m_rmq_y(phrase_i-1, phrase_j-1);
-            auto index_max_x = m_rMq_x(phrase_i-1, phrase_j-1);
-            auto index_max_y = m_rMq_y(phrase_i-1, phrase_j-1);
+        inline util::geo::region MBR(const size_type sample_i, const size_type sample_j) const {
+            auto index_min_x = m_rmq_x(sample_i, sample_j);
+            auto index_min_y = m_rmq_y(sample_i, sample_j);
+            auto index_max_x = m_rMq_x(sample_i, sample_j);
+            auto index_max_y = m_rMq_y(sample_i, sample_j);
             return util::geo::region{util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_min_x]) - alternative_code::decode(m_min_x_values[index_min_x])),
                                                       (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_min_y]) - alternative_code::decode(m_min_y_values[index_min_y]))},
                                      util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_max_x]) + alternative_code::decode(m_max_x_values[index_max_x])),
@@ -159,14 +160,14 @@ namespace rct {
             };
         }
 
-        inline util::geo::region MBR(const size_type phrase_i) const{
+        inline util::geo::region MBR(const size_type sample_i) const{
 
-            auto x_phrase = m_x_start + alternative_code::decode(m_x_values[phrase_i-1]);
-            auto y_phrase = m_y_start + alternative_code::decode(m_y_values[phrase_i-1]);
-            return util::geo::region{util::geo::point{(uint32_t) (x_phrase - alternative_code::decode(m_min_x_values[phrase_i-1])),
-                                                      (uint32_t) (y_phrase - alternative_code::decode(m_min_y_values[phrase_i-1]))},
-                                     util::geo::point{(uint32_t) (x_phrase + alternative_code::decode(m_max_x_values[phrase_i-1])),
-                                                      (uint32_t) (y_phrase + alternative_code::decode(m_max_x_values[phrase_i-1]))}
+            auto x_phrase = m_x_start + alternative_code::decode(m_x_values[sample_i*m_sample]);
+            auto y_phrase = m_y_start + alternative_code::decode(m_y_values[sample_i*m_sample]);
+            return util::geo::region{util::geo::point{(uint32_t) (x_phrase - alternative_code::decode(m_min_x_values[sample_i])),
+                                                      (uint32_t) (y_phrase - alternative_code::decode(m_min_y_values[sample_i]))},
+                                     util::geo::point{(uint32_t) (x_phrase + alternative_code::decode(m_max_x_values[sample_i])),
+                                                      (uint32_t) (y_phrase + alternative_code::decode(m_max_x_values[sample_i]))}
             };
         }
 
@@ -184,12 +185,13 @@ namespace rct {
         const disap_type &disap = m_disap;
 
         template<class ContainerTrajectory, class ContainerFactors>
-        log_object(const ContainerTrajectory &trajectory, const ContainerFactors &factors) {
+        log_object(const ContainerTrajectory &trajectory, const ContainerFactors &factors, const size_type sample=1) {
 
             //1. Compute the start values
             m_time_start = trajectory[0].t;
             m_x_start = trajectory[0].x;
             m_y_start = trajectory[0].y;
+            m_sample = sample;
 
             //2. Compute the disappearances
             auto last_t = m_time_start;
@@ -237,11 +239,19 @@ namespace rct {
                     }
                     start_phrase += factor.length;
                     acum_length += factor.length;
-                    min_x.push_back(m_x);
+
+                    /*min_x.push_back(m_x);
                     min_y.push_back(m_y);
                     max_x.push_back(M_x);
-                    max_y.push_back(M_y);
+                    max_y.push_back(M_y);*/
                     ++factor_i;
+                    //TODO: sampling
+                    if(factor_i % m_sample == 0){
+                        min_x.push_back(m_x);
+                        min_y.push_back(m_y);
+                        max_x.push_back(M_x);
+                        max_y.push_back(M_y);
+                    }
                 }
                 if(factor_i > 0) pos_ones_lengths.push_back(acum_length);
                 compress_data(m_offsets, offset_temp);
@@ -356,7 +366,8 @@ namespace rct {
 
             if(phrase_i > phrase_j) return false;
             std::stack<std::pair<size_type, size_type>> queue_index;
-            queue_index.push({phrase_i, phrase_j});
+            queue_index.push({(phrase_i-1)/m_sample, (phrase_j-1)/m_sample});
+
 #if VERBOSE
     std::cout << "Push: <" << phrase_i << ", " << phrase_j << ">" << std::endl;
 #endif
@@ -395,7 +406,13 @@ namespace rct {
 #endif
                         return true;
                     }
-                    phrases_to_check.push_back(pair.first);
+
+                    auto beg = std::max(phrase_i, m_sample*pair.first);
+                    auto end = std::min(phrase_j, m_sample*(pair.first+1)-1);
+                    for(size_type i = beg; i <= end; ++i){
+                        phrases_to_check.push_back(i);
+                    }
+
 #if VERBOSE
                     std::cout << "Phrases to check: " << pair.first << std::endl;
 #endif
@@ -404,14 +421,6 @@ namespace rct {
 #if VERBOSE
             std::cout << "Doesn't contain region " << std::endl;
 #endif
-            /*std::unordered_map<size_type, char> map_aux;
-            for(const auto &phrase : phrases_to_check){
-                if(map_aux.count(phrase) > 0){
-                    std::cout << "Error repetido" << std::endl;
-                    exit(0);
-                }
-                map_aux[phrase] = 1;
-            }*/
             return false;
 
         }

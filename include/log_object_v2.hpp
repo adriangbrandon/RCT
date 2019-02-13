@@ -392,6 +392,14 @@ namespace rct {
 #if VERBOSE
             std::cout << "Doesn't contain region " << std::endl;
 #endif
+            /*std::unordered_map<size_type, char> map_aux;
+            for(const auto &phrase : phrases_to_check){
+                if(map_aux.count(phrase) > 0){
+                    std::cout << "Error repetido" << std::endl;
+                    exit(0);
+                }
+                map_aux[phrase] = 1;
+            }*/
             return false;
 
         }
