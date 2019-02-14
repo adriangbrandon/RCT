@@ -14,7 +14,7 @@
 #include "spiral_matrix_coder.hpp"
 #include "time_util.hpp"
 #include <sdsl/int_vector.hpp>
-#include <rlz_repair.hpp>
+#include <rlz_naive.hpp>
 
 #define PRINT_STATS 1
 

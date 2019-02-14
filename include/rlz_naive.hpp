@@ -59,7 +59,7 @@ namespace rct {
 
         rlz_naive() = default;
 
-        rlz_naive(std::vector<value_type> &container, const size_type reference_size, const size_type block_size){
+        rlz_naive(std::vector<value_type> &container, const size_type reference_size = 0, const size_type block_size = 0){
 
 
             m_reference = reference_type(container, reference_size, block_size);
@@ -228,6 +228,7 @@ namespace rct {
     using rlz_csa_sada_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::csa_sada_int<> >;
     using rlz_csa_bc_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
     using rlz_csa_bc_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
+    using rlz_repair_csa_bc_int64 = rlz_naive<int64_t , reference_repair<int64_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
     //using rlz_csa_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::int_vector<>>;
 
 }
