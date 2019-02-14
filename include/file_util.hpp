@@ -36,6 +36,36 @@ namespace util {
             return (remove(file.c_str())==0);
         }
 
+        std::string remove_path(const std::string &file){
+            auto pos_last_slash = file.find_last_of("\\/");
+            if(pos_last_slash != -1) {
+                return file.substr(pos_last_slash+1);
+            }
+            return file;
+        }
+
+        std::string remove_extension(const std::string &file){
+            auto pos_last_slash = file.find_last_of("\\/");
+            auto pos_last_point = file.find_last_of('.');
+            if(pos_last_point != -1 && (pos_last_slash == -1 || pos_last_slash < pos_last_point)){
+                return file.substr(0, pos_last_point);
+            }
+            return file;
+        }
+
+        std::string index_file(const std::string &index_name, const char* argv[], const size_t length){
+            std::string result = index_name;
+            if(length > 1){
+                std::string dataset_name = remove_extension(remove_path(argv[1]));
+                result += "_" + dataset_name;
+            }
+            for(size_t i = 2; i < length; ++i){
+                result += "_" + std::string(argv[i]);
+            }
+            return result;
+        }
+
+
         template<class t_value>
         void read_from_file(const std::string& file, std::vector<t_value> &container){
             std::ifstream in(file, std::ios::in | std::ios::binary );

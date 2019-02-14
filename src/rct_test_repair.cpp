@@ -37,8 +37,7 @@ int main(int argc, char **argv) {
     uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
     uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
     uint32_t period = (uint32_t) atoi(argv[4]);
-    std::string index_file = "rct_index_rtree_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes)
-            + "_" + std::to_string(period) + ".idx";
+    std::string index_file =  util::file::index_file("rct_index_repair", argv, argc)+ ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
 
