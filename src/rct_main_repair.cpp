@@ -56,7 +56,7 @@ int main(int argc, const char* argv[]) {
         if(!util::file::file_exists(index_file)){
             std::cout << "Building index" << std::endl;
             auto t1 = util::time::user::now();
-            rct::rct_index_grammar<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index(dataset_path, reference_size, period);
+            rct::rct_index_grammar<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index(dataset_path, reference_size, 0, 0, period);
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
             sdsl::store_to_file(m_rct_index, index_file);

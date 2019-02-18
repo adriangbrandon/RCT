@@ -133,7 +133,9 @@ namespace rct {
 
         rct_index_grammar() = default;
 
-        rct_index_grammar(const std::string &dataset_file, const size_type size_reference, const size_type period_snapshot) {
+        rct_index_grammar(const std::string &dataset_file,
+                          const size_type size_reference, const size_type size_block, const double_t ratio,
+                          const size_type period_snapshot) {
 
             m_period_snapshot = period_snapshot;
             _get_stats(dataset_file);
@@ -146,6 +148,7 @@ namespace rct {
             std::vector<k2_tree_representation_lite<k> > trees(n_snapshots, k2_tree_representation_lite<k>(m_level_max));
             std::vector<std::vector<size_type>> reap_temp(n_snapshots);
             std::vector<std::vector<size_type>> disap_temp(n_snapshots);
+            std::vector<size_type> lengths;
             //m_reap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
             //m_disap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
             std::cout << "Array of movements: " << std::flush;
@@ -206,7 +209,7 @@ namespace rct {
             trees.clear();
             std::cout << "Done." << std::endl;
             std::cout << "RLZ: " << std::flush;
-            rlz_type rlz(input_reference, size_reference);
+            rlz_type rlz(input_reference, lengths, 0, 0, 0);
             std::cout << "Done." << std::endl;
             input_reference.clear();
             input_reference.shrink_to_fit();

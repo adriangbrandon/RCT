@@ -21,7 +21,7 @@ int main(int argc, const char* argv[]) {
         in.read((char*) movements.data(), movements.size()*sizeof(uint64_t));
         in.close();
 
-        rct::rlz_csa_bc_int64 m_rlz(movements, size_ref, size_block);
+        rct::rlz_csa_bc_int64 m_rlz(movements, std::vector<uint64_t >(),  size_ref, size_block, 0);
         m_rlz.init_factorization(&movements);
 
         std::vector<typename rct::rlz_csa_bc_int64::factor_type> factors;

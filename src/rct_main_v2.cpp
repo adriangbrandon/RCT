@@ -59,7 +59,7 @@ int main(int argc, const char* argv[]) {
             std::cout << "Building index" << std::endl;
             auto t1 = util::time::user::now();
             rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index(dataset_path, size_reference,
-                                                                                            size_block_bytes, period);
+                                                                                            size_block_bytes, 0, period);
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
             sdsl::store_to_file(m_rct_index, index_file);

@@ -40,7 +40,7 @@ int main(int argc, const char* argv[]) {
         in.close();
         std::cout << "Done." << std::endl;
         std::cout << "RLZ: " << std::flush;
-        rct::rlz_csa_bc_int rlz(input_reference, size_reference, size_block_bytes);
+        rct::rlz_csa_bc_int rlz(input_reference, std::vector<uint64_t>(), size_reference, size_block_bytes, 0);
         std::cout << "Done." << std::endl;
 
         //Computing size of storing the reference

@@ -82,7 +82,7 @@ int main(int argc, const char* argv[]) {
                 old_x = x;
                 old_y = y;
             }
-            rct::rlz_csa_bc_int rlz_aux(input_reference, size_ref, size_block);
+            rct::rlz_csa_bc_int rlz_aux(input_reference, std::vector<uint64_t >(),  size_ref, size_block, 0);
             m_rlz = rlz_aux;
             sdsl::store_to_file(m_rlz, ref);
 

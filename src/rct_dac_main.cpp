@@ -48,7 +48,7 @@ int main(int argc, const char* argv[]) {
 
         uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
         uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
-        rct::rct_index<2, rct::log_reference<>, rct::log_object_dac_vector> m_rct_index(argv[1], size_reference, size_block_bytes, 120);
+        rct::rct_index<2, rct::log_reference<>, rct::log_object_dac_vector> m_rct_index(argv[1], size_reference, size_block_bytes, 0, 120);
         std::ofstream out("rct_index_dac_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".html");
         sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
         std::string index_file = "rct_index_dac_" + std::to_string(size_reference) + "_" + std::to_string(size_block_bytes) + ".idx";
