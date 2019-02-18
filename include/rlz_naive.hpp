@@ -9,9 +9,8 @@
 #include <unordered_map>
 #include <reference_uniform_sample.hpp>
 #include <reference_repair.hpp>
+#include <reference_multiple_sequence.hpp>
 #include <sdsl/suffix_arrays.hpp>
-#include <sdsl/wavelet_trees.hpp>
-#include <sdsl/suffix_array_algorithm.hpp>
 
 #define INITIAL_CAPACITY 1024
 
@@ -59,10 +58,11 @@ namespace rct {
 
         rlz_naive() = default;
 
-        rlz_naive(std::vector<value_type> &container, const size_type reference_size = 0, const size_type block_size = 0){
+        rlz_naive(std::vector<value_type> &container, const std::vector<size_type> &lengths,
+                  const size_type reference_size = 0, const size_type block_size = 0, const double_t ratio = 0){
 
 
-            m_reference = reference_type(container, reference_size, block_size);
+            m_reference = reference_type(container, lengths, reference_size, block_size, ratio);
             std::string file_rev_reference =  std::to_string(getpid()) + ".rev_ref";
             {
                 std::map<size_type, size_type> D;
@@ -229,6 +229,7 @@ namespace rct {
     using rlz_csa_bc_int = rlz_naive<uint32_t , reference_uniform_sample<uint32_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
     using rlz_csa_bc_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
     using rlz_repair_csa_bc_int64 = rlz_naive<int64_t , reference_repair<int64_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
+    using rlz_multiple_csa_bc_int64 = rlz_naive<uint64_t, reference_multiple_sequence<uint64_t>, sdsl::csa_bitcompressed<sdsl::int_alphabet<>>>;
     //using rlz_csa_int64 = rlz_naive<uint64_t , reference_uniform_sample<uint64_t>, sdsl::int_vector<>>;
 
 }

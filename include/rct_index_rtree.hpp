@@ -162,6 +162,7 @@ namespace rct {
         rct_index_rtree() = default;
 
         rct_index_rtree(const std::string &dataset_file, const size_type size_reference, const size_type size_block,
+                  const double_t ratio,
                   const size_type period_snapshot) {
 
             m_period_snapshot = period_snapshot;
@@ -174,8 +175,10 @@ namespace rct {
             size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             std::vector<std::vector<size_type>> reap_temp(n_snapshots);
             std::vector<std::vector<size_type>> disap_temp(n_snapshots);
+            std::vector<size_type> lengths;
             //m_reap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
             //m_disap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
+            size_type length = 0;
             while (in) {
                 in >> id >> t >> x >> y;
                 if (in.eof()) break;
@@ -183,6 +186,10 @@ namespace rct {
                     int32_t diff_x = x - old_x;
                     int32_t diff_y = y - old_y;
                     input_reference.push_back(spiral_matrix_coder::encode(diff_x, diff_y));
+                    ++length;
+                }else if (old_id != -1){
+                    lengths.push_back(length);
+                    length = 0;
                 }
 
                 if(t % m_period_snapshot == 0){
@@ -204,13 +211,14 @@ namespace rct {
                 old_y = y;
                 old_t = t;
             }
+            lengths.push_back(length);
             in.close();
             std::cout << "Compressing snapshots. " << std::endl;
             m_snapshots.resize(n_snapshots);
             _init_snapshots(dataset_file, n_snapshots);
             std::cout << "Done." << std::endl;
             std::cout << "RLZ: " << std::flush;
-            rlz_type rlz(input_reference, size_reference, size_block);
+            rlz_type rlz(input_reference, lengths, size_reference, size_block, ratio);
             std::cout << "Done." << std::endl;
             input_reference.clear();
             input_reference.shrink_to_fit();

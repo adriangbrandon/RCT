@@ -198,9 +198,6 @@ namespace rct {
             uint64_t d = 0;
             for (size_type i = 1; i < trajectory.size(); ++i) {
                 const auto &info = trajectory[i];
-                if(last_t + 1 < info.t){
-                    std::cout << "desaparece de " << last_t +1 << "a " << info.t -1 << " (" << info.t - last_t -1 << ")" <<  std::endl;
-                }
                 for (auto t = last_t + 1; t < info.t; ++t) {
                     aux_disap[disap_i++] = 1;
                     d++;
@@ -208,7 +205,6 @@ namespace rct {
                 last_t = info.t;
                 ++disap_i; //set to zero
             }
-            std::cout << "desaparece: " << d << std::endl;
             m_disap = disap_type(aux_disap);
             sdsl::util::init_support(m_rank_disap, &m_disap);
             sdsl::util::init_support(m_succ_0_disap, &m_disap);

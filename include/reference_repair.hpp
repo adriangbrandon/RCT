@@ -201,8 +201,8 @@ namespace rct {
 
         reference_repair() = default;
 
-        reference_repair(std::vector<value_type> &container, const size_type reference_size = 0,
-                         const size_type block_size = 0){
+        reference_repair(const std::vector<value_type> &container, const std::vector<size_type> &lengths,
+                         const size_type reference_size=0 , const size_type block_size = 0, const double_t ratio = 0){
 
             std::vector<value_type > terminals;
             std::map<value_type, u_char> map_terminals;

@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rct_algorithm.hpp>
 #include <vector>
 #include <spiral_matrix_coder.hpp>
+#include <rlz_naive.hpp>
 
 int main(int argc, const char* argv[]) {
 
@@ -47,28 +48,26 @@ int main(int argc, const char* argv[]) {
     std::cout << pair.first << ", " << pair.second << std::endl;
     exit(9);*/
 
-    if(argc == 5){
+    if(argc == 4){
         std::string dataset_path = argv[1];
-        uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
-        uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
-        uint32_t period = (uint32_t) atoi(argv[4]);
+        double_t ratio = (double_t) atoi(argv[2])/(double_t) 100;
+        uint32_t period = (uint32_t) atoi(argv[3]);
 
-        std::string index_file = util::file::index_file("rct_index", argv, argc) + ".idx";
+        std::string index_file = util::file::index_file("rct_index_multiple", argv, argc) + ".idx";
 
         if(!util::file::file_exists(index_file)){
             std::cout << "Building index" << std::endl;
             auto t1 = util::time::user::now();
-            rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index(dataset_path, size_reference,
-                                                                                            size_block_bytes, 0, period);
+            rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> m_rct_index(dataset_path, 0, 0, ratio, period);
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
             sdsl::store_to_file(m_rct_index, index_file);
-            std::ofstream out(util::file::index_file("rct_index", argv, argc) + ".html");
+            std::ofstream out(util::file::index_file("rct_index_multiple", argv, argc) + ".html");
             sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
         }
 
         std::cout << "Loading index" << std::endl;
-        rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+        rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> m_rct_index;
         sdsl::load_from_file(m_rct_index, index_file);
 
 

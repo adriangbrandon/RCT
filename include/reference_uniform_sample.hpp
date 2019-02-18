@@ -30,8 +30,9 @@ namespace rct {
 
         reference_uniform_sample() = default;
 
-        reference_uniform_sample(std::vector<value_type> &container, const size_type reference_size,
-                                 const size_type block_size = block_size_default){
+        reference_uniform_sample(const std::vector<value_type> &container, const std::vector<size_type> &lengths,
+                                 const size_type reference_size, const size_type block_size = block_size_default,
+                                 const double_t ratio = 0){
 
             auto ref_length = reference_size / sizeof(value_type);
             auto block_length = block_size / sizeof(value_type);
