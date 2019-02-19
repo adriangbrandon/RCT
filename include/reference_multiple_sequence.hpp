@@ -146,12 +146,12 @@ namespace rct {
                 if(lengths[traj_done] > 0){
                     beg = end;
                     end = beg + lengths[traj_done];
-                    for(auto ita = beg; ita != end; ++ita){
+                    /*for(auto ita = beg; ita != end; ++ita){
                         if(*ita == 0){
                             std::cout << "Contains zero." << std::endl;
                             exit(1);
                         }
-                    }
+                    }*/
                     std::cout << "length: " << lengths[traj_done] << std::endl;
                     std::vector<value_type> reference(m_reference);
                     auto factors = compute_factors(beg, end, reference);
@@ -162,7 +162,7 @@ namespace rct {
                         auto size_ref = std::distance(m_reference.begin(), m_reference.end());
                         m_reference.resize(m_reference.size() + lengths[traj_done]);
                         std::copy(beg, end, m_reference.begin()+size_ref);
-                        auto pos = 0;
+                        /*auto pos = 0;
                         for(auto v : m_reference){
                             if(v == 0){
                                 std::cout << "Reference contains 0 after update" << std::endl;
@@ -170,13 +170,14 @@ namespace rct {
                                 exit(0);
                             }
                             ++pos;
-                        }
+                        }*/
                     }else{
                         m_reference = reference;
                     }
                     std::cout << "size reference: " << m_reference.size() << std::endl;
                 }
                 ++traj_done;
+                std::cout << "Progress: (" << traj_done << "/" << lengths.size() << ")" << std::endl;
 
             }
         }
