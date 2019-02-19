@@ -8,6 +8,7 @@
 #include <vector>
 #include <snapshot.hpp>
 #include <log_object.hpp>
+//#include <log_object_no_mbrs.hpp>
 #include <log_reference.hpp>
 #include <geo_util.hpp>
 #include <string>

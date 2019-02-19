@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, const char **argv) {
 
+    typedef rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> rct_index_type;
+
     std::string dataset_path = argv[1];
     uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
     uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
@@ -198,7 +200,7 @@ It exists */
                           " maxX: " << maxX << " minY:" << minY << " maxY:" << maxY << std::endl;
 
                 std::vector<uint32_t> resultados_2;
-                rct::algorithm::time_interval(region, tStart, tEnd, m_rct_index, resultados_2);
+                rct::algorithm::time_interval_brute_force(region, tStart, tEnd, m_rct_index, resultados_2);
                 std::sort(resultados_2.begin(), resultados_2.end());
                 finR >> id;
                 finR >> id;

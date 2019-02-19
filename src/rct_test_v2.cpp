@@ -44,6 +44,7 @@ int main(int argc, const char **argv) {
     std::ifstream in(index_file);
     m_rct_index.load(in, dataset);
     in.close();
+    std::cout << "Done" << std::endl;
 
    // Id: 162 TStart: 11572 TEnd: 13746
    /* std::vector<util::geo::traj_step> resultados_3;
@@ -204,7 +205,7 @@ It exists */
                           " maxX: " << maxX << " minY:" << minY << " maxY:" << maxY << std::endl;
 
                 std::vector<uint32_t> resultados_2;
-                rct::algorithm::time_interval(region, tStart, tEnd, m_rct_index, resultados_2);
+                rct::algorithm::time_interval_brute_force(region, tStart, tEnd, m_rct_index, resultados_2);
                 std::sort(resultados_2.begin(), resultados_2.end());
                 finR >> id;
                 finR >> id;
