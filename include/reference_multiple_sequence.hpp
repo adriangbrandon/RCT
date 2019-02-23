@@ -92,7 +92,7 @@ namespace rct {
                     }
                     ++counter;
                     std::cout << "distance: " << std::distance(it, end_input) << std::endl;
-                    //++it;
+                    ++it;
                     return true;
                 }
                 auto sym_comp = char2comp[sym];
