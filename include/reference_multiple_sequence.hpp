@@ -39,7 +39,7 @@ namespace rct {
             {
                 std::map<size_type, size_type> D;
                 // count occurrences of each symbol
-                for(auto it = reference.begin(); it != reference.end(); ++it) {
+                for(auto it = m_reference.begin(); it != m_reference.end(); ++it) {
                     auto value = *it;
                     D[value]++;
                     if(value ==  0){
@@ -58,7 +58,7 @@ namespace rct {
                 sdsl::int_vector<> rev_reference;
                 rev_reference.resize(m_reference.size());
                 for(size_type i = 0; i < rev_reference.size() ; ++i){
-                    auto value = *(m_reference.begin() + reference.size()-1-i);
+                    auto value = *(m_reference.begin() + m_reference.size()-1-i);
                     rev_reference[i] = char2comp[value];
                 }
                 /*for(auto v : rev_reference){
@@ -75,7 +75,7 @@ namespace rct {
             util::file::remove_file(file_rev_reference);
         }
 
-        bool count_factors(iterator &it, const iterator &end_input, sa_type &csa_bit, char2comp_type &char2comp, size_type &counter,
+        bool count_factors(iterator &it, const iterator &end_input, const sa_type &csa_bit, char2comp_type &char2comp, size_type &counter,
                            char2comp_type &new_values){
 
             size_type start = 0;
@@ -117,7 +117,7 @@ namespace rct {
             return false;
         }
 
-        size_type compute_factors(const sa_type &csa_bit, const char2comp_type &char2comp,
+        size_type compute_factors(const sa_type &csa_bit, char2comp_type &char2comp,
                                   const iterator &beg,  const iterator &end, char2comp_type &new_values){
             size_type factors = 0;
             auto it = beg;
@@ -178,6 +178,11 @@ namespace rct {
                         for(auto it : new_values){
                             m_reference.push_back(it.first);
                         }
+                        if(!new_values.empty()){
+                            prepare_compute_factors(csa, char2comp);
+                            new_values.clear();
+                        }
+
 
                     }
                     std::cout << "size reference: " << m_reference.size() << std::endl;
