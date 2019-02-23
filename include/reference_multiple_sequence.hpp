@@ -69,9 +69,9 @@ namespace rct {
                 }*/
                 sdsl::store_to_plain_array<value_type>(rev_reference, file_rev_reference);
             }
-            //std::cout << "building SA " << std::endl;
+            std::cout << "building SA " << std::endl;
             sdsl::construct(csa_bit, file_rev_reference.c_str(), sizeof(value_type));
-            //std::cout << "done" << std::endl;
+            std::cout << "done" << std::endl;
             util::file::remove_file(file_rev_reference);
         }
 
@@ -91,6 +91,8 @@ namespace rct {
                         new_values[sym]=1;
                     }
                     ++counter;
+                    std::cout << "distance: " << std::distance(it, end_input) << std::endl;
+                    //++it;
                     return true;
                 }
                 auto sym_comp = char2comp[sym];
