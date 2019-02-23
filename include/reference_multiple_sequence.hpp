@@ -31,7 +31,8 @@ namespace rct {
             m_reference = n.m_reference;
         }
 
-        void prepare_compute_factors(sa_type &csa_bit, char2comp_type &char2comp, const std::vector<value_type> &reference){
+        void prepare_compute_factors(sa_type &csa_bit, char2comp_type &char2comp){
+            std::cout << "prepare_compute_factors" << std::endl;
             sdsl::util::clear(csa_bit);
             sdsl::util::clear(char2comp);
             std::string file_rev_reference = "rev_reference_"+std::to_string(getpid())+".sdsl";
@@ -55,9 +56,9 @@ namespace rct {
                 }
                 char2comp[0] = 0;
                 sdsl::int_vector<> rev_reference;
-                rev_reference.resize(reference.size());
+                rev_reference.resize(m_reference.size());
                 for(size_type i = 0; i < rev_reference.size() ; ++i){
-                    auto value = *(reference.begin() + reference.size()-1-i);
+                    auto value = *(m_reference.begin() + reference.size()-1-i);
                     rev_reference[i] = char2comp[value];
                 }
                 /*for(auto v : rev_reference){
@@ -75,23 +76,20 @@ namespace rct {
         }
 
         bool count_factors(iterator &it, const iterator &end_input, sa_type &csa_bit, char2comp_type &char2comp, size_type &counter,
-                           std::vector<value_type> &reference){
+                           char2comp_type &new_values){
 
             size_type start = 0;
             size_type end = csa_bit.size()-1;
             size_type pos = 0;
             const iterator start_input = it;
-            char2comp_type new_values;
             while(it != end_input){
                 auto sym = *it;
                 //std::cout << "Symbol: " << sym << std::endl;
                 if(char2comp.count(sym) == 0){
                     if(start_input != it) ++counter;
                     if(new_values.count(sym) == 0){
-                        reference.push_back(sym);
                         new_values[sym]=1;
                     }
-                    //prepare_compute_factors(csa_bit, char2comp, reference);
                     ++counter;
                     return true;
                 }
@@ -119,13 +117,11 @@ namespace rct {
             return false;
         }
 
-        size_type compute_factors(const iterator &beg,  const iterator &end, std::vector<value_type> &reference){
-            sa_type csa_bit;
-            char2comp_type char2comp;
-            prepare_compute_factors(csa_bit, char2comp, reference);
+        size_type compute_factors(const sa_type &csa_bit, const char2comp_type &char2comp,
+                                  const iterator &beg,  const iterator &end, char2comp_type &new_values){
             size_type factors = 0;
             auto it = beg;
-            while(count_factors(it, end, csa_bit,char2comp, factors, reference)){
+            while(count_factors(it, end, csa_bit, char2comp, factors, new_values)){
                 //nothing to do
             }
             return factors;
@@ -146,6 +142,9 @@ namespace rct {
             m_reference.resize(lengths[0]);
             std::copy(beg, end, m_reference.begin());
             std::cout << "size: " << lengths.size() << std::endl;
+            sa_type csa;
+            char2comp_type char2comp, new_values;
+            prepare_compute_factors(csa, char2comp);
             while(traj_done < lengths.size()){
                 if(lengths[traj_done] > 0){
                     beg = end;
@@ -157,15 +156,15 @@ namespace rct {
                         }
                     }*/
                     std::cout << "length: " << lengths[traj_done] << std::endl;
-                    std::vector<value_type> reference(m_reference);
-                    auto factors = compute_factors(beg, end, reference);
+                    auto factors = compute_factors(csa, char2comp, beg, end, new_values);
                     double_t r = factors / (double_t) lengths[traj_done];
                     std::cout << "R: " << r << std::endl;
                     if(r > ratio){
                         std::cout << "new reference" << std::endl;
-                        auto size_ref = std::distance(m_reference.begin(), m_reference.end());
-                        m_reference.resize(m_reference.size() + lengths[traj_done]);
+                        auto size_ref = m_reference.size();
+                        m_reference.resize(size_ref + lengths[traj_done]);
                         std::copy(beg, end, m_reference.begin()+size_ref);
+                        prepare_compute_factors(csa, char2comp);
                         /*auto pos = 0;
                         for(auto v : m_reference){
                             if(v == 0){
@@ -176,7 +175,10 @@ namespace rct {
                             ++pos;
                         }*/
                     }else{
-                        m_reference = reference;
+                        for(auto it : new_values){
+                            m_reference.push_back(it.first);
+                        }
+
                     }
                     std::cout << "size reference: " << m_reference.size() << std::endl;
                 }

@@ -132,8 +132,8 @@ target_link_libraries(lz_parser_repair_test  libRepairGN sdsl divsufsort divsufs
 add_executable(sa src/sa.cpp)
 target_link_libraries(sa sdsl divsufsort divsufsort64)
 
-add_executable(rct_multiple_v2 src/rct_main_multiple.cpp)
-target_link_libraries(rct_multiple_v2 sdsl divsufsort divsufsort64)
+add_executable(rct_multiple src/rct_main_multiple.cpp)
+target_link_libraries(rct_multiple sdsl divsufsort divsufsort64)
 
 add_executable(rct_multiple_test src/rct_test_multiple.cpp)
 target_link_libraries(rct_multiple_test sdsl divsufsort divsufsort64)
