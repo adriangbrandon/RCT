@@ -81,13 +81,17 @@ namespace rct {
             size_type end = csa_bit.size()-1;
             size_type pos = 0;
             const iterator start_input = it;
+            char2comp_type new_values;
             while(it != end_input){
                 auto sym = *it;
                 //std::cout << "Symbol: " << sym << std::endl;
                 if(char2comp.count(sym) == 0){
                     if(start_input != it) ++counter;
-                    reference.push_back(sym);
-                    prepare_compute_factors(csa_bit, char2comp, reference);
+                    if(new_values.count(sym) == 0){
+                        reference.push_back(sym);
+                        new_values[sym]=1;
+                    }
+                    //prepare_compute_factors(csa_bit, char2comp, reference);
                     ++counter;
                     return true;
                 }

@@ -63,13 +63,19 @@ int main(int argc, const char* argv[]) {
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
             sdsl::store_to_file(m_rct_index, index_file);
-            std::ofstream out(util::file::index_file("rct_index", argv, argc) + ".html");
-            sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
         }
 
+        
         std::cout << "Loading index" << std::endl;
         rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
         sdsl::load_from_file(m_rct_index, index_file);
+
+        std::ofstream out(util::file::index_file("rct_index", argv, argc) + ".html");
+        sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
+        out.close();
+        std::ofstream out_json(util::file::index_file("rct_index", argv, argc) + ".json");
+        sdsl::write_structure<sdsl::JSON_FORMAT>(m_rct_index, out_json);
+        out_json.close();
 
 
         /*for(auto &log : m_rct_index.log_objects){
