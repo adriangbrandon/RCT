@@ -91,7 +91,7 @@ namespace rct {
                         new_values[sym]=1;
                     }
                     ++counter;
-                    std::cout << "distance: " << std::distance(it, end_input) << std::endl;
+                    //std::cout << "distance: " << std::distance(it, end_input) << std::endl;
                     ++it;
                     return true;
                 }

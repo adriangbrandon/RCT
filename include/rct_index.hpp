@@ -141,7 +141,6 @@ namespace rct {
             _get_stats(dataset_file);
 
             std::ifstream in(dataset_file);
-            std::ofstream factors_log("factors.log");
             std::vector<uint64_t> input_reference;
             uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, old_x = 0, y, old_y = 0;
             size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
@@ -355,6 +354,64 @@ namespace rct {
             //written_bytes += sdsl::serialize_vector(m_succs_disap, out, child, "succs_disap");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
+        }
+
+        void update_period_snapshot(const size_type period_snapshot, const std::string &dataset_file){
+            m_period_snapshot = period_snapshot;
+            std::ifstream in(dataset_file);
+            uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, y;
+            size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
+            std::vector<k2_tree_representation_lite<k> > trees(n_snapshots, k2_tree_representation_lite<k>(m_level_max));
+            std::vector<std::vector<size_type>> reap_temp(n_snapshots);
+            std::vector<std::vector<size_type>> disap_temp(n_snapshots);
+            std::cout << "Array of movements: " << std::flush;
+            size_type length = 0;
+            while (in) {
+                in >> id >> t >> x >> y;
+                if (in.eof()) break;
+
+                if(t % m_period_snapshot == 0){
+                    trees[t/m_period_snapshot].insertObject(x, y, id);
+                }else if (old_id != id || old_t / m_period_snapshot != t / m_period_snapshot){
+                    reap_temp[t / m_period_snapshot].push_back(id);
+                }
+
+                if(old_id != -1
+                   && ((old_id == id && old_t / m_period_snapshot < t / m_period_snapshot
+                        && t != (old_t / m_period_snapshot+1) * m_period_snapshot
+                        && t - old_t > 1 )
+                       || (old_id != id && old_t % m_period_snapshot > 0))) {
+                    disap_temp[old_t / m_period_snapshot].push_back(old_id);
+                }
+
+                old_id = id;
+                old_t = t;
+            }
+            in.close();
+            std::cout << "Compressing snapshots. " << std::endl;
+            m_snapshots = std::vector<snapshot<k>>(n_snapshots);
+            m_reap.resize(n_snapshots);
+            m_disap.resize(n_snapshots);
+            for(size_type i = 0; i < n_snapshots; i++) {
+                m_snapshots[i] = snapshot<k>(trees[i], m_total_objects);
+                m_reap[i].resize(reap_temp[i].size());
+                m_disap[i].resize(disap_temp[i].size());
+                size_type j = 0;
+                for(const auto &v : reap_temp[i]){
+                    m_reap[i][j] = v;
+                    ++j;
+                }
+                j = 0;
+                for(const auto &v : disap_temp[i]){
+                    m_disap[i][j] = v;
+                    ++j;
+                }
+                sdsl::util::bit_compress(m_reap[i]);
+                sdsl::util::bit_compress(m_disap[i]);
+                //m_succs_reap[i] = succ_support_v<1>(&m_reap[i]);
+                //m_succs_disap[i] = succ_support_v<1>(&m_disap[i]);
+            }
+            trees.clear();
         }
 
         void fix_disap(const std::string &dataset_file){

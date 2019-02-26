@@ -240,16 +240,19 @@ namespace rct {
                 if (id != old_id && old_id != -1) {
                     std::cout << "Parsing: " << old_id << std::endl;
                     std::vector<factor_type> factors;
+                    std::cout << "Init factorization " << std::endl;
                     rlz.init_factorization(&movements);
+                    std::cout << "Bucle has_next" << std::endl;
                     while (rlz.has_next()) {
                         auto f = rlz.next();
                         //factors_log << "f.length: " << f.length << " f.offset: "  << f.offset << std::endl;
                         factors.push_back(f);
                     }
-
+                    std::cout << "Building log" << std::endl;
                     m_log_objects.emplace_back(log_object_type(trajectory, factors));
                     movements.clear();
                     trajectory.clear();
+                    std::cout << "Done: " << old_id << std::endl;
                 }
                 old_id = id;
                 old_x = x;
