@@ -27,11 +27,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <string>
-#include <rct_index_rtree.hpp>
-#include <rct_algorithm_rtree.hpp>
+#include <rct_index_grammar.hpp>
+#include <rct_algorithm.hpp>
 #include <iostream>
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
     std::string dataset = argv[1];
     uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
@@ -39,11 +39,8 @@ int main(int argc, char **argv) {
     uint32_t period = (uint32_t) atoi(argv[4]);
     std::string index_file =  util::file::index_file("rct_index_repair", argv, argc)+ ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
-    rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
-
-    std::ifstream in(index_file);
-    m_rct_index.load(in, dataset);
-    in.close();
+    rct::rct_index_grammar<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+    sdsl::load_from_file(m_rct_index, index_file);
 
    // Id: 162 TStart: 11572 TEnd: 13746
    /* std::vector<util::geo::traj_step> resultados_3;
@@ -73,7 +70,7 @@ int main(int argc, char **argv) {
 
 
     std::vector<std::string> queries_array;
-    //queries_array.emplace_back("queries/traj.txt");
+    queries_array.emplace_back("queries/traj.txt");
     queries_array.emplace_back("queries/ts_s.txt");
     queries_array.emplace_back("queries/ts_l.txt");
     queries_array.emplace_back("queries/ti_s.txt");

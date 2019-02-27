@@ -132,7 +132,6 @@ namespace rct {
 
 
         rct_index_grammar() = default;
-
         rct_index_grammar(const std::string &dataset_file,
                           const size_type size_reference, const size_type size_block, const double_t ratio,
                           const size_type period_snapshot) {

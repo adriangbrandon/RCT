@@ -97,6 +97,9 @@ target_link_libraries(cut_dataset sdsl divsufsort divsufsort64)
 add_executable(rct_test src/rct_test.cpp)
 target_link_libraries(rct_test sdsl divsufsort divsufsort64)
 
+add_executable(rct_test_repair src/rct_test_repair.cpp)
+target_link_libraries(rct_test_repair sdsl divsufsort divsufsort64)
+
 add_executable(rct_times src/rct_times.cpp)
 target_link_libraries(rct_times sdsl divsufsort divsufsort64)
 
