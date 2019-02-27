@@ -100,6 +100,9 @@ target_link_libraries(rct_test sdsl divsufsort divsufsort64)
 add_executable(rct_test_repair src/rct_test_repair.cpp)
 target_link_libraries(rct_test_repair sdsl divsufsort divsufsort64)
 
+add_executable(rct_times_multiple src/rct_times_multiple.cpp)
+target_link_libraries(rct_times_multiple sdsl divsufsort divsufsort64)
+
 add_executable(rct_times src/rct_times.cpp)
 target_link_libraries(rct_times sdsl divsufsort divsufsort64)
 
@@ -140,3 +143,6 @@ target_link_libraries(rct_multiple sdsl divsufsort divsufsort64)
 
 add_executable(rct_multiple_test src/rct_test_multiple.cpp)
 target_link_libraries(rct_multiple_test sdsl divsufsort divsufsort64)
+
+add_executable(update_period src/update_period.cpp)
+target_link_libraries(update_period sdsl divsufsort divsufsort64)
