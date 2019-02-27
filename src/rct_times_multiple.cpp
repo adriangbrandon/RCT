@@ -27,8 +27,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <string>
-#include <rct_index_rtree.hpp>
-#include <rct_algorithm_rtree.hpp>
+#include <rct_index.hpp>
+#include <rct_algorithm.hpp>
 
 #define TIMES 1
 
