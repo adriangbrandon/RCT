@@ -48,7 +48,7 @@ int main(int argc, const char* argv[]) {
 
     for(auto p : new_periods){
         std::string dataset_name = util::file::remove_extension(util::file::remove_path(argv[1]));
-        std::string new_index_file = "rct_index_multiple_" dataset_name + "_" + std::to_string(atoi(argv[2])) + "_" + std::to_string(p) + ".idx";
+        std::string new_index_file = "rct_index_multiple_" + dataset_name + "_" + std::to_string(atoi(argv[2])) + "_" + std::to_string(p) + ".idx";
         rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> new_rct_index(m_rct_index);
         new_rct_index.update_period_snapshot(p, dataset_path);
         sdsl::store_to_file(new_rct_index, new_index_file);
