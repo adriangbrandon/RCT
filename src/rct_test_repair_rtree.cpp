@@ -27,7 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <string>
-#include <rct_index_rtree.hpp>
+#include <rct_index_grammar_rtree.hpp>
 #include <rct_algorithm_rtree.hpp>
 #include <iostream>
 
@@ -36,7 +36,7 @@ int main(int argc, const char **argv) {
     std::string dataset = argv[1];
     std::string index_file =  util::file::index_file("rct_index_repair_rtree", argv, argc)+ ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
-    rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+    rct::rct_index_grammar_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
 
     std::ifstream in(index_file);
     m_rct_index.load(in, dataset);
