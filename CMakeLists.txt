@@ -115,6 +115,9 @@ target_link_libraries(rct_index_rtree sdsl divsufsort divsufsort64 spatialindex 
 add_executable(v1_to_v2 src/v1_to_v2.cpp)
 target_link_libraries(v1_to_v2 sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
+add_executable(v1_to_v2_repair src/v1_to_v2_repair.cpp)
+target_link_libraries(v1_to_v2_repair sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
 add_executable(proba src/proba.cpp)
 
 add_executable(rct_test_v2 src/rct_test_v2.cpp)

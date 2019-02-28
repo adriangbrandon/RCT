@@ -31,24 +31,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Created by Adrián on 17/01/2019.
 //
 
-#include <rct_index.hpp>
-#include <rct_index_rtree.hpp>
+#include <rct_index_grammar.hpp>
+#include <rct_index_grammar_rtree.hpp>
+#include <string>
 
 int main(int argc, const char* argv[]) {
 
     string dataset = argv[1];
-    std::string index_file =  util::file::index_file("rct_index", argv, argc)+ ".idx";
+    std::string index_file =  util::file::index_file("rct_index_repair", argv, argc)+ ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
-    rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+    rct::rct_index_grammar<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
     sdsl::load_from_file(m_rct_index, index_file);
 
-    rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index_rtree;
+    rct::rct_index_grammar_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index_rtree;
     m_rct_index_rtree.from_v1(m_rct_index, dataset);
 
     sdsl::util::clear(m_rct_index);
 
     std::cout << "Total objects: " << m_rct_index_rtree.total_objects << std::endl;
-    std::string index_file_rtree =  util::file::index_file("rct_index_rtree", argv, argc)+ ".idx";
+    std::string index_file_rtree =  util::file::index_file("rct_index_repair_rtree", argv, argc)+ ".idx";
     sdsl::store_to_file(m_rct_index_rtree, index_file_rtree);
 
 

@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int main(int argc, const char* argv[]) {
 
     string dataset = argv[1];
-    std::string index_file =  util::file::index_file("rct_index", argv, argc)+ ".idx";
+    std::string index_file =  util::file::index_file("rct_index_multiple", argv, argc)+ ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
     sdsl::load_from_file(m_rct_index, index_file);
@@ -48,7 +48,7 @@ int main(int argc, const char* argv[]) {
     sdsl::util::clear(m_rct_index);
 
     std::cout << "Total objects: " << m_rct_index_rtree.total_objects << std::endl;
-    std::string index_file_rtree =  util::file::index_file("rct_index_rtree", argv, argc)+ ".idx";
+    std::string index_file_rtree =  util::file::index_file("rct_index_multiple_rtree", argv, argc)+ ".idx";
     sdsl::store_to_file(m_rct_index_rtree, index_file_rtree);
 
 
