@@ -200,6 +200,7 @@ It exists */
                           " maxX: " << maxX << " minY:" << minY << " maxY:" << maxY << std::endl;
 
                 std::vector<uint32_t> resultados_2;
+
                 rct::algorithm::time_interval_brute_force(region, tStart, tEnd, m_rct_index, resultados_2);
                 std::sort(resultados_2.begin(), resultados_2.end());
                 finR >> id;
