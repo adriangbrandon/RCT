@@ -358,6 +358,9 @@ namespace rct {
 
         void update_period_snapshot(const size_type period_snapshot, const std::string &dataset_file){
             m_period_snapshot = period_snapshot;
+            sdsl::util::clear(m_reap);
+            sdsl::util::clear(m_disap);
+            sdsl::util::clear(m_snapshots);
             std::ifstream in(dataset_file);
             uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, y;
             size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
