@@ -27,33 +27,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <string>
-#include <rct_index.hpp>
-#include <rct_algorithm.hpp>
+#include <rct_index_rtree.hpp>
+#include <rct_algorithm_rtree.hpp>
+#include <iostream>
 
 int main(int argc, const char **argv) {
 
-    typedef rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> rct_index_type;
-
-    std::string dataset_path = argv[1];
-    uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
-    uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
-    uint32_t period = (uint32_t) atoi(argv[4]);
-    std::string index_file =  util::file::index_file("rct_index", argv, argc)+ ".idx";
+    std::string dataset = argv[1];
+    std::string index_file =  util::file::index_file("rct_index_rtree", argv, argc)+ ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
-    rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
-    sdsl::load_from_file(m_rct_index, index_file);
+    rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+
+    std::ifstream in(index_file);
+    m_rct_index.load(in, dataset);
+    in.close();
+    std::cout << "Done" << std::endl;
 
    // Id: 162 TStart: 11572 TEnd: 13746
    /* std::vector<util::geo::traj_step> resultados_3;
     rct::algorithm::search_trajectory(162, 11572, 13746, m_rct_index, resultados_3);*/
 
-    /* Consulta: tStart: 11894 tEnd:11994 minX:1669 maxX: 1709 minY:280290 maxY:280330
+    /* Consulta FAIL: tStart: 37982 tEnd:38782 minX:1383 maxX: 1703 minY:254629 maxY:254949
+     * Valor esperado: id: 228
+     * Valor obtido: id: 64
      *
      * */
 
-    /*util::geo::region region{util::geo::point{1669, 280290}, util::geo::point{1709, 280330}};
+    /*util::geo::region region{util::geo::point{1383, 254629}, util::geo::point{1703, 254949}};
     std::vector<uint32_t> resultados_2;
-    rct::algorithm::time_interval(region, 11894, 11994, m_rct_index, resultados_2);
+    rct::algorithm::time_interval(region, 37982, 38782, m_rct_index, resultados_2);
     for(const auto &r : resultados_2){
         std::cout << r << std::endl;
     }
@@ -69,7 +71,7 @@ int main(int argc, const char **argv) {
 
 
     std::vector<std::string> queries_array;
-    queries_array.emplace_back("queries/traj.txt");
+    //queries_array.emplace_back("queries/traj.txt");
     queries_array.emplace_back("queries/ts_s.txt");
     queries_array.emplace_back("queries/ts_l.txt");
     queries_array.emplace_back("queries/ti_s.txt");

@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int main(int argc, const char **argv) {
 
     std::string dataset = argv[1];
-    uint32_t period = (uint32_t) atoi(argv[2]);
     std::string index_file =  util::file::index_file("rct_index_repair", argv, argc)+ ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index_grammar<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
@@ -198,8 +197,10 @@ It exists */
                 std::cout << "Consulta: tStart: " << tStart << " tEnd:" << tEnd << " minX:" << minX <<
                           " maxX: " << maxX << " minY:" << minY << " maxY:" << maxY << std::endl;
 
-                std::vector<uint32_t> resultados_2;
+                std::vector<uint32_t> resultados_2, resultados_brute_force;
+
                 rct::algorithm::time_interval(region, tStart, tEnd, m_rct_index, resultados_2);
+                rct::algorithm::time_interval_brute_force(region, tStart, tEnd, m_rct_index, resultados_brute_force);
                 std::sort(resultados_2.begin(), resultados_2.end());
                 finR >> id;
                 finR >> id;
@@ -222,9 +223,22 @@ It exists */
                     std::cout << "Incorrecto. Faltan " << index - resultados_2.size() << " resultados" << std::endl;
                     exit(10);
                 }
+                std::sort(resultados_brute_force.begin(), resultados_brute_force.end());
+                if(resultados_2.size() != resultados_brute_force.size()){
+                    std::cout << "Brute force different size" << std::endl;
+                    exit(10);
+                }
+                for(uint64_t j = 0; j < resultados_2.size(); ++j){
+                    if(resultados_2[j] != resultados_brute_force[j]){
+                        std::cout << "Brute force different values" << std::endl;
+                        exit(10);
+                    }
+                }
                 finQ >> type;
                 resultados_2.clear();
                 resultados_2.shrink_to_fit();
+                resultados_brute_force.clear();
+                resultados_brute_force.shrink_to_fit();
             }
         }
     }

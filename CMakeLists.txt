@@ -123,13 +123,19 @@ target_link_libraries(v1_to_v2_multiple sdsl divsufsort divsufsort64 spatialinde
 
 add_executable(proba src/proba.cpp)
 
-add_executable(rct_test_v2 src/rct_test_v2.cpp)
-target_link_libraries(rct_test_v2 sdsl divsufsort divsufsort64 spatialindex STRRtree)
+add_executable(rct_test_repair_rtree src/rct_test_repair_rtree.cpp)
+target_link_libraries(rct_test_repair_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(rct_test_multiple_rtree src/rct_test_multiple_rtree.cpp)
+target_link_libraries(rct_test_multiple_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(rct_test_rtree src/rct_test_rtree.cpp)
+target_link_libraries(rct_test_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
 add_executable(rtree_test src/rtree_test.cpp)
 target_link_libraries(rtree_test sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
-add_executable(rct_times_v2 src/rct_times_v2.cpp)
+add_executable(rct_times_v2 src/rct_times_rtree.cpp)
 target_link_libraries(rct_times_v2 sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
 add_executable(rct_repair src/rct_main_repair.cpp)
