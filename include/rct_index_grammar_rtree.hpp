@@ -409,6 +409,7 @@ namespace rct {
             m_log_reference.load(in);
             auto n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             m_snapshots.resize(n_snapshots);
+            std::cout << "Before init snapshots" << std::endl;
             _init_snapshots(dataset, n_snapshots);
             // m_succs_reap.resize(n_snapshots);
             //m_succs_disap.resize(n_snapshots);
