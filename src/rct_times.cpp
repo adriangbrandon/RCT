@@ -240,7 +240,7 @@ int main(int argc, const char **argv) {
         double_t milli_query = milli/(double_t) t_starts.size();
         cout << "Time (ms) = " << milli << std::endl;
         cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
-        t_interval_s += milli_query;
+        t_interval_brute_s += milli_query;
         sleep(10);
     }
     double_t avg_interval_brute_s = t_interval_brute_s/(double) TIMES;
@@ -281,6 +281,23 @@ int main(int argc, const char **argv) {
         sleep(10);
     }
     double_t avg_interval_l = t_interval_l/(double) TIMES;
+
+    double_t t_interval_brute_l = 0;
+    for(uint64_t j = 0; j < TIMES; j++){
+        auto start = high_resolution_clock::now();
+        for(uint64_t i = 0; i < t_starts.size(); i++){
+            std::vector<uint32_t > res_t_i;
+            rct::algorithm::time_interval(regions[i], t_starts[i], t_ends[i], m_rct_index, res_t_i);
+        }
+        auto stop = high_resolution_clock::now();
+        auto milli = duration_cast<milliseconds>(stop-start).count();
+        double_t milli_query = milli/(double_t) t_starts.size();
+        cout << "Time (ms) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        t_interval_brute_l += milli_query;
+        sleep(10);
+    }
+    double_t avg_interval_brute_l = t_interval_brute_l/(double) TIMES;
 
     t_starts.clear();
     t_ends.clear();

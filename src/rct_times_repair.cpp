@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
     double_t t_traj = 0;
     for(uint64_t j = 0; j < TIMES; j++){
         auto start = high_resolution_clock::now();
-        for(uint64_t i = 0; i < t_starts.size(); i++){
+        for(uint64_t i = 0; i < t_starts.size(); i++){que
             std::vector<util::geo::traj_step> results;
             rct::algorithm::search_trajectory_fast(ids[i], t_starts[i], t_ends[i], m_rct_index, results);
         }
