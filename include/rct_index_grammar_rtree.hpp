@@ -342,8 +342,6 @@ namespace rct {
             written_bytes += sdsl::write_member(m_x_max, out, child, "x_max");
             written_bytes += sdsl::write_member(m_y_max, out, child, "y_max");
             written_bytes += sdsl::write_member(m_period_snapshot, out, child, "period_snapshot");
-            //TODO: delete next line (log_size)
-            sdsl::write_member(m_log_objects.size(), out, child, "log_size");
             written_bytes += sdsl::serialize_vector(m_log_objects, out, child, "log_objects");
             written_bytes += m_log_reference.serialize(out, child, "log_reference");
             written_bytes += sdsl::serialize_vector(m_snapshots, out, child, "snapshots");
@@ -398,6 +396,7 @@ namespace rct {
         }
 
         void load(std::istream& in, std::string &dataset) {
+
             sdsl::read_member(m_total_objects, in);
             sdsl::read_member(m_speed_max, in);
             sdsl::read_member(m_t_max, in);
@@ -409,7 +408,6 @@ namespace rct {
             m_log_reference.load(in);
             auto n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             m_snapshots.resize(n_snapshots);
-            std::cout << "Before init snapshots" << std::endl;
             _init_snapshots(dataset, n_snapshots);
             // m_succs_reap.resize(n_snapshots);
             //m_succs_disap.resize(n_snapshots);
