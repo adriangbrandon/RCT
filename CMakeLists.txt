@@ -135,8 +135,17 @@ target_link_libraries(rct_test_rtree sdsl divsufsort divsufsort64 spatialindex S
 add_executable(rtree_test src/rtree_test.cpp)
 target_link_libraries(rtree_test sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
-add_executable(rct_times_v2 src/rct_times_rtree.cpp)
-target_link_libraries(rct_times_v2 sdsl divsufsort divsufsort64 spatialindex STRRtree)
+add_executable(rct_times_rtree src/rct_times_rtree.cpp)
+target_link_libraries(rct_times_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(rct_times_repair_rtree src/rct_times_repair_rtree.cpp)
+target_link_libraries(rct_times_repair_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(rct_times_repair src/rct_times_repair.cpp)
+target_link_libraries(rct_times_repair sdsl divsufsort divsufsort64)
+
+add_executable(rct_times_multiple_rtree src/rct_times_multiple_rtree.cpp)
+target_link_libraries(rct_times_multiple_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
 add_executable(rct_repair src/rct_main_repair.cpp)
 target_link_libraries(rct_repair libRepairGN sdsl divsufsort divsufsort64 spatialindex STRRtree)

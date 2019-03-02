@@ -27,15 +27,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <string>
-#include <rct_index_rtree.hpp>
-#include <rct_algorithm_rtree.hpp>
+#include <rct_index_grammar.hpp>
+#include <rct_algorithm.hpp>
 
 #define TIMES 1
 
 using namespace std;
 using namespace std::chrono;
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
 
     std::string dataset = argv[1];
@@ -43,12 +43,8 @@ int main(int argc, char **argv) {
     uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
     uint32_t period = (uint32_t) atoi(argv[4]);
     std::string index_file =  util::file::index_file("rct_index_repair", argv, argc)+ ".idx";
-    std::cout << "Loading index: " << index_file << std::endl;
-    rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
-
-    std::ifstream in(index_file);
-    m_rct_index.load(in, dataset);
-    in.close();
+    rct::rct_index_grammar<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+    sdsl::load_from_file(m_rct_index, index_file);
 
     std::vector<uint32_t> ids;
     std::vector<uint32_t> t_starts;
@@ -111,7 +107,7 @@ int main(int argc, char **argv) {
     double_t t_traj = 0;
     for(uint64_t j = 0; j < TIMES; j++){
         auto start = high_resolution_clock::now();
-        for(uint64_t i = 0; i < t_starts.size(); i++){que
+        for(uint64_t i = 0; i < t_starts.size(); i++){
             std::vector<util::geo::traj_step> results;
             rct::algorithm::search_trajectory_fast(ids[i], t_starts[i], t_ends[i], m_rct_index, results);
         }
@@ -233,6 +229,23 @@ int main(int argc, char **argv) {
     }
     double_t avg_interval_s = t_interval_s/(double) TIMES;
 
+    double_t t_interval_brute_s = 0;
+    for(uint64_t j = 0; j < TIMES; j++){
+        auto start = high_resolution_clock::now();
+        for(uint64_t i = 0; i < t_starts.size(); i++){
+            std::vector<uint32_t > res_t_i;
+            rct::algorithm::time_interval_brute_force(regions[i], t_starts[i], t_ends[i], m_rct_index, res_t_i);
+        }
+        auto stop = high_resolution_clock::now();
+        auto milli = duration_cast<milliseconds>(stop-start).count();
+        double_t milli_query = milli/(double_t) t_starts.size();
+        cout << "Time (ms) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        t_interval_brute_s += milli_query;
+        sleep(10);
+    }
+    double_t avg_interval_brute_s = t_interval_brute_s/(double) TIMES;
+
 
     t_starts.clear();
     t_ends.clear();
@@ -270,6 +283,23 @@ int main(int argc, char **argv) {
     }
     double_t avg_interval_l = t_interval_l/(double) TIMES;
 
+    double_t t_interval_brute_l = 0;
+    for(uint64_t j = 0; j < TIMES; j++){
+        auto start = high_resolution_clock::now();
+        for(uint64_t i = 0; i < t_starts.size(); i++){
+            std::vector<uint32_t > res_t_i;
+            rct::algorithm::time_interval(regions[i], t_starts[i], t_ends[i], m_rct_index, res_t_i);
+        }
+        auto stop = high_resolution_clock::now();
+        auto milli = duration_cast<milliseconds>(stop-start).count();
+        double_t milli_query = milli/(double_t) t_starts.size();
+        cout << "Time (ms) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        t_interval_brute_l += milli_query;
+        sleep(10);
+    }
+    double_t avg_interval_brute_l = t_interval_brute_l/(double) TIMES;
+
     t_starts.clear();
     t_ends.clear();
     regions.clear();
@@ -282,6 +312,8 @@ int main(int argc, char **argv) {
     cout << "Time Slice L (ms): " << avg_slice_l <<  endl;
     cout << "Time Interval S (ms): " << avg_interval_s << endl;
     cout << "Time Interval L (ms): " << avg_interval_l <<  endl;
+    cout << "Time Interval Brute S (ms): " << avg_interval_brute_s << endl;
+    cout << "Time Interval Brute L (ms): " << avg_interval_brute_l <<  endl;
     cout << "-----------------------------------------------------------------" << endl;
 
     struct decimal_comma : std::numpunct<char> {
@@ -296,8 +328,9 @@ int main(int argc, char **argv) {
     cout <<  avg_slice_l <<  endl;
     cout <<  avg_interval_s << endl;
     cout <<  avg_interval_l <<  endl;
+    cout <<  avg_interval_brute_s << endl;
+    cout <<  avg_interval_brute_l <<  endl;
     cout << "-----------------------------------------------------------------" << endl;
-
     std::cout << "Everything is OK!" << std::endl;
 //    dataset.clear();
 

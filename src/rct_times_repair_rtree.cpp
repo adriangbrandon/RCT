@@ -27,8 +27,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <string>
-#include <rct_index.hpp>
-#include <rct_algorithm.hpp>
+#include <rct_index_grammar_rtree.hpp>
+#include <rct_algorithm_rtree.hpp>
 
 #define TIMES 1
 
@@ -38,13 +38,17 @@ using namespace std::chrono;
 int main(int argc, const char **argv) {
 
 
-    std::string dataset_path = argv[1];
-    double_t ratio = (double_t) atoi(argv[2])/(double_t) 100;
-    uint32_t period = (uint32_t) atoi(argv[3]);
-    std::string index_file = util::file::index_file("rct_index_multiple", argv, argc) + ".idx";
-    std::cout << "Loading index: " << index_file << std::endl;
-    rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> m_rct_index;
-    sdsl::load_from_file(m_rct_index, index_file);
+    std::string dataset = argv[1];
+    uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
+    uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
+    uint32_t period = (uint32_t) atoi(argv[4]);
+    std::string index_file =  util::file::index_file("rct_index_repair_rtree", argv, argc)+ ".idx";
+    rct::rct_index_grammar_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+
+    std::ifstream in(index_file);
+    m_rct_index.load(in, dataset);
+    in.close();
+    std::cout << "Done" << std::endl;
 
     std::vector<uint32_t> ids;
     std::vector<uint32_t> t_starts;
@@ -331,8 +335,6 @@ int main(int argc, const char **argv) {
     cout <<  avg_interval_brute_s << endl;
     cout <<  avg_interval_brute_l <<  endl;
     cout << "-----------------------------------------------------------------" << endl;
-
-
     std::cout << "Everything is OK!" << std::endl;
 //    dataset.clear();
 

@@ -311,6 +311,8 @@ int main(int argc, const char **argv) {
     cout << "Time Slice L (ms): " << avg_slice_l <<  endl;
     cout << "Time Interval S (ms): " << avg_interval_s << endl;
     cout << "Time Interval L (ms): " << avg_interval_l <<  endl;
+    cout << "Time Interval Brute S (ms): " << avg_interval_brute_s << endl;
+    cout << "Time Interval Brute L (ms): " << avg_interval_brute_l <<  endl;
     cout << "-----------------------------------------------------------------" << endl;
 
     struct decimal_comma : std::numpunct<char> {
@@ -325,6 +327,8 @@ int main(int argc, const char **argv) {
     cout <<  avg_slice_l <<  endl;
     cout <<  avg_interval_s << endl;
     cout <<  avg_interval_l <<  endl;
+    cout <<  avg_interval_brute_s << endl;
+    cout <<  avg_interval_brute_l <<  endl;
     cout << "-----------------------------------------------------------------" << endl;
 
 
