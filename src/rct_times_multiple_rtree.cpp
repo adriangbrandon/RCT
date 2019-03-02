@@ -38,6 +38,7 @@ using namespace std::chrono;
 int main(int argc, const char **argv) {
 
 
+    size_t first_query_arg = 4;
     std::string dataset_path = argv[1];
     double_t ratio = (double_t) atoi(argv[2])/(double_t) 100;
     uint32_t period = (uint32_t) atoi(argv[3]);
@@ -57,7 +58,7 @@ int main(int argc, const char **argv) {
     int64_t type;
     uint32_t id, maxX, maxY, minX, minY, tstart, tend;
 
-    std::ifstream finQ(argv[5]);
+    std::ifstream finQ(argv[first_query_arg]);
 
     finQ >> type >> id >> tstart >> type;
     ids.push_back(id);
@@ -93,7 +94,7 @@ int main(int argc, const char **argv) {
 
     finQ.close();
 
-    finQ.open(argv[6]);
+    finQ.open(argv[first_query_arg+1]);
     finQ >> type >> tstart >> tend >> id;
     ids.push_back(id);
     t_starts.push_back(tstart);
@@ -130,7 +131,7 @@ int main(int argc, const char **argv) {
     ids.clear();
 
 
-    finQ.open(argv[7]);
+    finQ.open(argv[first_query_arg+2]);
     finQ >> type >> tstart >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     regions.push_back(util::geo::region{util::geo::point{minX, minY}, util::geo::point{maxX, maxY}});
@@ -166,7 +167,7 @@ int main(int argc, const char **argv) {
     regions.clear();
     ids.clear();
 
-    finQ.open(argv[8]);
+    finQ.open(argv[first_query_arg+3]);
     finQ >> type >> tstart >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     regions.push_back(util::geo::region{util::geo::point{minX, minY}, util::geo::point{maxX, maxY}});
@@ -201,7 +202,7 @@ int main(int argc, const char **argv) {
     ids.clear();
     finQ.close();
     //log_ts.close();
-    finQ.open(argv[9]);
+    finQ.open(argv[first_query_arg+4]);
     finQ >> type >> tstart >> tend >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     t_ends.push_back(tend);
@@ -255,7 +256,7 @@ int main(int argc, const char **argv) {
     regions.clear();
     ids.clear();
 
-    finQ.open(argv[10]);
+    finQ.open(argv[first_query_arg+5]);
     finQ >> type >> tstart >> tend >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     t_ends.push_back(tend);
