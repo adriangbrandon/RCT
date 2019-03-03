@@ -41,7 +41,7 @@ int main(int argc, const char **argv) {
     std::string dataset_path = argv[1];
     double_t ratio = (double_t) atoi(argv[2])/(double_t) 100;
     uint32_t period = (uint32_t) atoi(argv[3]);
-    std::string index_file = util::file::index_file("rct_index_multiple", argv, argc) + ".idx";
+    std::string index_file = util::file::index_file("rct_index_multiple", argv, first_query_arg) + ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> m_rct_index;
     sdsl::load_from_file(m_rct_index, index_file);

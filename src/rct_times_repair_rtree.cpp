@@ -40,7 +40,7 @@ int main(int argc, const char **argv) {
 
     size_t first_query_arg = 3;
     std::string dataset = argv[1];
-    std::string index_file =  util::file::index_file("rct_index_repair_rtree", argv, argc)+ ".idx";
+    std::string index_file =  util::file::index_file("rct_index_repair_rtree", argv, first_query_arg)+ ".idx";
     rct::rct_index_grammar_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
 
     std::ifstream in(index_file);
