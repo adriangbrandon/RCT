@@ -19,7 +19,13 @@
 
 namespace rct {
 
-    template <
+    typedef struct t_type {
+        constexpr static uint8_t sampling = 0;
+        constexpr static uint8_t grammar = 1;
+        constexpr static uint8_t multiple = 2;
+    } reference_algorithm_type;
+
+    template <uint8_t reference_algorithm = reference_algorithm_type::sampling,
             class t_log_reference = log_reference_direct_access<>,
             class t_log_object = log_object_no_mbrs<>,
             class t_rlz = rlz_csa_bc_int64>
@@ -98,13 +104,30 @@ namespace rct {
 #endif
         }
 
+        template<uint8_t ref>
+        struct rct_direct_access_trait {
+            template<class t_lengths, class t_length, class t_reference>
+            static void change_object(t_lengths &lengths, t_length &length, t_reference &reference)
+            {
+                lengths.push_back(length);
+                length = 0;
+            }
+        };
+
+        template<>
+        struct rct_direct_access_trait<reference_algorithm_type::grammar> {
+            template<class t_lengths, class t_length, class t_reference>
+            static void change_object(t_lengths &lengths, t_length &length, t_reference &reference)
+            {
+                reference.push_back(-1);
+            }
+        };
+
 
     public:
 
         const log_reference_type &log_reference = m_log_reference;
         const std::vector<log_object_type> &log_objects = m_log_objects;
-        //const std::vector<succ_support_v<1>> &succs_reap = m_succs_reap;
-        //const std::vector<succ_support_v<1>> &succs_disap = m_succs_disap;
         const size_type &total_objects = m_total_objects;
         const size_type &speed_max = m_speed_max;
         const size_type &x_max = m_x_max;
@@ -136,10 +159,8 @@ namespace rct {
                     input_reference.push_back(spiral_value);
                     ++length;
                 }else if (old_id != -1){
-                    lengths.push_back(length);
-                    length = 0;
+                    rct_direct_access_trait<reference_algorithm>::change_object(lengths, length, input_reference);
                 }
-
                 old_id = id;
                 old_x = x;
                 old_y = y;
@@ -159,7 +180,7 @@ namespace rct {
                 auto pair = rct::spiral_matrix_coder::decode(rlz.reference[i]);
                 ref_movements.emplace_back(util::geo::movement{pair.first, pair.second});
             }
-            m_log_reference = log_reference_type (ref_movements);
+            m_log_reference = log_reference_type(ref_movements);
             ref_movements.clear();
 
             id = 0, old_id = (uint32_t) -1, old_x = 0, old_y = 0;
