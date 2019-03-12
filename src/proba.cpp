@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <chrono>
 #include <vector>
 #include <iostream>
+#include <rct_direct_access_index.hpp>
 
 using namespace std;
 using namespace std::chrono;
@@ -93,7 +94,7 @@ public:
 
 int main(int argc, const char* argv[]) {
 
-    std::vector<elemento> list;
+    /*std::vector<elemento> list;
     list.resize(50, elemento());
     uint64_t max = atoi(argv[1]);
     //t
@@ -175,7 +176,7 @@ int main(int argc, const char* argv[]) {
     std::cout << "Duration 4: "<< duration_cast<milliseconds>(end4-start4).count() << std::endl;
     std::cout << "Duration 5: " << duration_cast<milliseconds>(end5-start5).count() << std::endl;
     std::cout << "Duration 6: " << duration_cast<milliseconds>(end6-start6).count() << std::endl;
-    std::cout << "Duration 7: " << duration_cast<milliseconds>(end7-start7).count() << std::endl;
+    std::cout << "Duration 7: " << duration_cast<milliseconds>(end7-start7).count() << std::endl;*/
     /********************
      * Duration 1: 428
      * Duration 2: 367
@@ -185,5 +186,7 @@ int main(int argc, const char* argv[]) {
      * Duration 6: 11712
      * Duration 7: 11081
      ********************/
+    uint8_t max_bits = 10;
+    std::cout << ((max_bits+7)>>3) << std::endl;
 
 }
