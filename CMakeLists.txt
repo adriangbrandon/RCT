@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Release")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -67,8 +67,20 @@ include_directories("${PROJECT_SOURCE_DIR}/external/googletest/include"
 add_executable(estimation_size src/estimation_size.cpp)
 target_link_libraries(estimation_size sdsl divsufsort divsufsort64)
 
-add_executable(rct_index src/rct_main.cpp include/runs_vector.hpp)
+add_executable(rct_index src/rct_main.cpp)
 target_link_libraries(rct_index sdsl divsufsort divsufsort64)
+
+add_executable(rct_index_gn src/rct_main_gn.cpp)
+target_link_libraries(rct_index_gn sdsl divsufsort divsufsort64)
+
+add_executable(rct_index_gn_redundant src/rct_main_gn_redundant.cpp)
+target_link_libraries(rct_index_gn_redundant sdsl divsufsort divsufsort64)
+
+add_executable(rct_index_gn_separately src/rct_main_gn_separately.cpp)
+target_link_libraries(rct_index_gn_separately sdsl divsufsort divsufsort64)
+
+add_executable(rct_index_gn_max_wr_min src/rct_main_gn_max_wr_min.cpp)
+target_link_libraries(rct_index_gn_max_wr_min sdsl divsufsort divsufsort64)
 
 add_executable(rct_index_dac src/rct_dac_main.cpp)
 target_link_libraries(rct_index_dac sdsl divsufsort divsufsort64)
@@ -96,6 +108,9 @@ target_link_libraries(cut_dataset sdsl divsufsort divsufsort64)
 
 add_executable(rct_test src/rct_test.cpp)
 target_link_libraries(rct_test sdsl divsufsort divsufsort64)
+
+add_executable(rct_gn_test src/rct_gn_test.cpp)
+target_link_libraries(rct_gn_test sdsl divsufsort divsufsort64)
 
 add_executable(rct_test_repair src/rct_test_repair.cpp)
 target_link_libraries(rct_test_repair sdsl divsufsort divsufsort64)

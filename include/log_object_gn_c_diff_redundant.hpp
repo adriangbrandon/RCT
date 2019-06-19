@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Created by Adrián on 26/11/2018.
 //
 
-#ifndef RCT_LOG_OBJECT_HPP
-#define RCT_LOG_OBJECT_HPP
+#ifndef RCT_LOG_OBJECT_GN_C_DIFF_REDUNDANT_HPP
+#define RCT_LOG_OBJECT_GN_C_DIFF_REDUNDANT_HPP
 
 #include <sdsl/vectors.hpp>
 #include <sdsl/sd_vector.hpp>
@@ -48,7 +48,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define VERBOSE 0
 
+/**
+ * x_values[i] and y_values[i] are encoded whith respect to the number of 0s before p_i. Being p_i
+ * the p_i-th movement in the reference, pointed by z_i, the phrase which contains i
+ *
+ * min_x_values, max_x_values, min_y_values and max_y_values are encoded as differences with respect to
+ * x_start and y_start, respectively
+ */
+
 namespace rct {
+
+    //Recall: X_diff is X-x_start and X_sel = select_1(x_p, p_i) - select_1(x_n, p_i),
+    //        where p_i is the position pointed by the i-th phrase in the reference
+    // struct naive {}; //Log stores X_diff-X_sel
+    // struct c_diff_redundant {}; //Log stores X_diff and X_diff-X_sel
+    // struct c_max_wr_min {}; //Log stores X_max with respect to X_min
+    // struct c_diff_separately {}; // Log stores X_diff and X_sel separately
+
 
     template <class t_offsets = sdsl::dac_vector_dp<sdsl::bit_vector>,
               class t_lengths = sdsl::sd_vector<>,
@@ -57,7 +73,7 @@ namespace rct {
               class t_disap = runs_bitvector<>,
               class t_disap_rank_1 = rank_support_runs_bitvector<1>,
               class t_disap_succ_0 = succ_support_runs_bitvector<0>>
-    class log_object {
+    class log_object_gn_c_diff_redundant {
 
     public:
         typedef uint64_t size_type;
@@ -78,8 +94,10 @@ namespace rct {
         value_type m_x_start = 0;
         value_type m_y_start = 0;
 
-        values_type m_x_values;
-        values_type m_y_values;
+        values_type m_x_diffsel;
+        values_type m_y_diffsel;
+        values_type m_x_diff;
+        values_type m_y_diff;
 
         values_min_max_type m_min_x_values;
         values_min_max_type m_max_x_values;
@@ -100,12 +118,14 @@ namespace rct {
         rank_1_disap_type m_rank_disap;
         succ_0_disap_type m_succ_0_disap;
 
-        void copy(const log_object &o){
+        void copy(const log_object_gn_c_diff_redundant &o){
             m_time_start = o.m_time_start;
             m_x_start = o.m_x_start;
             m_y_start = o.m_y_start;
-            m_x_values = o.m_x_values;
-            m_y_values = o.m_y_values;
+            m_x_diffsel = o.m_x_diffsel;
+            m_y_diffsel = o.m_y_diffsel;
+            m_x_diff = o.m_x_diff;
+            m_y_diff = o.m_y_diff;
             m_min_x_values = o.m_min_x_values;
             m_min_y_values = o.m_min_y_values;
             m_max_x_values = o.m_max_x_values;
@@ -152,30 +172,21 @@ namespace rct {
             auto index_min_y = m_rmq_y(phrase_i-1, phrase_j-1);
             auto index_max_x = m_rMq_x(phrase_i-1, phrase_j-1);
             auto index_max_y = m_rMq_y(phrase_i-1, phrase_j-1);
-            return util::geo::region{util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_min_x]) - alternative_code::decode(m_min_x_values[index_min_x])),
-                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_min_y]) - alternative_code::decode(m_min_y_values[index_min_y]))},
-                                     util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_max_x]) + alternative_code::decode(m_max_x_values[index_max_x])),
-                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_max_y]) + alternative_code::decode(m_max_y_values[index_max_y]))}
-            };
-        }
-
-        inline util::geo::region MBR(const size_type phrase_i) const{
-
-            auto x_phrase = m_x_start + alternative_code::decode(m_x_values[phrase_i-1]);
-            auto y_phrase = m_y_start + alternative_code::decode(m_y_values[phrase_i-1]);
-            return util::geo::region{util::geo::point{(uint32_t) (x_phrase - alternative_code::decode(m_min_x_values[phrase_i-1])),
-                                                      (uint32_t) (y_phrase - alternative_code::decode(m_min_y_values[phrase_i-1]))},
-                                     util::geo::point{(uint32_t) (x_phrase + alternative_code::decode(m_max_x_values[phrase_i-1])),
-                                                      (uint32_t) (y_phrase + alternative_code::decode(m_max_y_values[phrase_i-1]))}
+            return util::geo::region{util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_diff[index_min_x]) - alternative_code::decode(m_min_x_values[index_min_x])),
+                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_diff[index_min_y]) - alternative_code::decode(m_min_y_values[index_min_y]))},
+                                     util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_diff[index_max_x]) + alternative_code::decode(m_max_x_values[index_max_x])),
+                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_diff[index_max_y]) + alternative_code::decode(m_max_y_values[index_max_y]))}
             };
         }
 
     public:
 
-        log_object() = default;
+        log_object_gn_c_diff_redundant() = default;
 
-        const values_type &x_values = m_x_values;
-        const values_type &y_values = m_y_values;
+        const values_type &x_diffsel = m_x_diffsel;
+        const values_type &y_diffsel = m_y_diffsel;
+        const values_type &x_diff = m_x_diff;
+        const values_type &y_diff = m_y_diff;
         const values_min_max_type &min_x_values = m_min_x_values;
         const values_min_max_type &min_y_values = m_min_y_values;
         const values_min_max_type &max_x_values = m_max_x_values;
@@ -183,8 +194,9 @@ namespace rct {
         const offsets_type  &offsets = m_offsets;
         const disap_type &disap = m_disap;
 
-        template<class ContainerTrajectory, class ContainerFactors>
-        log_object(const ContainerTrajectory &trajectory, const ContainerFactors &factors) {
+        template<class ContainerTrajectory, class ContainerFactors, class ContainerReference>
+        log_object_gn_c_diff_redundant(const ContainerTrajectory &trajectory, const ContainerFactors &factors,
+                      const ContainerReference &reference) {
 
             //1. Compute the start values
             m_time_start = trajectory[0].t;
@@ -212,8 +224,10 @@ namespace rct {
             //3.2 Set offset, length, x and y
             {
                 std::vector<size_type> offset_temp(factors.size());
-                std::vector<size_type> x_values_temp(factors.size());
-                std::vector<size_type> y_values_temp(factors.size());
+                std::vector<size_type> x_diffsel_temp(factors.size());
+                std::vector<size_type> y_diffsel_temp(factors.size());
+                std::vector<size_type> x_diff_temp(factors.size());
+                std::vector<size_type> y_diff_temp(factors.size());
                 std::vector<size_type> min_x_values_temp(factors.size());
                 std::vector<size_type> max_x_values_temp(factors.size());
                 std::vector<size_type> min_y_values_temp(factors.size());
@@ -260,16 +274,21 @@ namespace rct {
                 m_rMq_y = rmq_succinct_ct<false>(max_y);
 
                 //The absolute values are stored as differences with respect to the first position
+                auto prev_x = 0, prev_y = 0;
                 for (size_type i = 0; i < temp_x.size(); ++i) {
-                    x_values_temp[i] = alternative_code::encode((int32_t) (temp_x[i] - m_x_start));
-                    y_values_temp[i] = alternative_code::encode((int32_t) (temp_y[i] - m_y_start));
+                    x_diffsel_temp[i] = alternative_code::encode((int32_t) (temp_x[i] - m_x_start - reference.compute_delta_x(offset_temp[i])));
+                    y_diffsel_temp[i] = alternative_code::encode((int32_t) (temp_y[i] - m_y_start - reference.compute_delta_y(offset_temp[i])));
+                    x_diff_temp[i] = alternative_code::encode((int32_t) (temp_x[i] - m_x_start));
+                    y_diff_temp[i] = alternative_code::encode((int32_t) (temp_y[i] - m_y_start));
                     min_x_values_temp[i] =  alternative_code::encode((int32_t) (temp_x[i] - min_x[i]));
                     min_y_values_temp[i] =  alternative_code::encode((int32_t) (temp_y[i] - min_y[i]));
                     max_x_values_temp[i] =  alternative_code::encode((int32_t) (max_x[i] - temp_x[i]));
                     max_y_values_temp[i] =  alternative_code::encode((int32_t) (max_y[i] - temp_y[i]));
                 }
-                compress_data(m_x_values, x_values_temp);
-                compress_data(m_y_values, y_values_temp);
+                compress_data(m_x_diffsel, x_diffsel_temp);
+                compress_data(m_y_diffsel, y_diffsel_temp);
+                compress_data(m_x_diff, x_diff_temp);
+                compress_data(m_y_diff, y_diff_temp);
                 compress_data(m_min_x_values, min_x_values_temp);
                 compress_data(m_min_y_values, min_y_values_temp);
                 compress_data(m_max_x_values, max_x_values_temp);
@@ -284,10 +303,21 @@ namespace rct {
             return util::geo::traj_step{m_time_start, m_x_start, m_y_start};
         };
 
-        inline util::geo::point phrase_point(const size_type phrase) const {
-            return util::geo::point{(uint32_t) (alternative_code::decode(x_values[phrase-1]) + m_x_start),
-                                    (uint32_t) (alternative_code::decode(y_values[phrase-1]) + m_y_start)};
+        inline util::geo::movement phrase_point(const size_type phrase) const {
+            return util::geo::movement{(int32_t) (alternative_code::decode(x_diffsel[phrase-1]) + m_x_start),
+                                    (int32_t) (alternative_code::decode(y_diffsel[phrase-1]) + m_y_start)};
         };
+
+        inline util::geo::region MBR(const size_type phrase_i) const{
+
+            auto x = m_x_start + alternative_code::decode(m_x_diff[phrase_i-1]);
+            auto y = m_y_start + alternative_code::decode(m_y_diff[phrase_i-1]);
+            return util::geo::region{util::geo::point{(uint32_t) (x - alternative_code::decode(m_min_x_values[phrase_i-1])),
+                                                      (uint32_t) (y - alternative_code::decode(m_min_y_values[phrase_i-1]))},
+                                     util::geo::point{(uint32_t) (x + alternative_code::decode(m_max_x_values[phrase_i-1])),
+                                                      (uint32_t) (y + alternative_code::decode(m_max_y_values[phrase_i-1]))}
+            };
+        }
 
         inline size_type time_start() const {
             return m_time_start;
@@ -330,7 +360,6 @@ namespace rct {
             return m_select_lengths(phrase+1);
         }
 
-
         inline void interval_phrases(const size_type movement_i, const size_type movement_j,
                                      size_type &c_phrase_i, size_type &c_phrase_j,
                                      size_type &ic_phrase_l, size_type &delta_phrase_l,
@@ -356,12 +385,15 @@ namespace rct {
         inline bool contains_region(const size_type phrase_i, const size_type phrase_j, const util::geo::region &r,
                                         std::vector<size_type> &phrases_to_check) const {
 
+            //std::ofstream log("log_ti_l.log", std::ios_base::app | std::ios_base::out);
             if(phrase_i > phrase_j) return false;
+            //log << "diff phrases: " << phrase_j - phrase_i;
             std::stack<std::pair<size_type, size_type>> queue_index;
             queue_index.push({phrase_i, phrase_j});
 #if VERBOSE
     std::cout << "Push: <" << phrase_i << ", " << phrase_j << ">" << std::endl;
 #endif
+            auto steps = 0;
             while(!queue_index.empty()){
                 //const auto pair = queue_index.front();
                 const auto pair = queue_index.top();
@@ -370,7 +402,7 @@ namespace rct {
                 std::cout << "Processing: <" << pair.first << ", " << pair.second << ">" << std::endl;
 #endif
                 if(pair.first < pair.second){
-                    auto mbr_region = MBR(pair.first, pair.second);
+                    const auto &mbr_region = MBR(pair.first, pair.second);
 #if VERBOSE
                     std::cout << "Region: " << mbr_region << std::endl;
 #endif
@@ -378,6 +410,7 @@ namespace rct {
 #if VERBOSE
                         std::cout << "Contains region "<< std::endl;
 #endif
+                        //log << " Steps(true): " << steps << std::endl;
                         return true;
                     }
                     if(util::geo::touches(r, mbr_region)){
@@ -390,11 +423,12 @@ namespace rct {
 #endif
                     }
                 }else{
-                    auto mbr_region = MBR(pair.first);
+                    const auto &mbr_region = MBR(pair.first);
                     if(util::geo::contains(r, mbr_region)){
 #if VERBOSE
                         std::cout << "Contains region " << mbr_region << std::endl;
 #endif
+                        //log << "Steps (true): " << steps << std::endl;
                         return true;
                     }
                     phrases_to_check.push_back(pair.first);
@@ -402,6 +436,7 @@ namespace rct {
                     std::cout << "Phrases to check: " << pair.first << std::endl;
 #endif
                 }
+                ++steps;
             }
 #if VERBOSE
             std::cout << "Doesn't contain region " << std::endl;
@@ -414,6 +449,7 @@ namespace rct {
                 }
                 map_aux[phrase] = 1;
             }*/
+            //log << " Steps(false): " << steps << std::endl;
             return false;
 
         }
@@ -425,8 +461,8 @@ namespace rct {
             auto phrase = m_rank_lengths(movement_q);
             idx_beg = m_offsets[phrase-1];
             idx_end = (movement_q - m_select_lengths(phrase)) + idx_beg;
-            r = util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase-1]),
-                                    (int32_t) alternative_code::decode(m_y_values[phrase-1])};
+            r = util::geo::movement{(int32_t) alternative_code::decode(m_x_diffsel[phrase-1]),
+                                    (int32_t) alternative_code::decode(m_y_diffsel[phrase-1])};
             return phrase;
         }
 
@@ -438,8 +474,8 @@ namespace rct {
             next_phrase_beg = m_select_lengths(phrase+1);
             idx_beg = m_offsets[phrase-1];
             idx_end = (movement_i - m_select_lengths(phrase)) + idx_beg;
-            r = util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase-1]),
-                                    (int32_t) alternative_code::decode(m_y_values[phrase-1])};
+            r = util::geo::movement{(int32_t) alternative_code::decode(m_x_diffsel[phrase-1]),
+                                    (int32_t) alternative_code::decode(m_y_diffsel[phrase-1])};
             return phrase;
         }
 
@@ -450,32 +486,34 @@ namespace rct {
         }
 
         //! Copy constructor
-        log_object(const log_object& o)
+        log_object_gn_c_diff_redundant(const log_object_gn_c_diff_redundant& o)
         {
             copy(o);
         }
 
         //! Move constructor
-        log_object(log_object&& o)
+        log_object_gn_c_diff_redundant(log_object_gn_c_diff_redundant&& o)
         {
             *this = std::move(o);
         }
 
 
-        log_object &operator=(const log_object &o) {
+        log_object_gn_c_diff_redundant &operator=(const log_object_gn_c_diff_redundant &o) {
             if (this != &o) {
                 copy(o);
             }
             return *this;
         }
 
-        log_object &operator=(log_object &&o) {
+        log_object_gn_c_diff_redundant &operator=(log_object_gn_c_diff_redundant &&o) {
             if (this != &o) {
                 m_time_start = o.m_time_start;
                 m_x_start = o.m_x_start;
                 m_y_start = o.m_y_start;
-                m_x_values = std::move(o.m_x_values);
-                m_y_values = std::move(o.m_y_values);
+                m_x_diffsel = std::move(o.m_x_diffsel);
+                m_y_diffsel = std::move(o.m_y_diffsel);
+                m_x_diff = std::move(o.m_x_diff);
+                m_y_diff = std::move(o.m_y_diff);
                 m_min_x_values = std::move(o.m_min_x_values);
                 m_min_y_values = std::move(o.m_min_y_values);
                 m_max_x_values = std::move(o.m_max_x_values);
@@ -499,13 +537,15 @@ namespace rct {
             return *this;
         }
 
-        void swap(log_object &o) {
+        void swap(log_object_gn_c_diff_redundant &o) {
             // m_bp.swap(bp_support.m_bp); use set_vector to set the supported bit_vector
             std::swap(m_time_start, o.m_time_start);
             std::swap(m_x_start, o.m_x_start);
             std::swap(m_y_start, o.m_y_start);
-            m_x_values.swap(o.m_x_values);
-            m_y_values.swap(o.m_y_values);
+            m_x_diffsel.swap(o.m_x_diffsel);
+            m_y_diffsel.swap(o.m_y_diffsel);
+            m_x_diff.swap(o.m_x_diff);
+            m_y_diff.swap(o.m_y_diff);
             m_min_x_values.swap(o.m_min_x_values);
             m_min_y_values.swap(o.m_min_y_values);
             m_max_x_values.swap(o.m_max_x_values);
@@ -530,8 +570,10 @@ namespace rct {
             written_bytes += sdsl::write_member(m_time_start, out, child, "time_start");
             written_bytes += sdsl::write_member(m_x_start, out, child, "x_start");
             written_bytes += sdsl::write_member(m_y_start, out, child, "y_start");
-            written_bytes += m_x_values.serialize(out, child, "x_values");
-            written_bytes += m_y_values.serialize(out, child, "y_values");
+            written_bytes += m_x_diffsel.serialize(out, child, "x_diffsel");
+            written_bytes += m_y_diffsel.serialize(out, child, "y_diffsel");
+            written_bytes += m_x_diff.serialize(out, child, "x_diff");
+            written_bytes += m_y_diff.serialize(out, child, "y_diff");
             written_bytes += m_min_x_values.serialize(out, child, "min_x_values");
             written_bytes += m_min_y_values.serialize(out, child, "min_y_values");
             written_bytes += m_max_x_values.serialize(out, child, "max_x_values");
@@ -555,8 +597,10 @@ namespace rct {
             sdsl::read_member(m_time_start, in);
             sdsl::read_member(m_x_start, in);
             sdsl::read_member(m_y_start, in);
-            m_x_values.load(in);
-            m_y_values.load(in);
+            m_x_diffsel.load(in);
+            m_y_diffsel.load(in);
+            m_x_diff.load(in);
+            m_y_diff.load(in);
             m_min_x_values.load(in);
             m_min_y_values.load(in);
             m_max_x_values.load(in);
@@ -576,8 +620,8 @@ namespace rct {
         }
 
         void print(){
-            for(size_type i = 0; i < m_x_values.size(); ++i){
-                std::cout << "(x,y)[" <<i << "]=" << alternative_code::decode(m_x_values[i]) << "," << alternative_code::decode(m_y_values[i]) << " ";
+            for(size_type i = 0; i < m_x_diffsel.size(); ++i){
+                std::cout << "(x,y)[" <<i << "]=" << alternative_code::decode(m_x_diffsel[i]) << "," << alternative_code::decode(m_y_diffsel[i]) << " ";
             }
             std::cout << std::endl;
             for(size_type i = 0; i < m_lengths.size(); ++i){
@@ -725,12 +769,12 @@ namespace rct {
 
     };
 
-    using log_object_dac_vector = log_object< sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::sd_vector<>,
+    using log_object_gn_c_diff_redundant_dac_vector = log_object_gn_c_diff_redundant< sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::sd_vector<>,
                                   sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::dac_vector_dp<sdsl::bit_vector>>;
 
-    using log_object_int_vector = log_object< sdsl::int_vector<>, sdsl::sd_vector<>, sdsl::int_vector<>,
+    using log_object_gn_c_diff_redundant_int_vector = log_object_gn_c_diff_redundant< sdsl::int_vector<>, sdsl::sd_vector<>, sdsl::int_vector<>,
                                   sdsl::dac_vector_dp<sdsl::bit_vector> >;
 
 }
 
-#endif //RCT_LOG_OBJECT_HPP
+#endif //RCT_LOG_OBJECT_GN_C_DIFF_REDUNDANT_HPP

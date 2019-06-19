@@ -779,7 +779,6 @@ namespace rct {
     }
 
 
-
     //! Returns the position of the i-th occurrence in the bit vector.
     template<>
     typename succ_support_runs_bitvector<0>::size_type succ_support_runs_bitvector<0>::succ(size_type i)const
