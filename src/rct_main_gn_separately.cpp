@@ -53,7 +53,7 @@ int main(int argc, const char* argv[]) {
         uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
         uint32_t period = (uint32_t) atoi(argv[4]);
 
-        std::string index_file = util::file::index_file("rct_index_gn", argv, argc) + ".idx";
+        std::string index_file = util::file::index_file("rct_index_gn_separately", argv, argc) + ".idx";
 
         if(!util::file::file_exists(index_file)){
             std::cout << "Building index" << std::endl;
@@ -71,10 +71,10 @@ int main(int argc, const char* argv[]) {
         rct::rct_index_gn<2, rct::log_reference_gn<>, rct::log_object_gn_c_diff_separately_int_vector> m_rct_index;
         sdsl::load_from_file(m_rct_index, index_file);
 
-        std::ofstream out(util::file::index_file("rct_index_gn", argv, argc) + ".html");
+        std::ofstream out(util::file::index_file("rct_index_gn_separately", argv, argc) + ".html");
         sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
         out.close();
-        std::ofstream out_json(util::file::index_file("rct_index_gn", argv, argc) + ".json");
+        std::ofstream out_json(util::file::index_file("rct_index_gn_separately", argv, argc) + ".json");
         sdsl::write_structure<sdsl::JSON_FORMAT>(m_rct_index, out_json);
         out_json.close();
 

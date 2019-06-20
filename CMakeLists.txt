@@ -121,6 +121,18 @@ target_link_libraries(rct_times_multiple sdsl divsufsort divsufsort64)
 add_executable(rct_times src/rct_times.cpp)
 target_link_libraries(rct_times sdsl divsufsort divsufsort64)
 
+add_executable(rct_times_gn src/rct_times_gn.cpp)
+target_link_libraries(rct_times_gn sdsl divsufsort divsufsort64)
+
+add_executable(rct_times_gn_max_wr_min src/rct_times_gn_max_wr_min.cpp)
+target_link_libraries(rct_times_gn_max_wr_min sdsl divsufsort divsufsort64)
+
+add_executable(rct_times_gn_redundant src/rct_times_gn_redundant.cpp)
+target_link_libraries(rct_times_gn_redundant sdsl divsufsort divsufsort64)
+
+add_executable(rct_times_gn_separately src/rct_times_gn_separately.cpp)
+target_link_libraries(rct_times_gn_separately sdsl divsufsort divsufsort64)
+
 add_executable(rct_fix_disap src/rct_fix_disap.cpp)
 target_link_libraries(rct_fix_disap sdsl divsufsort divsufsort64)
 
