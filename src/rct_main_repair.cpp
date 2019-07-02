@@ -47,7 +47,7 @@ int main(int argc, const char* argv[]) {
     std::cout << pair.first << ", " << pair.second << std::endl;
     exit(9);*/
 
-    if(argc ==3 || argc == 4){
+    if(argc ==3){
         uint32_t period = (uint32_t) atoi(argv[2]);
         uint32_t reference_size = 0;
         std::string dataset_path = argv[1];
