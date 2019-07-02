@@ -40,6 +40,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <math_util.hpp>
 #include <cmath>
 #include <rct_index.hpp>
+#include <knn_support_helper_rtree.hpp>
+
+using namespace rct::knn_support_helper_rtree;
 
 namespace rct {
 
@@ -47,6 +50,60 @@ namespace rct {
     class algorithm {
 
     private:
+
+        static void insert_result(knn_element &candidate, pq_knn_result_type &pq_results, pq_knn_movement_type &pq_distances, uint64_t k){
+            /*if(pq_distances.empty()){
+                std::cout << "Insert: " << candidate.id << " weight=" << candidate.weight << " distance=" << candidate.distance << " top= <none>"  << std::endl;
+            }else{
+                std::cout << "Insert: " << candidate.id << " weight=" << candidate.weight << " distance=" << candidate.distance << " top=" <<  pq_distances.top() << std::endl;
+            }*/
+            pq_results.push(candidate);
+            if (pq_distances.size() < k) {
+                pq_distances.push(candidate.distance);
+            } else if (candidate.distance < pq_distances.top()) {
+                pq_distances.pop();
+                pq_distances.push(candidate.distance);
+            }
+        }
+
+        static void insert_result2(knn_element &candidate, std::vector<knn_element> &results, pq_knn_movement_type &pq_distances, uint64_t k){
+            /*if(pq_distances.empty()){
+                std::cout << "Insert: " << candidate.id << " weight=" << candidate.weight << " distance=" << candidate.distance << " top= <none>"  << std::endl;
+            }else{
+                std::cout << "Insert: " << candidate.id << " weight=" << candidate.weight << " distance=" << candidate.distance << " top=" <<  pq_distances.top() << std::endl;
+            }*/
+            results.push_back(candidate);
+            if (pq_distances.size() < k) {
+                pq_distances.push(candidate.distance);
+            } else if (candidate.distance < pq_distances.top()) {
+                pq_distances.pop();
+                pq_distances.push(candidate.distance);
+            }
+        }
+
+        template<class RCTIndex, class t_array>
+        static void init_knn(const typename RCTIndex::size_type t_q,
+                             const util::geo::point &p_q,
+                             const typename RCTIndex::size_type k,
+                             pq_knn_result_type &knn_pq,
+                             pq_knn_result_type &pq_results,
+                             pq_knn_movement_type &pq_distances,
+                             const t_array &disap,
+                             const uint64_t snap_id, const RCTIndex &rctIndex){
+            std::vector<knn_element> elements;
+            for(const auto &oid : disap){
+                util::geo::point p;
+                if(search_object(oid, t_q, rctIndex, p)){
+                    //double_t distance = util::geo::distance(p, p_q);
+                    knn_element knn_e(oid, p_q, p, t_q);
+                    insert_result2(knn_e, elements, pq_distances, k);
+                };
+            }
+            pq_results = pq_knn_result_type(elements.begin(), elements.end());
+
+            knn_element knn_e(0, util::geo::point{0,0}, util::geo::point{0,0}, 0, snap_id * rctIndex.period_snapshot, 0);
+            knn_pq.push(knn_e);
+        };
 
         template<class RCTIndex>
         static void time_interval_reference(const typename RCTIndex::size_type oid,
@@ -291,6 +348,26 @@ namespace rct {
             }
         };
 
+        static void update_MBR(util::geo::region &mbr_result, util::geo::region &mbr, bool &init_mbr){
+            if(init_mbr){
+                if(mbr_result.min.x > mbr.min.x){
+                    mbr_result.min.x = mbr.min.x;
+                }
+                if(mbr_result.min.y > mbr.min.y){
+                    mbr_result.min.y = mbr.min.y;
+                }
+                if(mbr_result.max.x < mbr.max.x){
+                    mbr_result.max.x = mbr.max.x;
+                }
+                if(mbr_result.max.y < mbr.max.y){
+                    mbr_result.max.y = mbr.max.y;
+                }
+            }else{
+                mbr_result = mbr;
+                init_mbr = true;
+            }
+        }
+
 
     public:
 
@@ -471,53 +548,6 @@ namespace rct {
                     ic_phrase_l = 0, ic_phrase_r = 0, delta_phrase_l = 0, delta_phrase_r = 0;
             typename RCTIndex::size_type t_beg = t_i, t_end = t_j;
 
-           /* auto time_interval_object = [&] (typename RCTIndex::value_type oid){
-                auto beg = std::max(t_beg, rctIndex.log_objects[oid].time_start());
-                auto end = std::min(t_end, rctIndex.log_objects[oid].time_end());
-                auto traj_step = rctIndex.log_objects[oid].start_traj_step();
-                if(end >= traj_step.t) {
-                    if(beg <= traj_step.t){
-                        if(util::geo::contains(region_q, util::geo::point{traj_step.x, traj_step.y})){
-                            r.push_back(oid);
-                            processed_ids[oid]=1;
-                            return;
-                        };
-                        beg = traj_step.t+1;
-                    }
-                    if(beg <= end){
-                        rctIndex.log_objects[oid].time_to_movement(beg, end, movement_i, movement_j);
-                        if (movement_i > 0 && movement_i <= movement_j) {
-                            rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
-                                                                       ic_phrase_l, delta_phrase_l,
-                                                                       ic_phrase_r, delta_phrase_r);
-                            std::vector<typename RCTIndex::size_type> phrases_to_check;
-                            if (!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q,
-                                                                           phrases_to_check)) {
-                                time_interval_reference(oid, region_q, movement_i, movement_j, phrases_to_check,
-                                                        ic_phrase_l, delta_phrase_l,
-                                                        ic_phrase_r, delta_phrase_r, rctIndex, r);
-                            } else {
-                                r.push_back(oid);
-                            }
-                        }
-                    }
-
-                }
-                processed_ids[oid]=1;
-            };
-
-            auto time_interval_left = [&] (typename RCTIndex::value_type snap_id) {
-                std::vector<uint32_t > data;
-                rctIndex.snapshots[snap_id].intersection(region_q, data);
-                //std::cerr << "snapshot: " << data.size() << std::endl;
-                for(const auto &id: data){
-                    if(!processed_ids[id]){
-                        // std::cout << "succ: " << id << std::endl;
-                        time_interval_object(id);
-                    }
-                }
-            };*/
-
             int64_t snap_id = snap_start;
             while(snap_id < snap_end){
                 time_interval_left(snap_id, region_q, t_beg, t_end, processed_ids, rctIndex, r);
@@ -545,6 +575,109 @@ namespace rct {
                 time_interval_left_brute_force(snap_id, region_q, t_beg, t_end, processed_ids, rctIndex, r);
                 t_beg = ++snap_id * rctIndex.period_snapshot;
             }
+
+        }
+
+        template<class RCTIndex>
+        static void knn(const typename RCTIndex::size_type k, const util::geo::point& p_q,
+                        const typename RCTIndex::size_type t_q, const RCTIndex &rctIndex,
+                        std::vector<typename  RCTIndex::value_type> &r) {
+
+            pq_knn_result_type pq_results, pq_candidates;
+            pq_knn_movement_type pq_distances;
+            auto snap_q = t_q / rctIndex.period_snapshot;
+            const auto& snap =  rctIndex.snapshots[snap_q];
+            //Init candidates
+            pq_candidates.push(knn_element(snap.get_root(), p_q, util::geo::point{snap.get_lower0(), snap.get_lower1()}, util::geo::point{0, 0}));
+            while(!pq_candidates.empty() && !(pq_results.size() >= k && pq_candidates.top().distance > pq_distances.top())){
+                auto candidate = pq_candidates.top(); //copy is necessary
+                pq_candidates.pop();
+                if(candidate.is_point){
+                    util::geo::point p;
+                    if(search_object(candidate.id, t_q, rctIndex, p)){
+                        knn_element knn_e(candidate.id, p_q, p);
+                        insert_result(knn_e, pq_results, pq_distances, k);
+                    }
+                }else{
+                    snap.enqueue_children(candidate, pq_candidates, p_q);
+                }
+            }
+            double_t k_distance = 0;
+            for (uint i = 0; i < k; i++) {
+                r.emplace_back(pq_results.top().id);
+                pq_results.pop();
+            }
+
+
+        }
+
+        template<class RCTIndex>
+        static bool MBR(const typename RCTIndex::size_type t_i, const typename RCTIndex::size_type t_j,
+                        const typename RCTIndex::size_type oid,
+                        const RCTIndex &rctIndex,
+                        util::geo::region& mbr_result){
+
+            auto traj_step = rctIndex.log_objects[oid].start_traj_step();
+            typename RCTIndex::size_type t_start = traj_step.t;
+            typename RCTIndex::size_type t_end = rctIndex.log_objects[oid].time_end();
+            if (t_end < t_i || t_start > t_j) return false;
+
+            bool mbr_init = false;
+            auto aux_i = t_i;
+            auto aux_j = t_j;
+            if(aux_i <= t_start){
+                ++aux_i;
+                mbr_result = util::geo::region{traj_step.x, traj_step.y, traj_step.x, traj_step.y};
+                mbr_init = true;
+            };
+            if(aux_j > t_end) aux_j = t_end;
+
+            typename RCTIndex::size_type movement_i = 0, movement_j = 0, c_phrase_i = 0, c_phrase_j = 0,
+                    ic_phrase_l = 0, ic_phrase_r = 0, delta_phrase_l = 0, delta_phrase_r = 0;
+
+            rctIndex.log_objects[oid].time_to_movement(aux_i, aux_j, movement_i, movement_j);
+            if (movement_i > 0 && movement_i <= movement_j) {
+                //1. Phrases which involve the queried interval
+                rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
+                                                           ic_phrase_l, delta_phrase_l,
+                                                           ic_phrase_r, delta_phrase_r);
+
+                //2. MBR of the contained phrases
+                if(c_phrase_i <= c_phrase_j){
+                    auto mbr = rctIndex.log_objects[oid].MBR(c_phrase_i, c_phrase_j);
+                    update_MBR(mbr_result, mbr, mbr_init);
+                }
+                //3. MBR of the incomplete phrases
+                if(delta_phrase_l || ic_phrase_l == ic_phrase_r){
+                    //Check the first incomplete phrase
+                    auto mbr_phrase = rctIndex.log_objects[oid].MBR(ic_phrase_l);
+                    if(!mbr_init || !util::geo::contains(mbr_result, mbr_phrase)){
+                        auto phrase_start = rctIndex.log_objects[oid].offsets[ic_phrase_l-1];
+                        auto point_phrase = rctIndex.log_objects[oid].phrase_point(ic_phrase_l);
+                        auto last_movement = std::min(rctIndex.log_objects[oid].last_movement(ic_phrase_l), movement_j);
+                        auto move_ref_start =  phrase_start + delta_phrase_l+1; //count
+                        auto move_ref_end = move_ref_start + (last_movement - movement_i); //count
+                        auto mbr = rctIndex.log_reference.MBR(point_phrase.x, point_phrase.y, phrase_start, move_ref_start, move_ref_end);
+                        update_MBR(mbr_result, mbr, mbr_init);
+                    }
+
+                }
+
+                if(delta_phrase_r && ic_phrase_l < ic_phrase_r){
+                    //Check the last incomplete phrase
+                    auto mbr_phrase = rctIndex.log_objects[oid].MBR(ic_phrase_r);
+                    if(!mbr_init || !util::geo::contains(mbr_result, mbr_phrase)){
+                        auto phrase_start = rctIndex.log_objects[oid].offsets[ic_phrase_r-1];
+                        auto point_phrase = rctIndex.log_objects[oid].phrase_point(ic_phrase_r);
+                        auto start_movement = rctIndex.log_objects[oid].start_movement(ic_phrase_r);
+                        auto move_ref_end = phrase_start+1 + (movement_j - start_movement); //count
+                        auto mbr = rctIndex.log_reference.MBR(point_phrase.x, point_phrase.y, phrase_start, phrase_start+1, move_ref_end);
+                        update_MBR(mbr_result, mbr, mbr_init);
+                    }
+                }
+
+            }
+            return true;
 
         }
     };

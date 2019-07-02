@@ -147,28 +147,7 @@ namespace rct {
             sdsl::util::bit_compress(ref);
         }
 
-        inline util::geo::region MBR(const size_type phrase_i, const size_type phrase_j) const {
-            auto index_min_x = m_rmq_x(phrase_i-1, phrase_j-1);
-            auto index_min_y = m_rmq_y(phrase_i-1, phrase_j-1);
-            auto index_max_x = m_rMq_x(phrase_i-1, phrase_j-1);
-            auto index_max_y = m_rMq_y(phrase_i-1, phrase_j-1);
-            return util::geo::region{util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_min_x]) - alternative_code::decode(m_min_x_values[index_min_x])),
-                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_min_y]) - alternative_code::decode(m_min_y_values[index_min_y]))},
-                                     util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_max_x]) + alternative_code::decode(m_max_x_values[index_max_x])),
-                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_max_y]) + alternative_code::decode(m_max_y_values[index_max_y]))}
-            };
-        }
 
-        inline util::geo::region MBR(const size_type phrase_i) const{
-
-            auto x_phrase = m_x_start + alternative_code::decode(m_x_values[phrase_i-1]);
-            auto y_phrase = m_y_start + alternative_code::decode(m_y_values[phrase_i-1]);
-            return util::geo::region{util::geo::point{(uint32_t) (x_phrase - alternative_code::decode(m_min_x_values[phrase_i-1])),
-                                                      (uint32_t) (y_phrase - alternative_code::decode(m_min_y_values[phrase_i-1]))},
-                                     util::geo::point{(uint32_t) (x_phrase + alternative_code::decode(m_max_x_values[phrase_i-1])),
-                                                      (uint32_t) (y_phrase + alternative_code::decode(m_max_y_values[phrase_i-1]))}
-            };
-        }
 
     public:
 
@@ -328,6 +307,29 @@ namespace rct {
 
         inline size_type last_movement(const size_type phrase) const {
             return m_select_lengths(phrase+1);
+        }
+
+        inline util::geo::region MBR(const size_type phrase_i, const size_type phrase_j) const {
+            auto index_min_x = m_rmq_x(phrase_i-1, phrase_j-1);
+            auto index_min_y = m_rmq_y(phrase_i-1, phrase_j-1);
+            auto index_max_x = m_rMq_x(phrase_i-1, phrase_j-1);
+            auto index_max_y = m_rMq_y(phrase_i-1, phrase_j-1);
+            return util::geo::region{util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_min_x]) - alternative_code::decode(m_min_x_values[index_min_x])),
+                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_min_y]) - alternative_code::decode(m_min_y_values[index_min_y]))},
+                                     util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_max_x]) + alternative_code::decode(m_max_x_values[index_max_x])),
+                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_max_y]) + alternative_code::decode(m_max_y_values[index_max_y]))}
+            };
+        }
+
+        inline util::geo::region MBR(const size_type phrase_i) const{
+
+            auto x_phrase = m_x_start + alternative_code::decode(m_x_values[phrase_i-1]);
+            auto y_phrase = m_y_start + alternative_code::decode(m_y_values[phrase_i-1]);
+            return util::geo::region{util::geo::point{(uint32_t) (x_phrase - alternative_code::decode(m_min_x_values[phrase_i-1])),
+                                                      (uint32_t) (y_phrase - alternative_code::decode(m_min_y_values[phrase_i-1]))},
+                                     util::geo::point{(uint32_t) (x_phrase + alternative_code::decode(m_max_x_values[phrase_i-1])),
+                                                      (uint32_t) (y_phrase + alternative_code::decode(m_max_y_values[phrase_i-1]))}
+            };
         }
 
 

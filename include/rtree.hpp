@@ -20,45 +20,17 @@ namespace rct {
 
     class rtree {
 
-        struct queue_element {
-            util::geo::region r;
-            uint64_t distance;
-            SNode* ptr;
-            uint32_t id;
-            int32_t pl0, pl1;
-        };
-
-        class compare_queue_region {
-        public:
-
-            bool operator()(const queue_element& lhs, const queue_element& rhs) const
-            {
-                return lhs.distance > rhs.distance;
-            }
-        };
-
-        class compare_queue_object {
-        public:
-
-            bool operator()(const queue_element& lhs, const queue_element& rhs) const
-            {
-                return lhs.distance < rhs.distance;
-            }
-        };
 
     public:
         typedef uint64_t size_type;
         typedef uint32_t value_type;
-        typedef queue_element queue_element_type;
-        typedef std::priority_queue<queue_element, std::vector<queue_element>, compare_queue_region> queue_region_type;
-        typedef std::priority_queue<queue_element, std::vector<queue_element>, compare_queue_object> queue_object_type;
 
     private:
         RTree::SRTree* m_tSRTree = nullptr;
 
     private:
         void copy(const rtree& p){
-           m_tSRTree = p.m_tSRTree;
+            m_tSRTree = p.m_tSRTree;
         }
 
         /*void add_to_region_queue(const std::vector<int> &l0, const std::vector<int> &l1, const std::vector<int> &h0,
@@ -125,42 +97,38 @@ namespace rct {
         }
 
 
-       /* void knn_candidates(const size_type k, const point &p_q, util::pq_knn_candidate &candidates,
-                            const sdsl::bit_vector &disap) const{
+        inline SRTree::SNode* get_root() const {
+            return m_tSRTree->root;
+        }
 
-            int pl0 = m_tSRTree->lower0;
-            int pl1 = m_tSRTree->lower1;
+        inline value_type get_lower0() const {
+            return m_tSRTree->lower0;
+        }
 
-            //First nodes
-            queue_region_type priority_region_queue;
-            queue_object_type priority_object_queue;
-            queue_element qe;
-            qe.ptr = m_tSRTree->root;
-            qe.pl0 = pl0;
-            qe.pl1 = pl1;
-            priority_region_queue.push(qe);
-            size_type n_disap = 0;
-            while(!priority_region_queue.empty() && (priority_object_queue.size() < (k + n_disap)
-                  || priority_object_queue.top().distance >= priority_region_queue.top().distance)){
+        inline value_type get_lower1() const {
+            return m_tSRTree->lower1;
+        }
 
-                auto element = priority_region_queue.top();
-                priority_region_queue.pop();
-                std::vector<int> l0, l1, h0, h1, ids;
-                std::vector<SNode*> nodes;
-                element.ptr->children_region(element.pl0, element.pl1, l0, l1, h0, h1, nodes, ids);
-                if(ids.empty()){
-                    add_to_region_queue(l0, l1, h0, h1, nodes, priority_region_queue, p_q);
-                }else{
-                    add_to_object_queue(l0, l1, h0, h1, ids, priority_object_queue, p_q, n_disap, disap);
+        template<class Candidate, class Candidates>
+        void enqueue_children(const Candidate &candidate, Candidates &candidates, const util::geo::point &p_q) const {
+            std::vector<int32_t > lx, ly, hx, hy, ids;
+            std::vector<SNode*> nodes;
+            candidate.ptr->children_region(candidate.min.x, candidate.min.y, lx, ly, hx, hy, nodes, ids);
+            //std::cout << "Children of: [(" << candidate.min.x << ", " << candidate.min.y << "), (" << candidate.max.x << ", " << candidate.max.y << ")]" << std::endl;
+            if(ids.empty()){
+                //Enqueue Regions
+                for(size_type i = 0; i < nodes.size(); ++i){
+                    //std::cout << "Enqueue Region: " << " [(" << lx[i] << ", " << ly[i] << "), (" << hx[i] << ", " << hy[i] << ")]" << std::endl;
+                    candidates.push(Candidate(nodes[i], p_q, util::geo::point{(value_type) lx[i], (value_type) ly[i]}, util::geo::point{(value_type) hx[i], (value_type) hy[i]}));
+                }
+            }else{
+                //Enqueue Objects
+                for(size_type i = 0; i < ids.size(); ++i){
+                    //std::cout << "Enqueue Object: " << ids[i] << " [(" << lx[i] << ", " << ly[i] << "), (" << hx[i] << ", " << hy[i] << ")]" << std::endl;
+                    candidates.push(Candidate(ids[i], p_q, util::geo::point{(value_type) lx[i], (value_type) ly[i]}, util::geo::point{(value_type) hx[i], (value_type) hy[i]}));
                 }
             }
-            while(!priority_object_queue.empty()){
-                queue_element_type c = priority_object_queue.top();
-                util::pq_knn_candidate_element candidate(c.id, 0, 0, 0, 0, c.distance);
-                candidates.push(candidate);
-                priority_object_queue.pop();
-            }
-        }*/
+        }
 
 
         //! Assignment move operation

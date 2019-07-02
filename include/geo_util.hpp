@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdint>
 #include <iostream>
+#include <cmath>
 
 namespace util {
 
@@ -100,6 +101,36 @@ namespace util {
                         || r.min.y > r_q.max.y || r.max.y < r_q.min.y);
         }
 
+        inline region expand(const point &p,
+                             const uint32_t max_speed, const uint32_t time,
+                             const uint32_t max_x, const uint32_t max_y){
+
+            auto distance = max_speed * time;
+            region ret;
+            if(p.x < distance){
+                ret.min.x = 0;
+            }else{
+                ret.min.x = p.x - distance;
+            }
+            if(p.y < distance){
+                ret.min.y = 0;
+            }else{
+                ret.min.y = p.y - distance;
+            }
+
+            if(p.x + distance > max_x){
+                ret.max.x = max_x;
+            }else{
+                ret.max.x = p.x + distance;
+            }
+            if(p.y + distance > max_y){
+                ret.max.y = max_y;
+            }else{
+                ret.max.y = p.y + distance;
+            }
+            return ret;
+        }
+
         inline region expand(const region &r,
                              const uint32_t max_speed, const uint32_t time,
                              const uint32_t max_x, const uint32_t max_y){
@@ -128,6 +159,28 @@ namespace util {
                 ret.max.y = r.max.y + distance;
             }
             return ret;
+        }
+
+        inline double distance(const region &r, const point &p){
+            double x = 0, y = 0;
+            if(p.x < r.min.x){
+                x = r.min.x - p.x;
+            }else if(p.x > r.max.x){
+                x =p.x - r.max.x;
+            }
+            if(p.y < r.min.y){
+                y = r.min.y - p.y;
+            }else if(p.y > r.max.y){
+                y = p.y - r.max.y;
+            }
+            return std::sqrt(x * x + y * y);
+        }
+
+        inline double distance(const point &p, const point &p1){
+            double x = 0, y = 0;
+            x = std::abs((int32_t) (p1.x - p.x));
+            y = std::abs((int32_t) (p1.y - p.y));
+            return std::sqrt(x * x + y * y);
         }
     }
 }

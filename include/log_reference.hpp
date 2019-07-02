@@ -396,7 +396,7 @@ namespace rct {
 
         util::geo::region find_MBR(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
                                    const util::geo::point &p_s, const util::geo::point &p_e, const int32_t delta_x,
-                                   const int32_t  delta_y, size_type &total_selects) const {
+                                   const int32_t  delta_y) const {
 
             //1. Init the min and max points
             value_type min_x, max_x, min_y, max_y;
@@ -417,9 +417,9 @@ namespace rct {
 
             //Adding extra 1 caused by the flag
             size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s+1);
-            size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e+2);
+            size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e);
             size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s+1);
-            size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e+2);
+            size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e);
 
             //2. Computing the minimum at x-axis
             size_type rmq_x_s = _rank_min(rMmq_x_s)+1;  //rank_x(ms)+1 counts the number of samples before
@@ -454,7 +454,6 @@ namespace rct {
                 size_type movement_x = _select_max(max_x_c, m_rMmq_x_sample, m_select_rMmq_x_sample) + 1;
                 auto max_x_aux = (value_type) (compute_delta_x(movement_x) - delta_x + x);
                 //total_selects += 2;
-                max_x_aux += x;
                 max_x = std::max(max_x, max_x_aux);
             }
 
@@ -869,7 +868,23 @@ namespace rct {
 
             return false;
 
+        }
 
+        util::geo::region MBR(const value_type phrase_x, const value_type phrase_y, const size_type phrase_start,
+                             const size_type move_s, const size_type move_e) const {
+
+            //1. Compute p_s and p_e
+            size_type sel_p_x, sel_n_x, sel_p_y, sel_n_y;
+            int32_t delta_x = compute_delta_x(phrase_start);
+            int32_t delta_y = compute_delta_y(phrase_start);
+
+            auto m_s = compute_movement_deltas(move_s, delta_x, delta_y, sel_p_x, sel_n_x, sel_p_y, sel_n_y);
+            util::geo::point p_s{m_s.x + phrase_x, m_s.y + phrase_y};
+
+            auto m_e = compute_movement_deltas(move_e, delta_x, delta_y);
+            util::geo::point p_e{m_e.x + phrase_x, m_e.y + phrase_y};
+
+            return find_MBR(phrase_x, phrase_y, move_s, move_e, p_s, p_e, delta_x, delta_y);
 
         }
 

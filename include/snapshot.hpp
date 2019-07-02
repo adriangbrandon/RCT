@@ -329,6 +329,81 @@ namespace rct {
             return results;
         }
 
+        template <class element, class priority_queue>
+        void enqueue_children(const element &knn_e, priority_queue &pq, const util::geo::point p_q,
+                              const uint64_t max_speed, const uint64_t log_idx,
+                              const uint64_t snap_t, const uint64_t d_t,
+                              const uint64_t max_x, const uint64_t max_y) const {
+
+            if(knn_e.level == m_max_level){
+                auto leaf = m_rank_bl(knn_e.id); //m_rank_bl(knn_e.id)+1-1 -> +1 next; -1 index
+                for(size_type i = knn_e.id; i < k * k + knn_e.id; ++i){
+                    if(bl[i]){
+                        //leaf = m_rank_bl(i+1)-1;
+                        auto j = i - knn_e.id;
+                        uint32_t x = (j % k)  + knn_e.min.x;
+                        uint32_t y = (j / k)  + knn_e.min.y;
+                        util::geo::point p{(uint32_t) x, (uint32_t) y};
+                        std::vector<value_type> objects = m_permutation_labels.objects_into_cell(leaf);
+                        util::geo::region r_expanded = util::geo::expand(p, max_speed, d_t, max_x, max_y);
+                        //double_t distance = util::geo::distance(r_expanded, p_q);
+                        for(const auto &id : objects){
+                            //element knn_child(id, p, distance, snap_t);
+                            element knn_child(id, p_q, p, r_expanded, snap_t);
+                            pq.push(knn_child);
+                        }
+                        ++leaf;
+                    }
+                }
+            } else if(knn_e.level == m_max_level-1) {
+                auto div_level = div_level_table[knn_e.level];
+                size_type bn_index = knn_e.id - bt.size();
+                size_type p_leaf = m_rank_bn(bn_index) * k * k; //(rank(bn_index)+1-1)*k*k: +1 next; -1 index
+                for (size_type i = knn_e.id; i < k * k + knn_e.id; i++) {
+                    //Add regions to a priority queue
+                    if (bn[bn_index]) {
+                        //p_leaf = (m_rank_bn(bn_index+1)-1)*k*k;
+                        auto j = i - knn_e.id;
+                        uint32_t m_x = (j % k) * div_level + knn_e.min.x;
+                        uint32_t m_y = (j / k) * div_level + knn_e.min.y;
+                        uint32_t M_x = m_x + div_level - 1;
+                        uint32_t M_y = m_y + div_level - 1;
+                        util::geo::region r{m_x, m_y, M_x, M_y};
+                        util::geo::region r_expanded = util::geo::expand(r, max_speed, d_t, max_x, max_y);
+                        //double_t distance = util::geo::distance(r_expanded, p_q);
+                        //element knn_region(p_leaf, util::geo::point{m_x, m_y}, util::geo::point{M_x, M_y},
+                        //        distance, snap_t, knn_e.level+1);
+                        element knn_region(p_leaf, p_q, util::geo::point{m_x, m_y}, util::geo::point{M_x, M_y},
+                                           r_expanded, snap_t, knn_e.level+1);
+                        pq.push(knn_region);
+                        p_leaf += k*k;
+                    }
+                    ++bn_index;
+                }
+            } else {
+                auto div_level = div_level_table[knn_e.level];
+                size_type p_region = (m_rank_bt(knn_e.id)+1) * k * k;
+                for (size_type i = knn_e.id; i < k * k + knn_e.id; i++) {
+                    //Add regions to a priority queue
+                    if (bt[i]) {
+                        //p_region = m_rank_bt(i+1) * k * k;
+                        auto j = i - knn_e.id;
+                        uint32_t m_x = (j % k) * div_level + knn_e.min.x;
+                        uint32_t m_y = (j / k) * div_level + knn_e.min.y;
+                        uint32_t M_x = m_x + div_level - 1;
+                        uint32_t M_y = m_y + div_level - 1;
+                        util::geo::region r{m_x, m_y, M_x, M_y};
+                        util::geo::region r_expanded = util::geo::expand(r, max_speed, d_t, max_x, max_y);
+                        //double_t distance = util::geo::distance(r_expanded, p_q);
+                        element knn_region(p_region, p_q, util::geo::point{m_x, m_y}, util::geo::point{M_x, M_y},
+                                           r_expanded, snap_t, knn_e.level+1);
+                        pq.push(knn_region);
+                        p_region += k*k;
+                    }
+                }
+            }
+        }
+
         //! Assignment move operation
         snapshot& operator=(snapshot&& p) {
             if (this != &p) {
