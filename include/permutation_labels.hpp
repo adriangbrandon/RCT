@@ -27,7 +27,6 @@ namespace rct {
         sdsl::rank_support_v<0> m_rank_zero_q;
         sdsl::select_support_mcl<0> m_select_zero_q;
         sdsl::int_vector<> m_perm;
-        sdsl::inv_perm_support<5> m_inv_perm_support;
 
     private:
         void copy(const permutation_labels& p){
@@ -36,7 +35,6 @@ namespace rct {
             m_rank_zero_q = p.m_rank_zero_q;
             m_select_zero_q = p.m_select_zero_q;
             m_perm = p.m_perm;
-            m_inv_perm_support = p.m_inv_perm_support;
         }
     public:
         permutation_labels(){};
@@ -83,20 +81,6 @@ namespace rct {
             sdsl::util::init_support(m_select_zero_q, &m_bq);
             //Build the permutation
             sdsl::util::bit_compress(m_perm);
-            m_inv_perm_support = sdsl::inv_perm_support<5>(&m_perm);
-
-        }
-
-        bool cell_of_object(const value_type id, size_type &pos) const {
-            value_type k = m_inv_perm_support[id];
-            //Check if exists in the tree
-            if(k < m_size_total){
-                pos = m_rank_zero_q(k);
-                return true;
-            }else{
-                return false;
-            }
-
 
         }
 
@@ -126,8 +110,6 @@ namespace rct {
                 m_select_zero_q = std::move(p.m_select_zero_q);
                 m_select_zero_q.set_vector(&m_bq);
                 m_perm = std::move(p.m_perm);
-                m_inv_perm_support = std::move(p.m_inv_perm_support);
-                m_inv_perm_support.set_vector(&m_perm);
             }
             return *this;
         }
@@ -167,7 +149,6 @@ namespace rct {
             m_rank_zero_q.swap(p.m_rank_zero_q);
             m_select_zero_q.swap(p.m_select_zero_q);
             m_perm.swap(p.m_perm);
-            m_inv_perm_support.swap(p.m_inv_perm_support);
 
         }
 
@@ -185,7 +166,6 @@ namespace rct {
             written_bytes += m_rank_zero_q.serialize(out, child, "rank_zero_q");
             written_bytes += m_select_zero_q.serialize(out, child, "select_zero_q");
             written_bytes += m_perm.serialize(out, child, "perm");
-            written_bytes += m_inv_perm_support.serialize(out, child, "inv_perm");
 
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
@@ -199,8 +179,6 @@ namespace rct {
             m_select_zero_q.load(in);
             m_select_zero_q.set_vector(&m_bq);
             m_perm.load(in);
-            m_inv_perm_support.load(in);
-            m_inv_perm_support.set_vector(&m_perm);
         }
 
     };

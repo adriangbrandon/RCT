@@ -203,7 +203,7 @@ namespace rct {
             labels.clear();
         }
 
-        std::queue<size_type> _path_levels_object(value_type oid) const {
+        /*std::queue<size_type> _path_levels_object(value_type oid) const {
             std::queue<size_type> path;
             //Find the position in the leaf
 
@@ -224,9 +224,9 @@ namespace rct {
             }
             return path;
 
-        }
+        }*/
 
-        bool find_object_position(value_type id, util::geo::point &p) const{
+        /*bool find_object_position(value_type id, util::geo::point &p) const{
             if(id > m_total_objects){
                 return false;
             }else{
@@ -251,7 +251,7 @@ namespace rct {
                 p = util::geo::point{(uint32_t) column, (uint32_t) row};
                 return true;
             }
-        }
+        }*/
 
         void _find_objects_in_region_rec(size_type p1, size_type p2, size_type q1, size_type q2,
                                          size_type dp, size_type dq, long x, long l, std::vector<util::geo::id_point> &result) const {
