@@ -37,8 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int main(int argc, const char* argv[]) {
 
     std::string dataset_path = argv[1];
-    double_t ratio = (double_t) atoi(argv[2])/(double_t) 100;
-    uint32_t period = (uint32_t) atoi(argv[3]);
+    uint32_t period = (uint32_t) atoi(argv[2]);
     std::string index_file = util::file::index_file("rct_index_repair", argv, argc) + ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
