@@ -201,7 +201,7 @@ It exists */
                 std::vector<uint32_t> resultados_2, resultados_brute_force;
 
                 rct::algorithm::time_interval(region, tStart, tEnd, m_rct_index, resultados_2);
-                rct::algorithm::time_interval_brute_force(region, tStart, tEnd, m_rct_index, resultados_brute_force);
+                //rct::algorithm::time_interval_brute_force(region, tStart, tEnd, m_rct_index, resultados_brute_force);
                 std::sort(resultados_2.begin(), resultados_2.end());
                 finR >> id;
                 finR >> id;
@@ -224,7 +224,7 @@ It exists */
                     std::cout << "Incorrecto. Faltan " << index - resultados_2.size() << " resultados" << std::endl;
                     exit(10);
                 }
-                std::sort(resultados_brute_force.begin(), resultados_brute_force.end());
+                /*std::sort(resultados_brute_force.begin(), resultados_brute_force.end());
                 if(resultados_2.size() != resultados_brute_force.size()){
                     std::cout << "Brute force different size" << std::endl;
                     exit(10);
@@ -234,12 +234,130 @@ It exists */
                         std::cout << "Brute force different values" << std::endl;
                         exit(10);
                     }
-                }
+                }*/
                 finQ >> type;
                 resultados_2.clear();
                 resultados_2.shrink_to_fit();
                 resultados_brute_force.clear();
                 resultados_brute_force.shrink_to_fit();
+            }else if (type == -6){
+                uint32_t t, x, y, K, xr, yr;
+                finQ >> t >> x >> y >> K;
+                util::geo::point p_q{x, y};
+                // 1548 1820 281864 282231
+                //2506 2686 1400 4123 279952 283629
+
+                std::cout << "Executando: x=" << x << " y=" << y << " t=" << t << " k=" << K << std::endl;
+                std::vector<uint32_t> resultados_2;
+                //TODO: cambiar esto
+                rct::algorithm::knn(K, p_q, t, m_rct_index, resultados_2);
+                finR >> id;
+                finR >> id;
+                int index = 0;
+                std::vector<uint> valoresEsperados;
+                std::vector<uint64_t> x_knn, y_knn;
+                std::vector<double_t> distances;
+                std::map<double_t, std::vector<uint64_t>> map_distances_objects;
+                while (id != -1) {
+                    finR >> xr >> yr;
+                    valoresEsperados.push_back(id);
+                    double_t distance = util::geo::distance(util::geo::point{xr, yr}, p_q);
+                    std::map<double_t, std::vector<uint64_t >>::iterator it = map_distances_objects.find(distance);
+                    if(it == map_distances_objects.end()){
+                        distances.push_back(distance);
+                        std::vector<uint64_t> vector;
+                        vector.push_back(id);
+                        map_distances_objects.insert(std::pair<double_t , std::vector<uint64_t>>(distance, vector));
+                    }else{
+                        (*it).second.push_back(id);
+                    }
+                    finR >> id;
+                    index++;
+                }
+                uint i = 0;
+                for(uint64_t j = 0; j < distances.size(); j++){
+                    std::map<double_t , std::vector<uint64_t >>::iterator it = map_distances_objects.find(distances[j]);
+                    std::cout << std::endl;
+                    std::cout << "distance: " << distances[j] << std::endl;
+                    std::vector<uint64_t> vector = (*it).second;
+                    if(j == distances.size()-1){
+                        while(i < resultados_2.size()) {
+                            std::cout << "i: " << i << std::endl;
+                            std::cout << "j: " << j << std::endl;
+                            std::cout << "size: " << vector.size() << std::endl;
+                            std::cout << "id: " << resultados_2[i] << std::endl;
+                            std::vector<uint64_t>::iterator it2 = std::find(vector.begin(), vector.end(),
+                                                                            resultados_2[i]);
+                            if (it2 == vector.end()) {
+                                std::cout << "Error" << std::endl;
+                                for(uint64_t ii = 0; ii < vector.size(); ii++){
+                                    std::cout << "vector[" << ii <<  "]=" <<vector[ii] << std::endl;
+                                }
+
+                                std::cout << "valores esperados: ";
+                                for(uint64_t ii = 0; ii < valoresEsperados.size(); ii++){
+                                    std::cout << valoresEsperados[ii] << ", ";
+                                }
+                                std::cout << std::endl;
+
+                                std::cout << "valores obtidos: ";
+                                for(uint64_t ii = 0; ii < resultados_2.size(); ii++){
+                                    std::cout << resultados_2[ii] << ", ";
+                                }
+                                std::cout << std::endl;
+                                exit(11);
+                            }
+                            i++;
+                        }
+                    }else{
+                        while(!vector.empty()){
+                            std::cout << "i: " << i << std::endl;
+                            std::cout << "j: " << j << std::endl;
+                            std::cout << "size: " << vector.size() << std::endl;
+                            std::cout << "id: " << resultados_2[i] << std::endl;
+                            std::vector<uint64_t >::iterator it2 = std::find(vector.begin(), vector.end(), resultados_2[i]);
+                            if(it2 == vector.end()){
+                                std::cout << "Error " << std::endl;
+                                for(uint64_t ii = 0; ii < vector.size(); ii++){
+                                    std::cout << "vector[" << ii <<  "]=" <<vector[ii] << std::endl;
+                                }
+                                exit(10);
+                            }else{
+                                vector.erase(it2);
+                            }
+                            i++;
+                        }
+                    }
+                }
+
+
+                if (K == resultados_2.size()) {
+                    std::cout << "Correcto" << std::endl;
+                } else {
+                    std::cout << "Consulta FAIL: x=" << x << " y=" << y << " t=" << t << " k=" << K << std::endl;
+                    std::cout << "Esperados: " << valoresEsperados.size() << " obtidos: " << resultados_2.size() << std::endl;
+                    exit(10);
+                }
+                finQ >> type;
+            }else if (type == -7) {
+                uint t_start, t_end, q_id;
+                uint min_x, min_y, max_x, max_y;
+                int wildcard;
+                finQ >> t_start >> t_end >> q_id;
+                std::cout << "MBR: " << q_id << " TStart: " << t_start << " TEnd: " << t_end << std::endl;
+                finR >> wildcard >> min_x >> min_y >> max_x >> max_y >> wildcard;
+                util::geo::region mbr_result;
+                rct::algorithm::MBR(t_start, t_end, q_id, m_rct_index, mbr_result);
+                if(mbr_result.min.x == min_x && mbr_result.min.y == min_y
+                   && mbr_result.max.x == max_x && mbr_result.max.y == max_y){
+                    std::cout << "Correcto" << std::endl;
+                }else {
+                    std::cout << "Obtained: " << mbr_result << std::endl;
+                    util::geo::region expected{min_x, min_y, max_x, max_y};
+                    std::cout << "Expected:" << expected << std::endl;
+                    exit(10);
+                }
+                finQ >> type;
             }
         }
     }
