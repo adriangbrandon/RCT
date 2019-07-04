@@ -37,18 +37,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int main(int argc, const char* argv[]) {
 
     std::string dataset_path = argv[1];
-    std::string index_file = util::file::index_file("rct_index", argv, argc) + ".idx";
+    double_t ratio = (double_t) atoi(argv[2])/(double_t) 100;
+    uint32_t period = (uint32_t) atoi(argv[3]);
+    std::string index_file = util::file::index_file("rct_index_multiple", argv, argc) + ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
-    rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+    rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> m_rct_index;
     sdsl::load_from_file(m_rct_index, index_file);
 
     std::vector<uint32_t> new_periods = {240, 360, 720};
 
     for(auto p : new_periods){
         std::string dataset_name = util::file::remove_extension(util::file::remove_path(argv[1]));
-        std::string new_index_file = "rct_index_" + dataset_name + "_" + std::to_string(atoi(argv[2]))
-                                    + "_" + std::to_string(atoi(argv[3])) + "_" + std::to_string(p);
-
+        std::string new_index_file = "rct_index_multiple_" + dataset_name + "_" + std::to_string(atoi(argv[2])) + "_" + std::to_string(p);
         rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> new_rct_index(m_rct_index);
         new_rct_index.update_period_snapshot(p, dataset_path);
         sdsl::store_to_file(new_rct_index, new_index_file + ".idx");
