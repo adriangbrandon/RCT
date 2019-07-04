@@ -49,7 +49,7 @@ int main(int argc, const char* argv[]) {
         std::string new_index_file = "rct_index_" + dataset_name + "_" + std::to_string(atoi(argv[2]))
                                     + "_" + std::to_string(atoi(argv[3])) + "_" + std::to_string(p);
 
-        rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> new_rct_index(m_rct_index);
+        rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> new_rct_index(m_rct_index);
         new_rct_index.update_period_snapshot(p, dataset_path);
         sdsl::store_to_file(new_rct_index, new_index_file + ".idx");
         std::ofstream out(new_index_file + ".html");
