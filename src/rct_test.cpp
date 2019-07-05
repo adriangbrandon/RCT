@@ -48,13 +48,13 @@ int main(int argc, const char **argv) {
    /* std::vector<util::geo::traj_step> resultados_3;
     rct::algorithm::search_trajectory(162, 11572, 13746, m_rct_index, resultados_3);*/
 
-    /* Consulta: tStart: 11894 tEnd:11994 minX:1669 maxX: 1709 minY:280290 maxY:280330
-     *
-     * */
+    /*Consulta FAIL: tStart: 2687 tEnd:3487 minX:58486 maxX: 58806 minY:119649 maxY:119969
+    Valor esperado: id: 0
+    Valor obtido: id: 6*/
 
-    /*util::geo::region region{util::geo::point{1669, 280290}, util::geo::point{1709, 280330}};
+   /* util::geo::region region{util::geo::point{58486, 119649}, util::geo::point{58806, 119969}};
     std::vector<uint32_t> resultados_2;
-    rct::algorithm::time_interval(region, 11894, 11994, m_rct_index, resultados_2);
+    rct::algorithm::time_interval(region, 2687, 3487, m_rct_index, resultados_2);
     for(const auto &r : resultados_2){
         std::cout << r << std::endl;
     }

@@ -394,7 +394,7 @@ namespace rct {
                                                                            region_expanded.min.y, region_expanded.max.y);
             //std::cerr << "snapshot: " << data.size() << std::endl;
             for(const auto &e: data){
-                //std::cout << "normal: " << e.id << std::endl;
+                std::cout << "normal: " << e.id << std::endl;
                 if(!processed_ids[e.id]){
                     if(t_i <= snap_id*rctIndex.period_snapshot && snap_id*rctIndex.period_snapshot <= t_j
                        && util::geo::contains(region_q, util::geo::point{e.x, e.y})){
@@ -408,7 +408,7 @@ namespace rct {
             //std::cerr << "disap: " << rctIndex.disap[snap_id-1].size() << std::endl;
             for(const uint32_t &id : rctIndex.disap[snap_id-1]){
                 if(!processed_ids[id]){
-                    // std::cout << "succ: " << id << std::endl;
+                    std::cout << "succ: " << id << std::endl;
                     time_interval_object(id, region_q, t_i, t_j, processed_ids, rctIndex, r);
                 }
             }

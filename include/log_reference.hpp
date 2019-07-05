@@ -498,7 +498,7 @@ namespace rct {
 
             p_min_x_index = 0, p_max_x_index = 0, p_min_y_index = 0, p_max_y_index = 0;
             //Adding extra 1 caused by the flag bit
-            size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s-1);
+            size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s+1);
             size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e);//move_e + 1 + flag
 
             //2. Computing the minimum at x-axis
@@ -528,7 +528,7 @@ namespace rct {
 
             if(min_x > r_q.max.x || max_x < r_q.min.x) return false;
 
-            size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s-1);
+            size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s+1);
             size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e);
 
             //3. Computing the minimum at y-axis
