@@ -94,6 +94,7 @@ namespace rct {
             std::vector<knn_element> elements;
             for(const auto &oid : disap){
                 util::geo::point p;
+                std::cout << "oid: " << oid << std::endl;
                 if(search_object(oid, t_q, rctIndex, p)){
                     //double_t distance = util::geo::distance(p, p_q);
                     knn_element knn_e(oid, p_q, p, t_q);
@@ -844,7 +845,7 @@ namespace rct {
                     auto candidate = candidates.top(); //copy is necessary
                     candidates.pop();
                     if (candidate.is_point) {
-                        //std::cout << "Checking: " << candidate.id;
+                        std::cout << "Checking: " << candidate.id << std::endl;
                         if (search_object(candidate.id, t_q, rctIndex, p)) {
                             //std::cout << " Distance: " << distance;
                             //knn_element knn_e(candidate.id, p, distance, t_q);

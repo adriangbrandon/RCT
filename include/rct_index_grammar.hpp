@@ -169,10 +169,10 @@ namespace rct {
                 }
 
                 if(old_id != -1
-                   && ((old_id == id && old_t / m_period_snapshot < t / m_period_snapshot
-                        && t != (old_t / m_period_snapshot+1) * m_period_snapshot
+                   && ((old_id == id && old_t / m_period_snapshot < t / m_period_snapshot //t and old_t belong to different snaps
+                        && t != (old_t / m_period_snapshot+1) * m_period_snapshot //disappears before but the object is stored in the snapshot of t
                         && t - old_t > 1 )
-                        || (old_id != id && old_t % m_period_snapshot > 0))) {
+                       || (old_id != id))) {
                     disap_temp[old_t / m_period_snapshot].push_back(old_id);
                 }
 

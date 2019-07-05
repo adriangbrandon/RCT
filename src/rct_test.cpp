@@ -60,6 +60,17 @@ int main(int argc, const char **argv) {
     }
     exit(10);*/
 
+    /*
+     * Executando: x=57794 y=119583 t=328582 k=11
+     * Problemas con: 24. Obten 5 e ten que obter 24
+     */
+
+    std::vector<uint32_t> resultados_2;
+    rct::algorithm::knn(11, util::geo::point{57794, 119583}, 328582, m_rct_index, resultados_2);
+    for(const auto &r : resultados_2){
+        std::cout << r << std::endl;
+    }
+    exit(10);
     struct ids_sort
     {
         inline bool operator() (const util::geo::id_point& p, const util::geo::id_point& q)
