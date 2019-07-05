@@ -52,13 +52,13 @@ int main(int argc, const char **argv) {
     Valor esperado: id: 0
     Valor obtido: id: 1*/
 
-    util::geo::region region{util::geo::point{58197, 119750}, util::geo::point{58517, 120070}};
+    /*util::geo::region region{util::geo::point{58197, 119750}, util::geo::point{58517, 120070}};
     std::vector<uint32_t> resultados_2;
     rct::algorithm::time_interval(region, 2404, 3204, m_rct_index, resultados_2);
     for(const auto &r : resultados_2){
         std::cout << r << std::endl;
     }
-    exit(10);
+    exit(10);*/
 
     struct ids_sort
     {
