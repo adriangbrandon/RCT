@@ -591,7 +591,7 @@ namespace rct {
                 r = parent_region;
             }else{
                 //Adding extra 1 caused by the flag bit
-                size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s-1);
+                size_type rMmq_x_s = m_rank_rMmq_x_sample(move_s+1);
                 size_type rMmq_x_e = m_rank_rMmq_x_sample(move_e);//move_e + 1 + flag
                 //2. Computing the minimum at x-axis
                 if(move_s-1 < p_min_x_index && move_e-1 > p_min_x_index){
@@ -633,7 +633,7 @@ namespace rct {
                 r.min.y = parent_region.min.y;
                 r.max.y = parent_region.max.y;
             }else{
-                size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s-1);
+                size_type rMmq_y_s = m_rank_rMmq_y_sample(move_s+1);
                 size_type rMmq_y_e = m_rank_rMmq_y_sample(move_e);//move_e + 1 + flag
                 if(move_s-1 < p_min_y_index && move_e-1 > p_min_y_index){
                     r.min.y = parent_region.min.y;

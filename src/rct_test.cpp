@@ -48,17 +48,17 @@ int main(int argc, const char **argv) {
    /* std::vector<util::geo::traj_step> resultados_3;
     rct::algorithm::search_trajectory(162, 11572, 13746, m_rct_index, resultados_3);*/
 
-    /*Consulta FAIL: tStart: 2687 tEnd:3487 minX:58486 maxX: 58806 minY:119649 maxY:119969
+    /*Consulta FAIL: tStart: 2404 tEnd:3204 minX:58197 maxX: 58517 minY:119750 maxY:120070
     Valor esperado: id: 0
-    Valor obtido: id: 6*/
+    Valor obtido: id: 1*/
 
-   /* util::geo::region region{util::geo::point{58486, 119649}, util::geo::point{58806, 119969}};
+    util::geo::region region{util::geo::point{58197, 119750}, util::geo::point{58517, 120070}};
     std::vector<uint32_t> resultados_2;
-    rct::algorithm::time_interval(region, 2687, 3487, m_rct_index, resultados_2);
+    rct::algorithm::time_interval(region, 2404, 3204, m_rct_index, resultados_2);
     for(const auto &r : resultados_2){
         std::cout << r << std::endl;
     }
-    exit(10);*/
+    exit(10);
 
     struct ids_sort
     {
