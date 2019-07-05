@@ -34,8 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int main(int argc, const char **argv) {
 
     std::string dataset = argv[1];
-    std::string path_queries =  argv[2];
-    std::string index_file =  util::file::index_file("rct_index_repair_rtree", argv, 2)+ ".idx";
+    std::string path_queries =  argv[3];
+    std::string index_file =  util::file::index_file("rct_index_repair_rtree", argv, 3)+ ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index_grammar_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
 
