@@ -70,13 +70,14 @@ int main(int argc, const char **argv) {
 
 
     std::vector<std::string> queries_array;
-    queries_array.emplace_back("queries/traj.txt");
-    queries_array.emplace_back("queries/ts_s.txt");
-    queries_array.emplace_back("queries/ts_l.txt");
-    queries_array.emplace_back("queries/ti_s.txt");
-    queries_array.emplace_back("queries/ti_l.txt");
-    queries_array.emplace_back("queries/knn.txt");
-    queries_array.emplace_back("queries/mbr.txt");
+    queries_array.emplace_back(path_queries + "so.txt");
+    queries_array.emplace_back(path_queries +"traj.txt");
+    queries_array.emplace_back(path_queries +"ts_s.txt");
+    queries_array.emplace_back(path_queries +"ts_l.txt");
+    queries_array.emplace_back(path_queries +"ti_s.txt");
+    queries_array.emplace_back(path_queries +"ti_l.txt");
+    queries_array.emplace_back(path_queries +"knn.txt");
+    queries_array.emplace_back(path_queries +"mbr.txt");
 
     /*MBR: 19 TStart: 37105 TEnd: 37320
     Obtained: [(674, 276196), (683, 276558)]
