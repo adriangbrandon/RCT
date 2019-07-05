@@ -37,7 +37,8 @@ int main(int argc, const char **argv) {
     std::string dataset_path = argv[1];
     double_t ratio = (double_t) atoi(argv[2])/(double_t) 100;
     uint32_t period = (uint32_t) atoi(argv[3]);
-    std::string index_file = util::file::index_file("rct_index_multiple", argv, argc) + ".idx";
+    std::string path_queries =  argv[4];
+    std::string index_file = util::file::index_file("rct_index_multiple", argv, 4) + ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> m_rct_index;
     sdsl::load_from_file(m_rct_index, index_file);
@@ -356,6 +357,24 @@ It exists */
                 }else {
                     std::cout << "Obtained: " << mbr_result << std::endl;
                     util::geo::region expected{min_x, min_y, max_x, max_y};
+                    std::cout << "Expected:" << expected << std::endl;
+                    exit(10);
+                }
+                finQ >> type;
+            }else if (type == -4) {
+                uint q_id, t_q;
+                uint x, y;
+                int wildcard;
+                finQ >> q_id >> t_q;
+                std::cout << "SO: " << q_id << " T: " << t_q << std::endl;
+                finR >> wildcard >> wildcard >> x >> y >> wildcard;
+                util::geo::point p_result;
+                rct::algorithm::search_object(q_id, t_q, m_rct_index, p_result);
+                if(p_result.x == x && p_result.y == y){
+                    std::cout << "Correcto" << std::endl;
+                }else {
+                    std::cout << "Obtained: " << p_result << std::endl;
+                    util::geo::point expected{x, y};
                     std::cout << "Expected:" << expected << std::endl;
                     exit(10);
                 }

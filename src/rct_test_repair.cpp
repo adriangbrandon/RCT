@@ -34,7 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int main(int argc, const char **argv) {
 
     std::string dataset = argv[1];
-    std::string index_file =  util::file::index_file("rct_index_repair", argv, argc)+ ".idx";
+    std::string path_queries =  argv[2];
+    std::string index_file =  util::file::index_file("rct_index_repair", argv, 2)+ ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index_grammar<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
     sdsl::load_from_file(m_rct_index, index_file);
@@ -355,6 +356,24 @@ It exists */
                 }else {
                     std::cout << "Obtained: " << mbr_result << std::endl;
                     util::geo::region expected{min_x, min_y, max_x, max_y};
+                    std::cout << "Expected:" << expected << std::endl;
+                    exit(10);
+                }
+                finQ >> type;
+            }else if (type == -4) {
+                uint q_id, t_q;
+                uint x, y;
+                int wildcard;
+                finQ >> q_id >> t_q;
+                std::cout << "SO: " << q_id << " T: " << t_q << std::endl;
+                finR >> wildcard >> wildcard >> x >> y >> wildcard;
+                util::geo::point p_result;
+                rct::algorithm::search_object(q_id, t_q, m_rct_index, p_result);
+                if(p_result.x == x && p_result.y == y){
+                    std::cout << "Correcto" << std::endl;
+                }else {
+                    std::cout << "Obtained: " << p_result << std::endl;
+                    util::geo::point expected{x, y};
                     std::cout << "Expected:" << expected << std::endl;
                     exit(10);
                 }
