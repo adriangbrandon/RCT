@@ -43,7 +43,7 @@ int main(int argc, const char* argv[]) {
     rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
     sdsl::load_from_file(m_rct_index, index_file);
 
-    std::vector<uint32_t> new_periods = {240, 360, 720};
+    std::vector<uint32_t> new_periods = {120, 240, 360, 720};
 
     for(auto p : new_periods){
         std::string dataset_name = util::file::remove_extension(util::file::remove_path(argv[1]));

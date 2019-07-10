@@ -172,11 +172,11 @@ namespace rct {
                     reap_temp[t / m_period_snapshot].push_back(id);
                 }
 
-                if(old_id != -1
-                   && ((old_id == id && old_t / m_period_snapshot < t / m_period_snapshot
-                        && t != (old_t / m_period_snapshot+1) * m_period_snapshot
+                if(old_id != -1 && old_t % m_period_snapshot > 0 //the position at old_t cannot be stored in a snapshot
+                   && ((old_id == id && old_t / m_period_snapshot < t / m_period_snapshot //t and old_t belong to different snaps
+                        && t != (old_t / m_period_snapshot+1) * m_period_snapshot //disappears before but the object is stored in the snapshot of t
                         && t - old_t > 1 )
-                        || (old_id != id))) {
+                       || (old_id != id))) {
                     disap_temp[old_t / m_period_snapshot].push_back(old_id);
                 }
 
@@ -187,6 +187,9 @@ namespace rct {
             }
             lengths.push_back(length);
             in.close();
+            if(old_id != -1 && old_t % m_period_snapshot > 0) {
+                disap_temp[old_t / m_period_snapshot].push_back(old_id);
+            }
             std::cout << "Compressing snapshots. " << std::endl;
             m_snapshots = std::vector<snapshot<k>>(n_snapshots);
             m_reap.resize(n_snapshots);
@@ -379,7 +382,7 @@ namespace rct {
                     reap_temp[t / m_period_snapshot].push_back(id);
                 }
 
-                if(old_id != -1
+                if(old_id != -1 && old_t % m_period_snapshot > 0 //the position at old_t cannot be stored in a snapshot
                    && ((old_id == id && old_t / m_period_snapshot < t / m_period_snapshot //t and old_t belong to different snaps
                         && t != (old_t / m_period_snapshot+1) * m_period_snapshot //disappears before but the object is stored in the snapshot of t
                         && t - old_t > 1 )
@@ -391,6 +394,9 @@ namespace rct {
                 old_t = t;
             }
             in.close();
+            if(old_id != -1 && old_t % m_period_snapshot > 0) {
+                disap_temp[old_t / m_period_snapshot].push_back(old_id);
+            }
             std::cout << "Compressing snapshots. " << std::endl;
             m_snapshots = std::vector<snapshot<k>>(n_snapshots);
             m_reap.resize(n_snapshots);
