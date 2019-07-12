@@ -233,7 +233,7 @@ int main(int argc, const char **argv) {
     }
     double_t avg_interval_s = t_interval_s/(double) TIMES;
 
-    double_t t_interval_brute_s = 0;
+    /*double_t t_interval_brute_s = 0;
     for(uint64_t j = 0; j < TIMES; j++){
         auto start = high_resolution_clock::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
@@ -248,7 +248,7 @@ int main(int argc, const char **argv) {
         t_interval_brute_s += milli_query;
         sleep(10);
     }
-    double_t avg_interval_brute_s = t_interval_brute_s/(double) TIMES;
+    double_t avg_interval_brute_s = t_interval_brute_s/(double) TIMES;*/
 
 
     t_starts.clear();
@@ -287,7 +287,7 @@ int main(int argc, const char **argv) {
     }
     double_t avg_interval_l = t_interval_l/(double) TIMES;
 
-    double_t t_interval_brute_l = 0;
+    /*double_t t_interval_brute_l = 0;
     for(uint64_t j = 0; j < TIMES; j++){
         auto start = high_resolution_clock::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
@@ -302,7 +302,80 @@ int main(int argc, const char **argv) {
         t_interval_brute_l += milli_query;
         sleep(10);
     }
-    double_t avg_interval_brute_l = t_interval_brute_l/(double) TIMES;
+    double_t avg_interval_brute_l = t_interval_brute_l/(double) TIMES;*/
+
+    t_starts.clear();
+    t_ends.clear();
+    regions.clear();
+    ids.clear();
+
+    finQ.open(argv[first_query_arg+6]);
+    uint64_t k;
+    std::vector<uint64_t> ks;
+    finQ >> type >> tstart >> minX >> minY >> k;
+    t_starts.push_back(tstart);
+    points.push_back(util::geo::point{minX, minY});
+    t_ends.push_back(k);
+    finQ >> type;
+    while (finQ) {
+        finQ >> type >> tstart >> minX >> minY >> k >> type;
+        t_starts.push_back(tstart);
+        points.push_back(util::geo::point{minX, minY});
+        t_ends.push_back(k);
+    }
+    finQ.close();
+    double_t t_find_knn = 0;
+    for(uint64_t j = 0; j < TIMES; j++){
+        auto start = high_resolution_clock::now();
+        for(uint64_t i = 0; i < t_starts.size(); i++){
+            std::vector<uint32_t > res_knn;
+            rct::algorithm::knn(t_ends[i], points[i], t_starts[i], m_rct_index, res_knn);
+        }
+        auto stop = high_resolution_clock::now();
+        auto milli = duration_cast<milliseconds>(stop-start).count();
+        double_t milli_query = milli/(double_t) t_starts.size();
+        cout << "Time (ms) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        t_find_knn += milli_query;
+        sleep(10);
+    }
+    double_t avg_find_knn = t_find_knn/(double) TIMES;
+    t_starts.clear();
+    t_ends.clear();
+    points.clear();
+    ks.clear();
+
+
+    finQ.open(argv[first_query_arg+7]);
+    finQ >> type >> tstart >> tend >> id;
+    ids.push_back(id);
+    t_starts.push_back(tstart);
+    t_ends.push_back(tend);
+    finQ >> type;
+    while (finQ) {
+        finQ >> type >> tstart >> tend >> id >> type;
+        ids.push_back(id);
+        t_starts.push_back(tstart);
+        t_ends.push_back(tend);
+    }
+    finQ.close();
+
+    double_t t_mbr = 0;
+    for(uint64_t j = 0; j < TIMES; j++){
+        auto start = high_resolution_clock::now();
+        for(uint64_t i = 0; i < t_starts.size(); i++){
+            util::geo::region mbr;
+            rct::algorithm::MBR(t_starts[i], t_ends[i], ids[i], m_rct_index, mbr);
+        }
+        auto stop = high_resolution_clock::now();
+        auto milli = duration_cast<milliseconds>(stop-start).count();
+        double_t milli_query = milli/(double_t) t_starts.size();
+        cout << "Time (ms) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        t_mbr += milli_query;
+        sleep(10);
+    }
+    double_t avg_mbr = t_mbr/(double) TIMES;
 
     t_starts.clear();
     t_ends.clear();
@@ -316,8 +389,8 @@ int main(int argc, const char **argv) {
     cout << "Time Slice L (ms): " << avg_slice_l <<  endl;
     cout << "Time Interval S (ms): " << avg_interval_s << endl;
     cout << "Time Interval L (ms): " << avg_interval_l <<  endl;
-    cout << "Time Interval Brute S (ms): " << avg_interval_brute_s << endl;
-    cout << "Time Interval Brute L (ms): " << avg_interval_brute_l <<  endl;
+    cout << "Knn (ms): " << avg_find_knn <<  endl;
+    cout << "MBR (ms): " << avg_mbr <<  endl;
     cout << "-----------------------------------------------------------------" << endl;
 
     struct decimal_comma : std::numpunct<char> {
@@ -332,12 +405,10 @@ int main(int argc, const char **argv) {
     cout <<  avg_slice_l <<  endl;
     cout <<  avg_interval_s << endl;
     cout <<  avg_interval_l <<  endl;
-    cout <<  avg_interval_brute_s << endl;
-    cout <<  avg_interval_brute_l <<  endl;
+    cout << avg_find_knn << endl;
+    cout << avg_mbr << endl;
     cout << "-----------------------------------------------------------------" << endl;
 
-
     std::cout << "Everything is OK!" << std::endl;
-//    dataset.clear();
 
 }

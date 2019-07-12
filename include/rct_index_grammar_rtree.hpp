@@ -174,8 +174,6 @@ namespace rct {
             std::vector<int64_t> input_reference;
             uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, old_x = 0, y, old_y = 0;
             size_type n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
-            std::vector<std::vector<size_type>> reap_temp(n_snapshots);
-            std::vector<std::vector<size_type>> disap_temp(n_snapshots);
             std::vector<size_type> lengths;
             //m_reap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
             //m_disap = std::vector<sdsl::bit_vector>(n_snapshots, sdsl::bit_vector(m_total_objects, 0));
@@ -191,29 +189,12 @@ namespace rct {
                     input_reference.push_back(-1);
                 }
 
-                if(t % m_period_snapshot == 0){
-                    //trees[t/m_period_snapshot].insertObject(x, y, id);
-                }else if (old_id != id || old_t / m_period_snapshot != t / m_period_snapshot){
-                    reap_temp[t / m_period_snapshot].push_back(id);
-                }
-
-                if(old_id != -1 && old_t % m_period_snapshot > 0 //the position at old_t cannot be stored in a snapshot
-                   && ((old_id == id && old_t / m_period_snapshot < t / m_period_snapshot //t and old_t belong to different snaps
-                        && t != (old_t / m_period_snapshot+1) * m_period_snapshot //disappears before but the object is stored in the snapshot of t
-                        && t - old_t > 1 )
-                       || (old_id != id))) {
-                    disap_temp[old_t / m_period_snapshot].push_back(old_id);
-                }
-
                 old_id = id;
                 old_x = x;
                 old_y = y;
                 old_t = t;
             }
             in.close();
-            if(old_id != -1 && old_t % m_period_snapshot > 0) {
-                disap_temp[old_t / m_period_snapshot].push_back(old_id);
-            }
             std::cout << "Compressing snapshots. " << std::endl;
             m_snapshots.resize(n_snapshots);
             _init_snapshots(dataset_file, n_snapshots);
