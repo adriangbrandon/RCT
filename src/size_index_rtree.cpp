@@ -56,5 +56,12 @@ int main(int argc, const char **argv) {
     m_rct_index.load(in, dataset);
     in.close();
     std::cout << "Size: " << sdsl::size_in_bytes(m_rct_index) << std::endl;
+    std::ofstream out(util::file::index_file("rct_index_rtree", argv, first_query_arg) + ".html");
+    sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
+    out.close();
+    std::ofstream out_json(util::file::index_file("rct_index_rtree", argv, first_query_arg) + ".json");
+    sdsl::write_structure<sdsl::JSON_FORMAT>(m_rct_index, out_json);
+    out_json.close();
+    out.close();
 
 }
