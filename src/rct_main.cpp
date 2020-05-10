@@ -89,7 +89,7 @@ int main(int argc, const char* argv[]) {
             in >> id >> t >> x >> y;
             if(in.eof()) break;
             rct::algorithm::search_object(id, t, m_rct_index, r);
-            std::cout << "Obtained: " << r.x << ", " << r.y << std::endl;
+            //std::cout << "Obtained: " << r.x << ", " << r.y << std::endl;
             if(r.x != x || r.y != y){
                 std::cout << "Error looking for: id=" << id << " t=" << t << std::endl;
                 std::cout << "Expected: " << x << ", " << y << std::endl;

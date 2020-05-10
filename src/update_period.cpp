@@ -43,7 +43,7 @@ int main(int argc, const char* argv[]) {
     sdsl::load_from_file(m_rct_index, index_file);
 
    //std::vector<uint32_t> new_periods = {240, 360, 720};
-    std::vector<uint32_t> new_periods = {120, 240, 360, 720};
+    std::vector<uint32_t> new_periods = {60, 120, 240, 360, 720};
 
     for(auto p : new_periods){
         std::string dataset_name = util::file::remove_extension(util::file::remove_path(argv[1]));
@@ -54,10 +54,10 @@ int main(int argc, const char* argv[]) {
         new_rct_index.update_period_snapshot(p, dataset_path);
         sdsl::store_to_file(new_rct_index, new_index_file + ".idx");
         std::ofstream out(new_index_file + ".html");
-        sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, out);
+        sdsl::write_structure<sdsl::HTML_FORMAT>(new_rct_index, out);
         out.close();
         std::ofstream out_json(new_index_file + ".json");
-        sdsl::write_structure<sdsl::JSON_FORMAT>(m_rct_index, out_json);
+        sdsl::write_structure<sdsl::JSON_FORMAT>(new_rct_index, out_json);
         out_json.close();
     }
 
