@@ -65,7 +65,7 @@ int main(int argc, const char* argv[]) {
             sdsl::store_to_file(m_rct_index, index_file);
         }
 
-        std::cout << "Loading index" << std::endl;
+        std::cout << "Loading index: "  << index_file << std::endl;
         rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
         std::ifstream index_stream(index_file);
         m_rct_index.load(index_stream, dataset);

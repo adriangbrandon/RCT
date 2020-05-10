@@ -348,18 +348,26 @@ namespace rct {
         }
 
         void load(std::istream& in, std::string &dataset) {
+            std::cout << "entra en load" << std::endl;
             sdsl::read_member(m_total_objects, in);
             sdsl::read_member(m_speed_max, in);
             sdsl::read_member(m_t_max, in);
             sdsl::read_member(m_x_max, in);
             sdsl::read_member(m_y_max, in);
             sdsl::read_member(m_period_snapshot, in);
+            std::cout << "log_objects" << std::flush;
             m_log_objects.resize(m_total_objects);
             sdsl::load_vector(m_log_objects, in);
+            std::cout << " done." << std::endl;
+            std::cout << "log_reference" << std::flush;
             m_log_reference.load(in);
+            std::cout << " done." << std::endl;
+            std::cout << "snapshots" << std::flush;
             auto n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             m_snapshots.resize(n_snapshots);
             _init_snapshots(dataset, n_snapshots);
+            std::cout << " done." << std::endl;
+            std::cout << "sale load" << std::endl;
            // m_succs_reap.resize(n_snapshots);
             //m_succs_disap.resize(n_snapshots);
             //sdsl::load_vector(m_snapshots, in);

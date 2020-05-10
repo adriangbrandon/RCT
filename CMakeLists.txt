@@ -217,5 +217,5 @@ target_link_libraries(size_repair_index sdsl divsufsort divsufsort64)
 add_executable(size_repair_index_rtree src/size_repair_index_rtree.cpp)
 target_link_libraries(size_repair_index_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
-add_executable(test test/test.cpp)
-target_link_libraries(test sdsl divsufsort divsufsort64)
+add_executable(proba test/test.cpp)
+target_link_libraries(proba sdsl divsufsort divsufsort64)

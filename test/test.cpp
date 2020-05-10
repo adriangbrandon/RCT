@@ -4,6 +4,7 @@
 
 #include <rlz_int_vector.hpp>
 #include <sdsl/int_vector.hpp>
+#include <rmq_succinct_ct.hpp>
 
 int main(int argc, const char* argv[]) {
 
@@ -35,6 +36,10 @@ int main(int argc, const char* argv[]) {
             exit(0);
         }
     }
+
+    std::vector<uint32_t > data = {1,2,3,4,5,3,8,9};
+    rct::rmq_succinct_ct<> m_rmq(data);
+    std::cout << "RMQ: " << m_rmq(3, 6) << std::endl;
 
 
 }

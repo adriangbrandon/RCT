@@ -33,11 +33,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, const char **argv) {
 
+    size_t first_query_arg = 5;
     std::string dataset = argv[1];
-    std::string path_queries =  argv[5];
-    std::string index_file =  util::file::index_file("rct_index_rtree", argv, 5)+ ".idx";
+    uint32_t size_reference = (uint32_t) atoi(argv[2]) * 1024*1024;
+    uint32_t size_block_bytes = (uint32_t) atoi(argv[3]);
+    uint32_t period = (uint32_t) atoi(argv[4]);
+    std::string index_file =  util::file::index_file("rct_index_rtree", argv, first_query_arg)+ ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
+    
+    //std::string dataset = argv[1];
+    std::string path_queries =  argv[5];
+    //std::string index_file =  util::file::index_file("rct_index_rtree", argv, 5)+ ".idx";
+    //std::cout << "Loading index: " << index_file << std::endl;
+    //rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector> m_rct_index;
 
     std::ifstream in(index_file);
     m_rct_index.load(in, dataset);

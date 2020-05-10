@@ -89,9 +89,18 @@ namespace rct {
                 is_point = true;
                 id = _id;
                 //t = _t;
-                auto d_x = (distance_type) std::abs((int32_t) (_pq.x - _p.x));
-                auto d_y = (distance_type) std::abs((int32_t) (_pq.y - _p.y));
-                distance = d_x * d_x + d_y * d_y;
+                distance_type x = 0, y = 0;
+                if(_pq.x < _p.x){
+                    x = _p.x - _pq.x;
+                }else if(_pq.x > _p.x){
+                    x =_pq.x - _p.x;
+                }
+                if(_pq.y < _p.y){
+                    y = _p.y - _pq.y;
+                }else if(_pq.y > _p.y){
+                    y = _pq.y - _p.y;
+                }
+                distance = x*x + y*y;
             }
 
             knn_element(size_type _id, util::geo::point _pq, util::geo::point _min,
