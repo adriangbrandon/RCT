@@ -130,6 +130,27 @@ namespace rct {
             }
         }
 
+        template<class Candidate, class Candidates>
+        void enqueue_children(const Candidate &candidate, Candidates &candidates, const util::geo::region &p_q) const {
+            std::vector<int32_t > lx, ly, hx, hy, ids;
+            std::vector<SNode*> nodes;
+            candidate.ptr->children_region(candidate.min.x, candidate.min.y, lx, ly, hx, hy, nodes, ids);
+            //std::cout << "Children of: [(" << candidate.min.x << ", " << candidate.min.y << "), (" << candidate.max.x << ", " << candidate.max.y << ")]" << std::endl;
+            if(ids.empty()){
+                //Enqueue Regions
+                for(size_type i = 0; i < nodes.size(); ++i){
+                    //std::cout << "Enqueue Region: " << " [(" << lx[i] << ", " << ly[i] << "), (" << hx[i] << ", " << hy[i] << ")]" << std::endl;
+                    candidates.push(Candidate(nodes[i], p_q, util::geo::point{(value_type) lx[i], (value_type) ly[i]}, util::geo::point{(value_type) hx[i], (value_type) hy[i]}, candidate.snap_id));
+                }
+            }else{
+                //Enqueue Objects
+                for(size_type i = 0; i < ids.size(); ++i){
+                    //std::cout << "Enqueue Object: " << ids[i] << " [(" << lx[i] << ", " << ly[i] << "), (" << hx[i] << ", " << hy[i] << ")]" << std::endl;
+                    candidates.push(Candidate(ids[i], p_q, util::geo::point{(value_type) lx[i], (value_type) ly[i]}, util::geo::point{(value_type) hx[i], (value_type) hy[i]}, candidate.snap_id));
+                }
+            }
+        }
+
 
         //! Assignment move operation
         rtree& operator=(rtree&& p) {

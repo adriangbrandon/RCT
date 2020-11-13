@@ -69,14 +69,15 @@ int main(int argc, const char **argv) {
 
 
     std::vector<std::string> queries_array;
-    queries_array.emplace_back(path_queries + "so.txt");
+    /*queries_array.emplace_back(path_queries + "so.txt");
     queries_array.emplace_back(path_queries +"traj.txt");
     queries_array.emplace_back(path_queries +"ts_s.txt");
     queries_array.emplace_back(path_queries +"ts_l.txt");
     queries_array.emplace_back(path_queries +"ti_s.txt");
     queries_array.emplace_back(path_queries +"ti_l.txt");
     queries_array.emplace_back(path_queries +"knn.txt");
-    queries_array.emplace_back(path_queries +"mbr.txt");
+    queries_array.emplace_back(path_queries +"mbr.txt");*/
+    queries_array.emplace_back(path_queries +"knn_traj.txt");
 
     /*Consulta MBR: oid: 313 tStart: 37566 tEnd:41408
 It exists */
@@ -104,8 +105,10 @@ It exists */
         std::ifstream finQ(query);
         std::string results = query + "_r";
         std::ifstream finR(results);
+        auto number = 0;
         while (finQ) {
             finQ >> type;
+            ++number;
             //Formato do arquivo imis1month
             if (!finQ.good()) continue; // skip newlines, etc.
             std::vector<util::geo::id_point> resultados;
@@ -377,6 +380,59 @@ It exists */
                     std::cout << "Obtained: " << p_result << std::endl;
                     util::geo::point expected{x, y};
                     std::cout << "Expected:" << expected << std::endl;
+                    exit(10);
+                }
+                finQ >> type;
+            }else if (type == -8) {
+                uint32_t t_s, t_e, x, y, K, xr, yr;
+                finQ >> t_s >> t_e;
+                auto length = t_e - t_s + 1;
+                std::vector<uint32_t> traj_x, traj_y;
+                for (auto i = 0; i < length; ++i) {
+                    finQ >> x >> y;
+                    traj_x.push_back(x);
+                    traj_y.push_back(y);
+                }
+                finQ >> K;
+
+                util::geo::point p_q{x, y};
+                // 1548 1820 281864 282231
+                //2506 2686 1400 4123 279952 283629
+
+                std::cout << "Executando: t_s=" << t_s << " t_e=" << t_e << " k=" << K << std::endl;
+                std::vector<uint32_t> resultados_2;
+                //TODO: cambiar esto
+                rct::algorithm::knn_trajectory(K, traj_x, traj_y, t_s, t_e, m_rct_index, resultados_2);
+                finR >> id;
+                finR >> id;
+                int index = 0;
+                std::map<uint, bool> map_solutions;
+                while (id != -1) {
+                    map_solutions.insert({id, true});
+                    finR >> id;
+                    index++;
+                }
+                if(resultados_2.size() == K){
+                    for(const auto &v : resultados_2){
+                        if(map_solutions.find(v) == map_solutions.end()){
+                            std::cout << "The id=" << v << " should not be solution" << std::endl;
+                            std::cout << "Consulta FAIL (" << number << "): t_s=" << t_s << " t_e=" << t_e << " k=" << K << std::endl;
+                            std::cout << "Resultado" << std::endl;
+                            for(auto it : resultados_2){
+                                std::cout << it << std::endl;
+                            }
+                            std::cout << "Solution" << std::endl;
+                            for(auto it : map_solutions){
+                                std::cout << it.first << std::endl;
+                            }
+                            exit(10);
+                        }
+                    }
+                    std::cout << "Correcto" << std::endl;
+                }else{
+                    std::cout << "Consulta FAIL: t_s=" << t_s << " t_e=" << t_e << " k=" << K << std::endl;
+                    std::cout << "Esperados: " << K << " obtidos: " << resultados_2.size()
+                              << std::endl;
                     exit(10);
                 }
                 finQ >> type;
