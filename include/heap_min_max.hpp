@@ -47,7 +47,6 @@ namespace util {
     class heap_min_max {
     public:
         typedef t_object object_type;
-        typedef
         typedef struct {
             object_type object;
             bool deleted;
