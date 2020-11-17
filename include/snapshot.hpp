@@ -428,7 +428,7 @@ namespace rct {
                         uint32_t y = (j / k)  + knn_e.min.y;
                         util::geo::point p{(uint32_t) x, (uint32_t) y};
                         util::geo::region r_expanded = util::geo::expand(p, max_speed, d_t, max_x, max_y);
-                        element knn_leaf(leaf, p_q, p, r_expanded, snap_t);
+                        element knn_leaf(leaf, p_q, p, r_expanded, snap_t, log_idx);
                         knn_leaf.is_leaf = true;
                         //std::cout << "Leaf: " << p.x << ", " << p.y << " distance: " << knn_leaf.distance << std::endl;
                         pq.push(knn_leaf);
@@ -454,7 +454,7 @@ namespace rct {
                         //element knn_region(p_leaf, util::geo::point{m_x, m_y}, util::geo::point{M_x, M_y},
                         //        distance, snap_t, knn_e.level+1);
                         element knn_region(p_leaf, p_q, util::geo::point{m_x, m_y}, util::geo::point{M_x, M_y},
-                                           r_expanded, snap_t, knn_e.level+1);
+                                           r_expanded, snap_t, knn_e.level+1, log_idx);
                         pq.push(knn_region);
                         p_leaf += k*k;
                     }
@@ -476,7 +476,7 @@ namespace rct {
                         util::geo::region r_expanded = util::geo::expand(r, max_speed, d_t, max_x, max_y);
                         //double_t distance = util::geo::distance(r_expanded, p_q);
                         element knn_region(p_region, p_q, util::geo::point{m_x, m_y}, util::geo::point{M_x, M_y},
-                                           r_expanded, snap_t, knn_e.level+1);
+                                           r_expanded, snap_t, knn_e.level+1, log_idx);
                         pq.push(knn_region);
                         p_region += k*k;
                     }

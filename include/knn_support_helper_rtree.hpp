@@ -232,12 +232,21 @@ namespace rct {
             }
 
             knn_traj_element(const size_type _id, const distance_type dmin,
-                             const distance_type dmax){
+                    const distance_type dmax){
                 is_header = true;
                 id = _id;
                 distance = dmin;
                 max_distance = dmax;
 
+            }
+
+            knn_traj_element(const size_type _id, const util::geo::point &_rq, const util::geo::point &_min,
+                             const util::geo::point &_max, const size_type _snap = 0) {
+                is_leaf = true;
+                ptr = nullptr;
+                id = _id;
+                snap_id = _snap;
+                common_knn_element(_rq, _min, _max);
             }
 
             knn_traj_element(const size_type _id, const util::geo::region &_rq, const util::geo::point &_min,
@@ -250,6 +259,14 @@ namespace rct {
             }
 
             knn_traj_element(SRTree::SNode *_ptr, const util::geo::region &_rq,
+                            const util::geo::point &_min, const util::geo::point &_max, const size_type _snap = 0) {
+                is_leaf = false;
+                ptr = _ptr;
+                snap_id = _snap;
+                common_knn_element(_rq, _min, _max);
+            }
+
+            knn_traj_element(SRTree::SNode *_ptr, const util::geo::point &_rq,
                              const util::geo::point &_min, const util::geo::point &_max, const size_type _snap = 0) {
                 is_leaf = false;
                 ptr = _ptr;

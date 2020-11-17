@@ -78,6 +78,7 @@ int main(int argc, const char **argv) {
     queries_array.emplace_back(path_queries +"knn.txt");
     queries_array.emplace_back(path_queries +"mbr.txt");*/
     queries_array.emplace_back(path_queries +"knn_traj.txt");
+    //queries_array.emplace_back(path_queries +"knn_int.txt");
 
     /*Consulta MBR: oid: 313 tStart: 37566 tEnd:41408
 It exists */
@@ -430,6 +431,52 @@ It exists */
                     }
                     std::cout << "Correcto" << std::endl;
                 }else{
+                    std::cout << "Consulta FAIL: t_s=" << t_s << " t_e=" << t_e << " k=" << K << std::endl;
+                    std::cout << "Esperados: " << K << " obtidos: " << resultados_2.size()
+                              << std::endl;
+                    exit(10);
+                }
+                finQ >> type;
+            } else if (type == -9) {
+                uint32_t t_s, t_e, x, y, K, xr, yr;
+                finQ >> t_s >> t_e >> x >> y >> K;
+
+                util::geo::point p_q{x, y};
+                // 1548 1820 281864 282231
+                //2506 2686 1400 4123 279952 283629
+
+                std::cout << "Executando: t_s=" << t_s << " t_e=" << t_e << " k=" << K << std::endl;
+                std::vector<uint32_t> resultados_2;
+                //TODO: cambiar esto
+                rct::algorithm::knn_interval(K, p_q, t_s, t_e, m_rct_index, resultados_2);
+                finR >> id;
+                finR >> id;
+                int index = 0;
+                std::map<uint, bool> map_solutions;
+                while (id != -1) {
+                    map_solutions.insert({id, true});
+                    finR >> id;
+                    index++;
+                }
+                if (resultados_2.size() == K) {
+                    for (const auto &v : resultados_2) {
+                        if (map_solutions.find(v) == map_solutions.end()) {
+                            std::cout << "The id=" << v << " should not be solution" << std::endl;
+                            std::cout << "Consulta FAIL (" << number << "): t_s=" << t_s << " t_e=" << t_e << " k=" << K
+                                      << std::endl;
+                            std::cout << "Resultado" << std::endl;
+                            for (auto it : resultados_2) {
+                                std::cout << it << std::endl;
+                            }
+                            std::cout << "Solution" << std::endl;
+                            for (auto it : map_solutions) {
+                                std::cout << it.first << std::endl;
+                            }
+                            exit(10);
+                        }
+                    }
+                    std::cout << "Correcto" << std::endl;
+                } else {
                     std::cout << "Consulta FAIL: t_s=" << t_s << " t_e=" << t_e << " k=" << K << std::endl;
                     std::cout << "Esperados: " << K << " obtidos: " << resultados_2.size()
                               << std::endl;

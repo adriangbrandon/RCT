@@ -244,6 +244,7 @@ namespace rct {
                 for(size_type i = 0; i < movements.size(); ++i){
                     compute_rmMq_repr(movements[i].x, i, min, max, rmMq_ones, increase, first, value);
                 }
+                rmMq_ones.push_back(movements.size());
                 m_rMmq_x_sample = sampling_type(rmMq_ones.begin(), rmMq_ones.end());
                 sdsl::util::init_support(m_rank_rMmq_x_sample, &m_rMmq_x_sample);
                 sdsl::util::init_support(m_select_rMmq_x_sample, &m_rMmq_x_sample);
@@ -260,6 +261,7 @@ namespace rct {
                 for(size_type i = 0; i < movements.size(); ++i){
                     compute_rmMq_repr(movements[i].y, i, min, max, rmMq_ones, increase, first, value);
                 }
+                rmMq_ones.push_back(movements.size());
                 m_rMmq_y_sample = sampling_type(rmMq_ones.begin(), rmMq_ones.end());
                 sdsl::util::init_support(m_rank_rMmq_y_sample, &m_rMmq_y_sample);
                 sdsl::util::init_support(m_select_rMmq_y_sample, &m_rMmq_y_sample);

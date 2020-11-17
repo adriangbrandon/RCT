@@ -160,7 +160,7 @@ namespace rct {
             }
 
             /**** NOVOS METODOS ****/
-            knn_element(size_type _id, util::geo::point _pq, util::geo::point _p, size_type _t){
+            knn_element(size_type _id, util::geo::point _pq, util::geo::point _p, size_type _t, size_type log_idx = 0){
                 //std::cout << "KNN element: " << id << "p_q:" << _pq << std::endl;
                 is_point = true;
                 id = _id;
@@ -181,7 +181,7 @@ namespace rct {
             }
 
             knn_element(size_type _id, util::geo::point _pq, util::geo::point _min, util::geo::point _max,
-                        util::geo::region _expanded_r, size_type _t, size_type _level) {
+                        util::geo::region _expanded_r, size_type _t, size_type _level, size_type log_idx = 0) {
                 is_point = false;
                 id = _id;
                 min = _min;
@@ -193,7 +193,7 @@ namespace rct {
             }
 
             knn_element(size_type _id, util::geo::point _pq, util::geo::point _p,
-                        util::geo::region _expanded_r, size_type _t){
+                        util::geo::region _expanded_r, size_type _t, size_type log_idx = 0){
                 is_point = true;
                 id = _id;
                 min = _p;
@@ -205,7 +205,7 @@ namespace rct {
             /**** FIN NOVOS METODOS ****/
 
             knn_element(size_type _id, util::geo::point _min, util::geo::point _max,
-                        distance_type _dist, size_type _t, size_type _level){
+                        distance_type _dist, size_type _t, size_type _level, size_type log_idx = 0){
                 is_point = false;
                 id = _id;
                 min = _min;
@@ -217,7 +217,8 @@ namespace rct {
 
 
 
-            knn_element(size_type _id, util::geo::point _pq, util::geo::point _min, util::geo::point _max, size_type _t, size_type _level){
+            knn_element(size_type _id, util::geo::point _pq, util::geo::point _min, util::geo::point _max, size_type _t,
+                        size_type _level, size_type log_idx = 0){
                 is_point = false;
                 id = _id;
                 min = _min;
@@ -268,7 +269,7 @@ namespace rct {
             }
 
             knn_traj_element(size_type _id, util::geo::point _min, util::geo::point _max,
-                             distance_type _dist, size_type _t, size_type _level){
+            distance_type _dist, size_type _t, size_type _level){
                 id = _id;
                 min = _min;
                 max = _max;
@@ -286,7 +287,10 @@ namespace rct {
 
             }
 
-            knn_traj_element(size_type _id, util::geo::region _pq, util::geo::point _p, util::geo::region _expanded_r, size_type _t, size_type _snap){
+
+
+            template<class Geometry>
+            knn_traj_element(size_type _id, Geometry _pq, util::geo::point _p, util::geo::region _expanded_r, size_type _t, size_type _snap){
                 is_leaf = true;
                 id = _id;
                 min = _p;
@@ -296,8 +300,9 @@ namespace rct {
                 max_distance = dmax(_pq, _expanded_r.min, _expanded_r.max);
             }
 
-            knn_traj_element(size_type _id, util::geo::region _pq, util::geo::point _min, util::geo::point _max,
-                             util::geo::region _expanded_r, size_type _t, size_type _level, size_type _snap) {
+            template<class Geometry>
+            knn_traj_element(size_type _id, Geometry &_pq, util::geo::point _min, util::geo::point _max,
+                    util::geo::region _expanded_r, size_type _t, size_type _level, size_type _snap = 0) {
                 id = _id;
                 min = _min;
                 max = _max;
@@ -308,7 +313,19 @@ namespace rct {
                 max_distance = dmax(_pq, _expanded_r.min, _expanded_r.max);
             }
 
-            knn_traj_element(const size_type _id, const util::geo::region &_rq, const util::geo::point &_min,
+
+            template<class Geometry>
+            knn_traj_element(const size_type _id, const Geometry &p_q, util::geo::point p, util::geo::region _expanded_r,
+                             size_type _t){
+                is_leaf = true;
+                id = _id;
+                t = _t;
+                common_knn_element(p_q, _expanded_r.min, _expanded_r.max);
+            }
+
+
+            template<class Geometry>
+            knn_traj_element(const size_type _id, const Geometry &_rq, const util::geo::point &_min,
                              const util::geo::point &_max, const size_type _snap = 0) {
                 is_leaf = true;
                 id = _id;
@@ -375,9 +392,9 @@ namespace rct {
 
 
     }
-
+    
     namespace knn_support_helper_old {
-
+        
         typedef uint64_t size_type;
         typedef uint64_t distance_type;
 
@@ -524,4 +541,4 @@ namespace rct {
 
 }
 
-#endif //RCT_KNN_SUPPORT_HELPER_HPP
+#endif //GRACT_KNN_SUPPORT_HELPER_HPP

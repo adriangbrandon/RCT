@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RCT_ALGORITHM_HPP
 
 #include "geo_util.hpp"
+#include "heap_min_max.hpp"
 #include <vector>
 #include <unordered_map>
 #include <math_util.hpp>
@@ -840,6 +841,151 @@ namespace rct {
                 }else{
                     util::geo::region reg = root_regions[candidate.snap_id - first];
                     rctIndex.snapshots[candidate.id].enqueue_children(candidate, pq_global, reg);
+                }
+            }
+
+            for (uint i = 0; i < k; i++) {
+                r.emplace_back(pq_results.top().id);
+                pq_results.pop();
+            }
+
+
+        }
+
+        template<class RCTIndex>
+        static void knn_interval(const typename RCTIndex::size_type k,
+                                 const util::geo::point &p_q,
+                                 const typename RCTIndex::size_type t_b,
+                                 const typename RCTIndex::size_type t_e,
+                                 const RCTIndex &rctIndex,
+                                 std::vector<typename  RCTIndex::value_type> &r) {
+
+
+            typedef std::unordered_map<typename RCTIndex::value_type, size_type> map_obj_heap_type;
+            typedef struct {
+                size_type t_b, t_e, snap_id;
+            } object_info_type;
+            typedef util::heap_min_max<object_info_type, size_type> pq_object_type;
+
+
+            //Add the roots to the global heap and build the binary trees
+            pq_knn_traj_element_type pq_global;
+            size_type first = t_b / rctIndex.period_snapshot;
+            size_type last = t_e / rctIndex.period_snapshot;
+            for(size_type i = first; i <= last; ++i){
+                // Adding the root
+                const auto& snap =  rctIndex.snapshots[i];
+                knn_traj_element root(snap.get_root(), p_q, util::geo::point{snap.get_lower0(), snap.get_lower1()}, util::geo::point{0, 0}, i);
+                snap.enqueue_children(root, pq_global, p_q);
+            }
+
+            pq_knn_result_type pq_results;
+            pq_knn_movement_type pq_distances;
+            map_obj_heap_type object_to_heap;
+            std::vector<pq_object_type> pq_objects;
+            while(!pq_global.empty() && !(pq_results.size() >= k && pq_global.top().distance >= pq_distances.top())){
+                auto candidate = pq_global.top();
+                //std::cout << "New candidate: " << candidate.id << std::endl;
+                pq_global.pop();
+                //Header
+                if(candidate.is_header){
+                    std::cout << "Search in pq_object: " << candidate.id << std::endl;
+                    //Search in the priority queue of the object
+                    if(candidate.distance == candidate.max_distance){
+                        knn_element knn_e(candidate.id, candidate.distance);
+                        insert_result(knn_e, pq_results, pq_distances, k);
+                    }else{
+                        const auto it = object_to_heap.find(candidate.id);
+                        auto &pq_object = pq_objects[it->second];
+                        if (!pq_object.empty()) {
+                            auto info = pq_object.top();
+                            pq_object.pop();
+                            if(info.t_e == info.t_b){
+                                knn_element knn_e(candidate.id, candidate.distance);
+                                insert_result(knn_e, pq_results, pq_distances, k);
+                            }else if (info.t_e - info.t_b == 1) {
+                                util::geo::point pb, pe;
+                                if (search_object(candidate.id, info.t_b, rctIndex, pb)) {
+                                    auto dist = knn_support_helper_rtree::dmin(p_q, pb, pb);
+                                    object_info_type info1{info.t_b, info.t_b, info.snap_id};
+                                    pq_object.push(info1, dist, dist);
+                                }
+                                if (search_object(candidate.id, info.t_e, rctIndex, pe)) {
+                                    auto dist = knn_support_helper_rtree::dmin(p_q, pe, pe);
+                                    object_info_type info2{info.t_e, info.t_e, info.snap_id};
+                                    pq_object.push(info2, dist, dist);
+                                }
+                                auto min_max = pq_object.top_min_max();
+                                pq_global.push(knn_traj_element(candidate.id, min_max.first, min_max.second));
+                            } else {
+                                //std::cout << ">1 element" << std::endl;
+                                auto mid = (info.t_e - info.t_b) / 2 + info.t_b;
+                                util::geo::region mbr_1, mbr_2;
+                                distance_type dmin1, dmax1, dmin2, dmax2;
+                                bool info1_ok = false, info2_ok = false;
+                                object_info_type info1, info2;
+
+
+                                //uto &bt = bts[info.snap_id - first];
+                                if (MBR(info.t_b, mid, candidate.id, rctIndex, mbr_1)) {
+                                    dmin1 = knn_support_helper_rtree::dmin(p_q, mbr_1.min, mbr_1.max);
+                                    dmax1 = knn_support_helper_rtree::dmax(p_q, mbr_1.min, mbr_1.max);
+                                    info1 = object_info_type{info.t_b, mid, info.snap_id};
+                                    info1_ok = true;
+
+                                }
+                                if (MBR(mid + 1, info.t_e, candidate.id, rctIndex, mbr_2)) {
+                                    dmin2 = knn_support_helper_rtree::dmin(p_q, mbr_2.min, mbr_2.max);
+                                    dmax2 = knn_support_helper_rtree::dmax(p_q, mbr_2.min, mbr_2.max);
+                                    info2 = object_info_type{mid + 1, info.t_e, info.snap_id};
+                                    info2_ok = true;
+                                }
+                                //std::cout << "Check " << std::endl;
+                                if (info1_ok && info2_ok) {
+                                    if (dmin1 < dmax2) pq_object.push(info1, dmin1, dmax1);
+                                    if (dmin2 < dmax1) pq_object.push(info2, dmin2, dmax2);
+                                } else if (info1_ok) {
+                                    pq_object.push(info1, dmin1, dmax1);
+                                } else if (info2_ok) {
+                                    pq_object.push(info2, dmin2, dmax2);
+                                }
+                                auto min_max = pq_object.top_min_max();
+                                //std::cout << "Top min max" << std::endl;
+                                pq_global.push(knn_traj_element(candidate.id, min_max.first, min_max.second));
+                            }
+                        }
+                    }
+
+                }else if(candidate.is_leaf){
+                    std::cout << "Leaf: " << candidate.id << std::endl;
+                    const auto it = object_to_heap.find(candidate.id);
+                    if(it == object_to_heap.end()){
+                        pq_objects.push_back(pq_object_type());
+                        auto snap_id = first;
+                        while(snap_id <= last){
+                            util::geo::region mbr;
+                            //bts[snap_id - first].get_region(0, reg);
+                            auto b = std::max(snap_id*rctIndex.period_snapshot, t_b);
+                            auto e = std::min((snap_id+1)*rctIndex.period_snapshot-1, t_e);
+                            if(MBR(b, e, candidate.id, rctIndex, mbr)){
+                                std::cout << "MBR" << std::endl;
+                                object_info_type info{b, e, snap_id};
+                                auto dmin = knn_support_helper_rtree::dmin(p_q, mbr.min, mbr.max);
+                                auto dmax = knn_support_helper_rtree::dmax(p_q, mbr.min, mbr.max);
+                                pq_objects[pq_objects.size()-1].push(info, dmin, dmax);
+                            }
+                            //std::cout << "Skip MBR" << std::endl;
+                            ++snap_id;
+                        }
+                        if(!pq_objects[pq_objects.size()-1].empty()){
+                            auto min_max = pq_objects[pq_objects.size()-1].top_min_max();
+                            std::cout << "First min_max min=" << min_max.first << " max=" << min_max.second << std::endl;
+                            pq_global.push(knn_traj_element(candidate.id, min_max.first, min_max.second));
+                        }
+                        object_to_heap.insert({candidate.id, pq_objects.size()-1});
+                    }
+                }else{
+                    rctIndex.snapshots[candidate.snap_id].enqueue_children(candidate, pq_global, p_q);
                 }
             }
 
