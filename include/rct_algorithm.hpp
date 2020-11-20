@@ -110,6 +110,7 @@ namespace rct {
             knn_pq.push(knn_e);
         };
 
+        /*
         template<class RCTIndex>
         static void time_interval_reference(const typename RCTIndex::size_type oid,
                                             const util::geo::region& region_q,
@@ -167,10 +168,10 @@ namespace rct {
                 };
             }
 
-        }
+        }*/
 
         template<class RCTIndex>
-        static void time_interval_reference(const typename RCTIndex::size_type oid,
+        static bool time_interval_reference(const typename RCTIndex::size_type oid,
                                             const util::geo::region& region_q,
                                             const typename RCTIndex::size_type movement_i,
                                             const typename RCTIndex::size_type movement_j,
@@ -180,8 +181,7 @@ namespace rct {
                                             const typename RCTIndex::size_type delta_phrase_l,
                                             const typename RCTIndex::size_type ic_phrase_r,
                                             const typename RCTIndex::size_type delta_phrase_r,
-                                            const RCTIndex &rctIndex,
-                                            std::vector<typename  RCTIndex::value_type> &r){
+                                            const RCTIndex &rctIndex){
 
             typename RCTIndex::size_type phrase_start, last_movement, start_movement;
 
@@ -194,11 +194,9 @@ namespace rct {
                 last_movement = std::min(rctIndex.log_objects[oid].last_movement(ic_phrase_l), movement_j);
                 auto move_ref_start =  phrase_start + delta_phrase_l+1; //count
                 auto move_ref_end = move_ref_start + (last_movement - movement_i); //count
-                //TODO: revisar
                 if(rctIndex.log_reference.contains_region(point_phrase.x, point_phrase.y, phrase_start, move_ref_start,
                                                           move_ref_end, region_q)){
-                    r.push_back(oid);
-                    return;
+                    return true;
                 };
             }
             for(auto phrase = phrase_i; phrase <= phrase_j; ++phrase){
@@ -210,8 +208,7 @@ namespace rct {
                 auto move_ref_end = phrase_start+1 + (last_movement - start_movement); //count
                 if(rctIndex.log_reference.contains_region(point_phrase.x, point_phrase.y, phrase_start, phrase_start+1,
                                                           move_ref_end, region_q)){
-                    r.push_back(oid);
-                    return;
+                    return true;
                 };
             }
             if(delta_phrase_r && ic_phrase_l < ic_phrase_r){
@@ -222,13 +219,13 @@ namespace rct {
                 auto move_ref_end = phrase_start+1 + (movement_j - start_movement); //count
                 if(rctIndex.log_reference.contains_region(point_phrase.x, point_phrase.y, phrase_start, phrase_start+1,
                                                           move_ref_end, region_q)){
-                    r.push_back(oid);
-                    return;
+                    return true;
                 };
             }
-
+            return false;
         }
 
+        /*
         template<class RCTIndex>
         static void time_interval_object (typename RCTIndex::value_type oid,
                                           const util::geo::region& region_q,
@@ -271,8 +268,49 @@ namespace rct {
                 }
             }
             processed_ids[oid]=1;
+        };*/
+
+        template<class RCTIndex>
+        static bool object_contained (typename RCTIndex::value_type oid,
+                                          const util::geo::region& region_q,
+                                          const typename RCTIndex::size_type t_beg,
+                                          const typename RCTIndex::size_type t_end,
+                                          const RCTIndex &rctIndex){
+
+            typename RCTIndex::size_type movement_i = 0, movement_j = 0, c_phrase_i = 0, c_phrase_j = 0,
+                    ic_phrase_l = 0, ic_phrase_r = 0, delta_phrase_l = 0, delta_phrase_r = 0;
+            auto beg = std::max(t_beg, rctIndex.log_objects[oid].time_start());
+            auto end = std::min(t_end, rctIndex.log_objects[oid].time_end());
+            auto traj_step = rctIndex.log_objects[oid].start_traj_step();
+            if(end >= traj_step.t) {
+                if(beg <= traj_step.t){
+                    if(util::geo::contains(region_q, util::geo::point{traj_step.x, traj_step.y})){
+                        return true;
+                    };
+                    beg = traj_step.t+1;
+                }
+                if(beg <= end){
+                    rctIndex.log_objects[oid].time_to_movement(beg, end, movement_i, movement_j);
+                    if (movement_i > 0 && movement_i <= movement_j) {
+                        rctIndex.log_objects[oid].interval_phrases(movement_i, movement_j, c_phrase_i, c_phrase_j,
+                                                                   ic_phrase_l, delta_phrase_l,
+                                                                   ic_phrase_r, delta_phrase_r);
+                        std::vector<typename RCTIndex::size_type> phrases_to_check;
+                        if (!rctIndex.log_objects[oid].contains_region(c_phrase_i, c_phrase_j, region_q,
+                                                                       phrases_to_check)) {
+                            return time_interval_reference(oid, region_q, movement_i, movement_j, phrases_to_check,
+                                                            ic_phrase_l, delta_phrase_l,
+                                                            ic_phrase_r, delta_phrase_r, rctIndex);
+                        } else {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
         };
 
+        /*
         template<class RCTIndex>
         static void time_interval_object_brute_force (typename RCTIndex::value_type oid,
                                           const util::geo::region& region_q,
@@ -310,6 +348,7 @@ namespace rct {
             }
             processed_ids[oid]=1;
         };
+
 
         template<class RCTIndex>
         static void time_interval_left(typename RCTIndex::value_type snap_id, const util::geo::region& region_q,
@@ -452,7 +491,7 @@ namespace rct {
                     time_interval_object_brute_force(id, region_q, t_i, t_j, processed_ids, rctIndex, r);
                 }
             }
-        };
+        };*/
 
         static void update_MBR(util::geo::region &mbr_result, util::geo::region &mbr, bool &init_mbr){
             if(init_mbr){
@@ -719,6 +758,73 @@ namespace rct {
 
         template<class RCTIndex>
         static void time_interval(const util::geo::region& region_q, const typename RCTIndex::size_type t_i,
+                                     const typename RCTIndex::size_type t_j, const RCTIndex &rctIndex,
+                                     std::vector<typename  RCTIndex::value_type> &r) {
+
+            std::unordered_map<typename RCTIndex::value_type, uint8_t > checked;
+            uint64_t last_snap = rctIndex.last_snapshot();
+            uint64_t snap_start = t_i / rctIndex.period_snapshot;
+            uint64_t snap_end = std::min(util::math::ceil_div(t_j, rctIndex.period_snapshot), last_snap);
+            uint64_t half = rctIndex.period_snapshot/2;
+
+            size_type elements = 0;
+            for(uint64_t snap_i = snap_start; snap_i <= snap_end; ++snap_i){
+                uint64_t t = snap_i * rctIndex.period_snapshot;
+                uint64_t t_l = (t < half) ? 0 : t - half;
+                uint64_t t_r = (snap_i == last_snap) ? t_j : t + half;
+                auto bwd = std::max(t_i, t_l);
+                auto fwd = std::min(t_j, t_r);
+                if (bwd <= fwd){
+                    auto fwd_t = (fwd < t) ? 0 : fwd - t;
+                    auto t_bwd = (t < bwd) ? 0 : t - bwd;
+                    auto r_e = util::geo::expand(region_q, rctIndex.speed_max, std::max(fwd_t, t_bwd),
+                                                 rctIndex.x_max, rctIndex.y_max);
+                    auto c_snap = rctIndex.snapshots[snap_i].find_objects_in_region(r_e.min.x, r_e.max.x,
+                                                                                    r_e.min.y, r_e.max.y);
+                    for(const auto &c : c_snap){
+                        //std::cout << "C_snap: " << c.id << std::endl;
+                        if(checked.find(c.id) == checked.end()){
+                            if (object_contained(c.id, region_q, t_i, t_j, rctIndex)){
+                                r.push_back(c.id);
+                            }
+                            ++elements;
+                            checked.insert({c.id, 1});
+                        }
+                    }
+
+                    if(t > snap_start * rctIndex.period_snapshot){
+                        for(const auto &c : rctIndex.disap[snap_i-1]){
+                            //std::cout << "C_disap: " << c << std::endl;
+                            if(checked.find(c) == checked.end()){
+                                if (object_contained(c, region_q, t_i, t_j, rctIndex)){
+                                    r.push_back(c);
+                                }
+                                ++elements;
+                                checked.insert({c, 1});
+                            }
+                        }
+                    }
+
+                    if(t < snap_end * rctIndex.period_snapshot || snap_i == last_snap){
+                        for(const auto &c : rctIndex.reap[snap_i]){
+                            //std::cout << "C_reap: " << c << std::endl;
+                            if(checked.find(c) == checked.end()){
+                                if (object_contained(c, region_q, t_i, t_j, rctIndex)){
+                                    r.push_back(c);
+                                }
+                                ++elements;
+                                checked.insert({c, 1});
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+
+        /*
+        template<class RCTIndex>
+        static void time_interval_v2(const util::geo::region& region_q, const typename RCTIndex::size_type t_i,
                            const typename RCTIndex::size_type t_j, const RCTIndex &rctIndex,
                            std::vector<typename  RCTIndex::value_type> &r) {
 
@@ -783,7 +889,7 @@ namespace rct {
             //std::cerr << std::endl;
 
 
-        }
+        }*/
 
         template<class RCTIndex>
         static void knn(const typename RCTIndex::size_type k, const util::geo::point& p_q,

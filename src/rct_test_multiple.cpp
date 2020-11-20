@@ -77,8 +77,8 @@ int main(int argc, const char **argv) {
     queries_array.emplace_back(path_queries +"ti_l.txt");
     queries_array.emplace_back(path_queries +"knn.txt");
     queries_array.emplace_back(path_queries +"mbr.txt");*/
-    queries_array.emplace_back(path_queries +"knn_traj.txt");
-    //queries_array.emplace_back(path_queries +"knn_int.txt");
+    //queries_array.emplace_back(path_queries +"knn_traj.txt");
+    queries_array.emplace_back(path_queries +"knn_int.txt");
 
     /*Consulta MBR: oid: 313 tStart: 37566 tEnd:41408
 It exists */
