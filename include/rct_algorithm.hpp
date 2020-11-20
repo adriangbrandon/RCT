@@ -110,9 +110,9 @@ namespace rct {
             knn_pq.push(knn_e);
         };
 
-        /*
+
         template<class RCTIndex>
-        static void time_interval_reference(const typename RCTIndex::size_type oid,
+        static bool time_interval_reference(const typename RCTIndex::size_type oid,
                                             const util::geo::region& region_q,
                                             const typename RCTIndex::size_type movement_i,
                                             const typename RCTIndex::size_type movement_j,
@@ -121,8 +121,7 @@ namespace rct {
                                             const typename RCTIndex::size_type delta_phrase_l,
                                             const typename RCTIndex::size_type ic_phrase_r,
                                             const typename RCTIndex::size_type delta_phrase_r,
-                                            const RCTIndex &rctIndex,
-                                            std::vector<typename  RCTIndex::value_type> &r){
+                                            const RCTIndex &rctIndex){
 
             typename RCTIndex::size_type phrase_start, last_movement, start_movement;
 
@@ -138,8 +137,7 @@ namespace rct {
                 //TODO: revisar
                 if(rctIndex.log_reference.contains_region(point_phrase.x, point_phrase.y, phrase_start, move_ref_start,
                                                           move_ref_end, region_q)){
-                    r.push_back(oid);
-                    return;
+                    return true;
                 };
             }
             for(const auto &phrase : phrases_to_check){
@@ -151,8 +149,7 @@ namespace rct {
                 auto move_ref_end = phrase_start+1 + (last_movement - start_movement); //count
                 if(rctIndex.log_reference.contains_region(point_phrase.x, point_phrase.y, phrase_start, phrase_start+1,
                                                           move_ref_end, region_q)){
-                    r.push_back(oid);
-                    return;
+                    return true;
                 };
             }
             if(delta_phrase_r && ic_phrase_l < ic_phrase_r){
@@ -163,12 +160,12 @@ namespace rct {
                 auto move_ref_end = phrase_start+1 + (movement_j - start_movement); //count
                 if(rctIndex.log_reference.contains_region(point_phrase.x, point_phrase.y, phrase_start, phrase_start+1,
                                                           move_ref_end, region_q)){
-                    r.push_back(oid);
-                    return;
+                    return true;
                 };
             }
+            return false;
 
-        }*/
+        }
 
         template<class RCTIndex>
         static bool time_interval_reference(const typename RCTIndex::size_type oid,
