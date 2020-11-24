@@ -37,6 +37,22 @@ using namespace std::chrono;
 
 int main(int argc, const char **argv) {
 
+    std::string directory_queries = argv[4];
+
+    if(!::util::file::end_slash(directory_queries)){
+        directory_queries = directory_queries + "/";
+    }
+
+    std::vector<std::string> file_queries = {"so.txt",
+                                             "traj.txt",
+                                             "ts_s.txt",
+                                             "ts_l.txt",
+                                             "ti_s.txt",
+                                             "ti_l.txt",
+                                             "mbr.txt",
+                                             "knn.txt",
+                                             "knn_int.txt",
+                                             "knn_traj.txt"};
 
     size_t first_query_arg = 4;
     std::string dataset_path = argv[1];
@@ -50,7 +66,7 @@ int main(int argc, const char **argv) {
     in.close();
     std::cout << "Done" << std::endl;
 
-    std::vector<uint32_t> ids;
+    std::vector<uint32_t> ids, ks;
     std::vector<uint32_t> t_starts;
     std::vector<uint32_t> t_ends;
     std::vector<util::geo::region> regions;
@@ -58,7 +74,7 @@ int main(int argc, const char **argv) {
     int64_t type;
     uint32_t id, maxX, maxY, minX, minY, tstart, tend;
 
-    std::ifstream finQ(argv[first_query_arg]);
+    std::ifstream finQ(directory_queries + file_queries[0]);
 
     finQ >> type >> id >> tstart >> type;
     ids.push_back(id);
@@ -73,17 +89,17 @@ int main(int argc, const char **argv) {
     double_t t_object = 0;
     util::geo::point p;
     for(uint64_t j = 0; j < TIMES; j++){
-        auto start = high_resolution_clock::now();
+        auto start = util::time::user::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
             rct::algorithm::search_object(ids[i], t_starts[i], m_rct_index, p);
         }
-        auto stop = high_resolution_clock::now();
-        auto milli = duration_cast<milliseconds>(stop-start).count();
+        auto stop = util::time::user::now();
+        auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
         cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
         t_object += milli_query;
-        sleep(10);
+        sleep(2);
     }
     double_t avg_object = t_object/(double) TIMES;
 
@@ -94,7 +110,7 @@ int main(int argc, const char **argv) {
 
     finQ.close();
 
-    finQ.open(argv[first_query_arg+1]);
+    finQ.open(directory_queries + file_queries[1]);
     finQ >> type >> tstart >> tend >> id;
     ids.push_back(id);
     t_starts.push_back(tstart);
@@ -110,18 +126,18 @@ int main(int argc, const char **argv) {
 
     double_t t_traj = 0;
     for(uint64_t j = 0; j < TIMES; j++){
-        auto start = high_resolution_clock::now();
+        auto start = util::time::user::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
             std::vector<util::geo::traj_step> results;
             rct::algorithm::search_trajectory_fast(ids[i], t_starts[i], t_ends[i], m_rct_index, results);
         }
-        auto stop = high_resolution_clock::now();
-        auto milli = duration_cast<milliseconds>(stop-start).count();
+        auto stop = util::time::user::now();
+        auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
         cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
         t_traj += milli_query;
-        sleep(10);
+        sleep(2);
     }
     double_t avg_traj = t_traj/(double) TIMES;
 
@@ -131,7 +147,7 @@ int main(int argc, const char **argv) {
     ids.clear();
 
 
-    finQ.open(argv[first_query_arg+2]);
+    finQ.open(directory_queries + file_queries[2]);
     finQ >> type >> tstart >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     regions.push_back(util::geo::region{util::geo::point{minX, minY}, util::geo::point{maxX, maxY}});
@@ -146,19 +162,19 @@ int main(int argc, const char **argv) {
     //std::ofstream log_ts("log_ts_RCT.txt");
     double_t t_slice_s = 0;
     for(uint64_t j = 0; j < TIMES; j++){
-        auto start = high_resolution_clock::now();
+        auto start = util::time::user::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
             std::vector<util::geo::id_point> res_t_s;
             rct::algorithm::time_slice(regions[i], t_starts[i], m_rct_index, res_t_s);
             //log_ts << " " << t_starts[i] << " " << regions[i] << "[results.size = " << res_t_s.size() << "]" << std::endl;
         }
-        auto stop = high_resolution_clock::now();
-        auto milli = duration_cast<milliseconds>(stop-start).count();
+        auto stop = util::time::user::now();
+        auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
         cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
         t_slice_s += milli_query;
-        sleep(10);
+        sleep(2);
     }
     double_t avg_slice_s = t_slice_s/(double) TIMES;
 
@@ -167,7 +183,7 @@ int main(int argc, const char **argv) {
     regions.clear();
     ids.clear();
 
-    finQ.open(argv[first_query_arg+3]);
+    finQ.open(directory_queries + file_queries[3]);
     finQ >> type >> tstart >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     regions.push_back(util::geo::region{util::geo::point{minX, minY}, util::geo::point{maxX, maxY}});
@@ -181,19 +197,19 @@ int main(int argc, const char **argv) {
 
     double_t t_slice_l = 0;
     for(uint64_t j = 0; j < TIMES; j++){
-        auto start = high_resolution_clock::now();
+        auto start = util::time::user::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
             std::vector<util::geo::id_point> res_t_s;
             rct::algorithm::time_slice(regions[i], t_starts[i], m_rct_index, res_t_s);
             //log_ts << " " << t_starts[i] << " " << regions[i] << "[results.size = " << res_t_s.size() << "]" << std::endl;
         }
-        auto stop = high_resolution_clock::now();
-        auto milli = duration_cast<milliseconds>(stop-start).count();
+        auto stop = util::time::user::now();
+        auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
         cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
         t_slice_l += milli_query;
-        sleep(10);
+        sleep(2);
     }
     double_t avg_slice_l = t_slice_l/(double) TIMES;
     t_starts.clear();
@@ -202,7 +218,7 @@ int main(int argc, const char **argv) {
     ids.clear();
     finQ.close();
     //log_ts.close();
-    finQ.open(argv[first_query_arg+4]);
+    finQ.open(directory_queries + file_queries[4]);
     finQ >> type >> tstart >> tend >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     t_ends.push_back(tend);
@@ -218,37 +234,20 @@ int main(int argc, const char **argv) {
 
     double_t t_interval_s = 0;
     for(uint64_t j = 0; j < TIMES; j++){
-        auto start = high_resolution_clock::now();
+        auto start = util::time::user::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
             std::vector<uint32_t > res_t_i;
             rct::algorithm::time_interval(regions[i], t_starts[i], t_ends[i], m_rct_index, res_t_i);
         }
-        auto stop = high_resolution_clock::now();
-        auto milli = duration_cast<milliseconds>(stop-start).count();
+        auto stop = util::time::user::now();
+        auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
         cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
         t_interval_s += milli_query;
-        sleep(10);
+        sleep(2);
     }
     double_t avg_interval_s = t_interval_s/(double) TIMES;
-
-    /*double_t t_interval_brute_s = 0;
-    for(uint64_t j = 0; j < TIMES; j++){
-        auto start = high_resolution_clock::now();
-        for(uint64_t i = 0; i < t_starts.size(); i++){
-            std::vector<uint32_t > res_t_i;
-            rct::algorithm::time_interval_brute_force(regions[i], t_starts[i], t_ends[i], m_rct_index, res_t_i);
-        }
-        auto stop = high_resolution_clock::now();
-        auto milli = duration_cast<milliseconds>(stop-start).count();
-        double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
-        t_interval_brute_s += milli_query;
-        sleep(10);
-    }
-    double_t avg_interval_brute_s = t_interval_brute_s/(double) TIMES;*/
 
 
     t_starts.clear();
@@ -256,7 +255,7 @@ int main(int argc, const char **argv) {
     regions.clear();
     ids.clear();
 
-    finQ.open(argv[first_query_arg+5]);
+    finQ.open(directory_queries + file_queries[5]);
     finQ >> type >> tstart >> tend >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     t_ends.push_back(tend);
@@ -272,81 +271,27 @@ int main(int argc, const char **argv) {
 
     double_t t_interval_l = 0;
     for(uint64_t j = 0; j < TIMES; j++){
-        auto start = high_resolution_clock::now();
+        auto start = util::time::user::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
             std::vector<uint32_t > res_t_i;
             rct::algorithm::time_interval(regions[i], t_starts[i], t_ends[i], m_rct_index, res_t_i);
         }
-        auto stop = high_resolution_clock::now();
-        auto milli = duration_cast<milliseconds>(stop-start).count();
+        auto stop = util::time::user::now();
+        auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
         cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
         t_interval_l += milli_query;
-        sleep(10);
+        sleep(2);
     }
     double_t avg_interval_l = t_interval_l/(double) TIMES;
-
-    /*double_t t_interval_brute_l = 0;
-    for(uint64_t j = 0; j < TIMES; j++){
-        auto start = high_resolution_clock::now();
-        for(uint64_t i = 0; i < t_starts.size(); i++){
-            std::vector<uint32_t > res_t_i;
-            rct::algorithm::time_interval(regions[i], t_starts[i], t_ends[i], m_rct_index, res_t_i);
-        }
-        auto stop = high_resolution_clock::now();
-        auto milli = duration_cast<milliseconds>(stop-start).count();
-        double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
-        t_interval_brute_l += milli_query;
-        sleep(10);
-    }
-    double_t avg_interval_brute_l = t_interval_brute_l/(double) TIMES;*/
 
     t_starts.clear();
     t_ends.clear();
     regions.clear();
     ids.clear();
 
-    finQ.open(argv[first_query_arg+6]);
-    uint64_t k;
-    std::vector<uint64_t> ks;
-    finQ >> type >> tstart >> minX >> minY >> k;
-    t_starts.push_back(tstart);
-    points.push_back(util::geo::point{minX, minY});
-    t_ends.push_back(k);
-    finQ >> type;
-    while (finQ) {
-        finQ >> type >> tstart >> minX >> minY >> k >> type;
-        t_starts.push_back(tstart);
-        points.push_back(util::geo::point{minX, minY});
-        t_ends.push_back(k);
-    }
-    finQ.close();
-    double_t t_find_knn = 0;
-    for(uint64_t j = 0; j < TIMES; j++){
-        auto start = high_resolution_clock::now();
-        for(uint64_t i = 0; i < t_starts.size(); i++){
-            std::vector<uint32_t > res_knn;
-            rct::algorithm::knn(t_ends[i], points[i], t_starts[i], m_rct_index, res_knn);
-        }
-        auto stop = high_resolution_clock::now();
-        auto milli = duration_cast<milliseconds>(stop-start).count();
-        double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
-        t_find_knn += milli_query;
-        sleep(10);
-    }
-    double_t avg_find_knn = t_find_knn/(double) TIMES;
-    t_starts.clear();
-    t_ends.clear();
-    points.clear();
-    ks.clear();
-
-
-    finQ.open(argv[first_query_arg+7]);
+    finQ.open(argv[6]);
     finQ >> type >> tstart >> tend >> id;
     ids.push_back(id);
     t_starts.push_back(tstart);
@@ -362,18 +307,18 @@ int main(int argc, const char **argv) {
 
     double_t t_mbr = 0;
     for(uint64_t j = 0; j < TIMES; j++){
-        auto start = high_resolution_clock::now();
+        auto start = util::time::user::now();
         for(uint64_t i = 0; i < t_starts.size(); i++){
             util::geo::region mbr;
             rct::algorithm::MBR(t_starts[i], t_ends[i], ids[i], m_rct_index, mbr);
         }
-        auto stop = high_resolution_clock::now();
-        auto milli = duration_cast<milliseconds>(stop-start).count();
+        auto stop = util::time::user::now();
+        auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
         cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << duration_cast<milliseconds>(stop-start).count()/((double)t_starts.size())<< endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
         t_mbr += milli_query;
-        sleep(10);
+        sleep(2);
     }
     double_t avg_mbr = t_mbr/(double) TIMES;
 
@@ -382,6 +327,133 @@ int main(int argc, const char **argv) {
     regions.clear();
     ids.clear();
 
+    finQ.open(directory_queries + file_queries[7]);
+    uint64_t k;
+    finQ >> type >> tstart >> minX >> minY >> k;
+    t_starts.push_back(tstart);
+    points.push_back(util::geo::point{minX, minY});
+    ks.push_back(k);
+    finQ >> type;
+    while (finQ) {
+        finQ >> type >> tstart >> minX >> minY >> k >> type;
+        t_starts.push_back(tstart);
+        points.push_back(util::geo::point{minX, minY});
+        ks.push_back(k);
+    }
+    finQ.close();
+    double_t t_find_knn = 0;
+    for(uint64_t j = 0; j < TIMES; j++){
+        auto start = util::time::user::now();
+        for(uint64_t i = 0; i < t_starts.size(); i++){
+            std::vector<uint32_t > res_knn;
+            rct::algorithm::knn(ks[i], points[i], t_starts[i], m_rct_index, res_knn);
+        }
+        auto stop = util::time::user::now();
+        auto milli = stop-start;
+        double_t milli_query = milli/(double_t) t_starts.size();
+        cout << "Time (ms) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        t_find_knn += milli_query;
+        sleep(2);
+    }
+    double_t avg_find_knn = t_find_knn/(double) TIMES;
+    t_starts.clear();
+    t_ends.clear();
+    ks.clear();
+    points.clear();
+
+    finQ.open(directory_queries + file_queries[8]);
+    finQ >> type >> tstart >> tend >> minX >> minY >> k;
+    t_starts.push_back(tstart);
+    t_ends.push_back(tend);
+    points.push_back(util::geo::point{minX, minY});
+    ks.push_back(k);
+    finQ >> type;
+    while (finQ) {
+        finQ >> type >> tstart >> tend >> minX >> minY >> k >> type;
+        t_starts.push_back(tstart);
+        t_ends.push_back(tend);
+        points.push_back(util::geo::point{minX, minY});
+        ks.push_back(k);
+    }
+    finQ.close();
+    double_t t_find_knn_int = 0;
+    for(uint64_t j = 0; j < TIMES; j++){
+        auto start = util::time::user::now();
+        for(uint64_t i = 0; i < t_starts.size(); i++){
+            std::vector<uint32_t > res_knn;
+            rct::algorithm::knn_interval(ks[i], points[i], t_starts[i], t_ends[i], m_rct_index, res_knn);
+        }
+        auto stop = util::time::user::now();
+        auto milli = stop-start;
+        double_t milli_query = milli/(double_t) t_starts.size();
+        cout << "Time (ms) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        t_find_knn_int += milli_query;
+        sleep(2);
+    }
+    double_t avg_find_knn_int = t_find_knn_int/(double) TIMES;
+    t_starts.clear();
+    t_ends.clear();
+    ks.clear();
+    points.clear();
+    ks.clear();
+
+    finQ.open(directory_queries + file_queries[7]);
+    finQ >> type >> tstart >> tend;
+    auto length = tend - tstart + 1;
+    std::vector<std::vector<uint32_t>> traj_x(1), traj_y(1);
+    uint64_t c_query = 0;
+    for (auto i = 0; i < length; ++i) {
+        finQ >> minX >> minY;
+        traj_x[c_query].push_back(minX);
+        traj_y[c_query].push_back(minY);
+    }
+    finQ >> k >> type;
+    t_starts.push_back(tstart);
+    t_ends.push_back(tend);
+    ks.push_back(k);
+    while (finQ) {
+        ++c_query;
+        traj_x.emplace_back();
+        traj_y.emplace_back();
+        finQ >> type >> tstart >> tend;
+        length = tend - tstart + 1;
+        for (auto i = 0; i < length; ++i) {
+            finQ >> minX >> minY;
+            traj_x[c_query].push_back(minX);
+            traj_y[c_query].push_back(minY);
+        }
+        finQ >> k >> type;
+        t_starts.push_back(tstart);
+        t_ends.push_back(tend);
+        ks.push_back(k);
+    }
+    finQ.close();
+    std::vector<double_t> knn_traj_times;
+    //for(uint64_t steps_knn = 0; steps_knn <= 0; ++steps_knn){
+    double_t t_find_knn_traj = 0;
+    //uint64_t s = steps_knn;
+    //if(s == 0) s = 1000;
+    for(uint64_t j = 0; j < TIMES; j++){
+        auto start = ::util::time::user::now();
+        for(uint64_t i = 0; i < ks.size(); i++){
+            std::vector<uint32_t > res_knn;
+            rct::algorithm::knn_trajectory(ks[i], traj_x[i], traj_y[i],
+                                               t_starts[i], t_ends[i], m_rct_index, res_knn);
+        }
+        auto stop = ::util::time::user::now();
+        auto milli = stop-start;
+        double_t milli_query = milli/(double_t) t_starts.size();
+        cout << "Time (ms) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        t_find_knn_traj += milli_query;
+        sleep(2);
+    }
+    double_t avg_find_knn_traj = t_find_knn_traj/(double) TIMES;
+
+
+
     cout << "-----------------------------------------------------------------" << endl;
     cout << "Find_object (ms): " << avg_object <<  endl;
     cout << "Find_trajectory (ms): " << avg_traj <<  endl;
@@ -389,25 +461,18 @@ int main(int argc, const char **argv) {
     cout << "Time Slice L (ms): " << avg_slice_l <<  endl;
     cout << "Time Interval S (ms): " << avg_interval_s << endl;
     cout << "Time Interval L (ms): " << avg_interval_l <<  endl;
-    cout << "Knn (ms): " << avg_find_knn <<  endl;
     cout << "MBR (ms): " << avg_mbr <<  endl;
+    cout << "Knn (ms): " << avg_find_knn <<  endl;
+    cout << "Knn int (ms): " << avg_find_knn_int <<  endl;
+    cout << "Knn traj (ms): " << avg_find_knn_traj <<  endl;
     cout << "-----------------------------------------------------------------" << endl;
 
-    struct decimal_comma : std::numpunct<char> {
-        char do_decimal_point()   const { return ','; }  // separate with slash
-    };
-    std::cout.imbue(std::locale(std::cout.getloc(), new decimal_comma));
-    cout << "TO EXCEL" << endl;
-    cout << "-----------------------------------------------------------------" << endl;
-    cout <<  avg_object << endl;
-    cout <<  avg_traj <<  endl;
-    cout <<  avg_slice_s <<  endl;
-    cout <<  avg_slice_l <<  endl;
-    cout <<  avg_interval_s << endl;
-    cout <<  avg_interval_l <<  endl;
-    cout << avg_find_knn << endl;
-    cout << avg_mbr << endl;
-    cout << "-----------------------------------------------------------------" << endl;
+    std::ofstream out_res("RCT_multiple_rtree_" + util::file::remove_path(argv[1]) + ".res", std::ios_base::app);
+    out_res <<  avg_object <<"," << avg_traj << "," << avg_slice_s << "," << avg_slice_l << ","
+            << avg_interval_s << "," << avg_interval_l << "," << avg_mbr <<  "," << avg_find_knn <<  ","
+            << avg_find_knn_int <<  "," << avg_find_knn_traj << endl;
+    out_res.close();
+
 
     std::cout << "Everything is OK!" << std::endl;
 

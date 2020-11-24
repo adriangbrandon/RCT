@@ -47,6 +47,11 @@ namespace util {
 
     namespace file {
 
+        bool end_slash(const std::string &file){
+            auto pos_last_slash = file.find_last_of("\\/");
+            return (pos_last_slash == file.length()-1);
+        }
+
         uint64_t file_size(const std::string& file){
             struct stat fs;
             if(stat(file.c_str(), &fs) != 0) {
