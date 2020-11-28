@@ -75,7 +75,7 @@ int main(int argc, const char **argv) {
     uint32_t id, maxX, maxY, minX, minY, tstart, tend;
 
     std::ifstream finQ(directory_queries + file_queries[0]);
-
+    std::cout << directory_queries + file_queries[0] << std::endl;
     finQ >> type >> id >> tstart >> type;
     ids.push_back(id);
     t_starts.push_back(tstart);
@@ -96,10 +96,10 @@ int main(int argc, const char **argv) {
         auto stop = util::time::user::now();
         auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        cout << "Time (µs) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (µs) = " << milli_query << endl;
         t_object += milli_query;
-        sleep(2);
+        sleep(1);
     }
     double_t avg_object = t_object/(double) TIMES;
 
@@ -111,6 +111,7 @@ int main(int argc, const char **argv) {
     finQ.close();
 
     finQ.open(directory_queries + file_queries[1]);
+    std::cout << directory_queries + file_queries[1] << std::endl;
     finQ >> type >> tstart >> tend >> id;
     ids.push_back(id);
     t_starts.push_back(tstart);
@@ -134,10 +135,10 @@ int main(int argc, const char **argv) {
         auto stop = util::time::user::now();
         auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        cout << "Time (µs) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (µs) = " << milli_query << endl;
         t_traj += milli_query;
-        sleep(2);
+        sleep(1);
     }
     double_t avg_traj = t_traj/(double) TIMES;
 
@@ -148,6 +149,7 @@ int main(int argc, const char **argv) {
 
 
     finQ.open(directory_queries + file_queries[2]);
+    std::cout << directory_queries + file_queries[2] << std::endl;
     finQ >> type >> tstart >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     regions.push_back(util::geo::region{util::geo::point{minX, minY}, util::geo::point{maxX, maxY}});
@@ -171,10 +173,10 @@ int main(int argc, const char **argv) {
         auto stop = util::time::user::now();
         auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        cout << "Time (µs) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (µs) = " << milli_query << endl;
         t_slice_s += milli_query;
-        sleep(2);
+        sleep(1);
     }
     double_t avg_slice_s = t_slice_s/(double) TIMES;
 
@@ -184,6 +186,7 @@ int main(int argc, const char **argv) {
     ids.clear();
 
     finQ.open(directory_queries + file_queries[3]);
+    std::cout << directory_queries + file_queries[3] << std::endl;
     finQ >> type >> tstart >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     regions.push_back(util::geo::region{util::geo::point{minX, minY}, util::geo::point{maxX, maxY}});
@@ -206,10 +209,10 @@ int main(int argc, const char **argv) {
         auto stop = util::time::user::now();
         auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        cout << "Time (µs) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (µs) = " << milli_query << endl;
         t_slice_l += milli_query;
-        sleep(2);
+        sleep(1);
     }
     double_t avg_slice_l = t_slice_l/(double) TIMES;
     t_starts.clear();
@@ -219,6 +222,7 @@ int main(int argc, const char **argv) {
     finQ.close();
     //log_ts.close();
     finQ.open(directory_queries + file_queries[4]);
+    std::cout << directory_queries + file_queries[4] << std::endl;
     finQ >> type >> tstart >> tend >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     t_ends.push_back(tend);
@@ -242,10 +246,10 @@ int main(int argc, const char **argv) {
         auto stop = util::time::user::now();
         auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        cout << "Time (µs) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (µs) = " << milli_query << endl;
         t_interval_s += milli_query;
-        sleep(2);
+        sleep(1);
     }
     double_t avg_interval_s = t_interval_s/(double) TIMES;
 
@@ -256,6 +260,7 @@ int main(int argc, const char **argv) {
     ids.clear();
 
     finQ.open(directory_queries + file_queries[5]);
+    std::cout << directory_queries + file_queries[5] << std::endl;
     finQ >> type >> tstart >> tend >> minX >> maxX >> minY >> maxY;
     t_starts.push_back(tstart);
     t_ends.push_back(tend);
@@ -279,10 +284,10 @@ int main(int argc, const char **argv) {
         auto stop = util::time::user::now();
         auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        cout << "Time (µs) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (µs) = " << milli_query << endl;
         t_interval_l += milli_query;
-        sleep(2);
+        sleep(1);
     }
     double_t avg_interval_l = t_interval_l/(double) TIMES;
 
@@ -291,7 +296,8 @@ int main(int argc, const char **argv) {
     regions.clear();
     ids.clear();
 
-    finQ.open(argv[6]);
+    finQ.open(directory_queries + file_queries[6]);
+    std::cout << directory_queries + file_queries[6] << std::endl;
     finQ >> type >> tstart >> tend >> id;
     ids.push_back(id);
     t_starts.push_back(tstart);
@@ -315,10 +321,10 @@ int main(int argc, const char **argv) {
         auto stop = util::time::user::now();
         auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        cout << "Time (µs) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (µs) = " << milli_query << endl;
         t_mbr += milli_query;
-        sleep(2);
+        sleep(1);
     }
     double_t avg_mbr = t_mbr/(double) TIMES;
 
@@ -328,6 +334,7 @@ int main(int argc, const char **argv) {
     ids.clear();
 
     finQ.open(directory_queries + file_queries[7]);
+    std::cout << directory_queries + file_queries[7] << std::endl;
     uint64_t k;
     finQ >> type >> tstart >> minX >> minY >> k;
     t_starts.push_back(tstart);
@@ -351,10 +358,10 @@ int main(int argc, const char **argv) {
         auto stop = util::time::user::now();
         auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        cout << "Time (µs) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (µs) = " << milli_query << endl;
         t_find_knn += milli_query;
-        sleep(2);
+        sleep(1);
     }
     double_t avg_find_knn = t_find_knn/(double) TIMES;
     t_starts.clear();
@@ -363,6 +370,7 @@ int main(int argc, const char **argv) {
     points.clear();
 
     finQ.open(directory_queries + file_queries[8]);
+    std::cout << directory_queries + file_queries[8] << std::endl;
     finQ >> type >> tstart >> tend >> minX >> minY >> k;
     t_starts.push_back(tstart);
     t_ends.push_back(tend);
@@ -387,10 +395,10 @@ int main(int argc, const char **argv) {
         auto stop = util::time::user::now();
         auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        cout << "Time (µs) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (µs) = " << milli_query << endl;
         t_find_knn_int += milli_query;
-        sleep(2);
+        sleep(1);
     }
     double_t avg_find_knn_int = t_find_knn_int/(double) TIMES;
     t_starts.clear();
@@ -399,7 +407,8 @@ int main(int argc, const char **argv) {
     points.clear();
     ks.clear();
 
-    finQ.open(directory_queries + file_queries[7]);
+    finQ.open(directory_queries + file_queries[9]);
+    std::cout << directory_queries + file_queries[9] << std::endl;
     finQ >> type >> tstart >> tend;
     auto length = tend - tstart + 1;
     std::vector<std::vector<uint32_t>> traj_x(1), traj_y(1);
@@ -445,26 +454,26 @@ int main(int argc, const char **argv) {
         auto stop = ::util::time::user::now();
         auto milli = stop-start;
         double_t milli_query = milli/(double_t) t_starts.size();
-        cout << "Time (ms) = " << milli << std::endl;
-        cout << "Time per query (" << t_starts.size() << ")" << " (ms) = " << milli_query << endl;
+        cout << "Time (µs) = " << milli << std::endl;
+        cout << "Time per query (" << t_starts.size() << ")" << " (µs) = " << milli_query << endl;
         t_find_knn_traj += milli_query;
-        sleep(2);
+        sleep(1);
     }
     double_t avg_find_knn_traj = t_find_knn_traj/(double) TIMES;
 
 
 
     cout << "-----------------------------------------------------------------" << endl;
-    cout << "Find_object (ms): " << avg_object <<  endl;
-    cout << "Find_trajectory (ms): " << avg_traj <<  endl;
-    cout << "Time Slice S (ms): " << avg_slice_s <<  endl;
-    cout << "Time Slice L (ms): " << avg_slice_l <<  endl;
-    cout << "Time Interval S (ms): " << avg_interval_s << endl;
-    cout << "Time Interval L (ms): " << avg_interval_l <<  endl;
-    cout << "MBR (ms): " << avg_mbr <<  endl;
-    cout << "Knn (ms): " << avg_find_knn <<  endl;
-    cout << "Knn int (ms): " << avg_find_knn_int <<  endl;
-    cout << "Knn traj (ms): " << avg_find_knn_traj <<  endl;
+    cout << "Find_object (µs): " << avg_object <<  endl;
+    cout << "Find_trajectory (µs): " << avg_traj <<  endl;
+    cout << "Time Slice S (µs): " << avg_slice_s <<  endl;
+    cout << "Time Slice L (µs): " << avg_slice_l <<  endl;
+    cout << "Time Interval S (µs): " << avg_interval_s << endl;
+    cout << "Time Interval L (µs): " << avg_interval_l <<  endl;
+    cout << "MBR (µs): " << avg_mbr <<  endl;
+    cout << "Knn (µs): " << avg_find_knn <<  endl;
+    cout << "Knn int (µs): " << avg_find_knn_int <<  endl;
+    cout << "Knn traj (µs): " << avg_find_knn_traj <<  endl;
     cout << "-----------------------------------------------------------------" << endl;
 
     std::ofstream out_res("RCT_multiple_rtree_" + util::file::remove_path(argv[1]) + ".res", std::ios_base::app);

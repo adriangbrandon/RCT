@@ -554,7 +554,6 @@ namespace rct {
         }
 
         void load(std::istream& in) {
-            std::cout << "entra" << std::endl;
             sdsl::read_member(m_time_start, in);
             sdsl::read_member(m_x_start, in);
             sdsl::read_member(m_y_start, in);
@@ -570,7 +569,6 @@ namespace rct {
             m_select_lengths.load(in, &m_lengths);
             m_disap.load(in);
             m_rank_disap.load(in, &m_disap);
-            std::cout << "a" << std::endl;
             m_succ_0_disap.load(in, &m_disap);
             m_rmq_x.load(in);
             m_rmq_y.load(in);

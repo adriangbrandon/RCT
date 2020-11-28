@@ -430,7 +430,6 @@ namespace rct {
                         util::geo::region r_expanded = util::geo::expand(p, max_speed, d_t, max_x, max_y);
                         element knn_leaf(leaf, p_q, p, r_expanded, snap_t, log_idx);
                         knn_leaf.is_leaf = true;
-                        //std::cout << "Leaf: " << p.x << ", " << p.y << " distance: " << knn_leaf.distance << std::endl;
                         pq.push(knn_leaf);
                         ++leaf;
                     }
@@ -503,7 +502,6 @@ namespace rct {
                         util::geo::region r_expanded = util::geo::expand(p, max_speed, d_t, max_x, max_y);
                         element knn_leaf(leaf, p_q, p, r_expanded, snap_t, log_idx);
                         knn_leaf.is_leaf = true;
-                        std::cout << "Leaf: " << p.x << ", " << p.y << " distance: " << knn_leaf.distance << " snap_t: " << snap_t << std::endl;
                         pq.push(knn_leaf);
                         ++leaf;
                     }

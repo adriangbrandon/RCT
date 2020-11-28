@@ -97,7 +97,6 @@ namespace rct {
             std::vector<knn_element> elements;
             for(const auto &oid : disap){
                 util::geo::point p;
-                std::cout << "oid: " << oid << std::endl;
                 if(search_object(oid, t_q, rctIndex, p)){
                     //double_t distance = util::geo::distance(p, p_q);
                     knn_element knn_e(oid, p_q, p, t_q);
@@ -911,11 +910,14 @@ namespace rct {
                 knn_element knn_e(0, util::geo::point{0,0}, util::geo::point{0,0}, 0, snap_t, 0);
                 candidates.push(knn_e);
                 const auto &snap = rctIndex.snapshots[sid];
-                while(!candidates.empty() && !(pq_results.size() >= k && candidates.top().distance > pq_distances.top())){
+                while(!candidates.empty() && !(pq_results.size() >= k && candidates.top().distance >= pq_distances.top())){
                     auto candidate = candidates.top(); //copy is necessary
                     candidates.pop();
-                    if(candidate.is_point){
-                        insert_result(candidate, pq_results, pq_distances, k);
+                    if(candidate.is_leaf){
+                        for(const auto &oid : snap.get_objects(candidate.id)){
+                            knn_element knn_e(oid, p_q, candidate.min, t_q);
+                            insert_result(knn_e, pq_results, pq_distances, k);
+                        }
                     }else{
                         snap.enqueue_children(candidate, candidates, p_q, rctIndex.speed_max,
                                               sid, snap_t, d_t, rctIndex.x_max, rctIndex.y_max);
@@ -947,22 +949,20 @@ namespace rct {
                 //std::cout << "snap_t: " << snap_t << std::endl;
                 util::geo::point p;
                 while (!candidates.empty() &&
-                       !(pq_results.size() >= k && candidates.top().distance > pq_distances.top())) {
+                       !(pq_results.size() >= k && candidates.top().distance >= pq_distances.top())) {
                     auto candidate = candidates.top(); //copy is necessary
                     candidates.pop();
-                    if (candidate.is_point) {
-                        std::cout << "Checking: " << candidate.id << std::endl;
-                        if (search_object(candidate.id, t_q, rctIndex, p)) {
-                            //std::cout << " Distance: " << distance;
-                            //knn_element knn_e(candidate.id, p, distance, t_q);
-                            knn_element knn_e(candidate.id, p_q, p, t_q);
-                            //std::cout << "knn_e: " << candidate.id << " distance: " << knn_e.distance;
-                            insert_result(knn_e, pq_results, pq_distances, k);
-                        };
-                    } else {
-                        //std::cout << "Region min: " << candidate.min << " max: " << candidate.max << " distance: " << candidate.distance << std::endl;
-                        snap.enqueue_children(candidate, candidates, p_q, rctIndex.speed_max, sid,
-                                              snap_t, d_t, rctIndex.x_max, rctIndex.y_max);
+                    if(candidate.is_leaf){
+                        for(const auto &oid : snap.get_objects(candidate.id)){
+                            //std::cout << "oid: " << oid << std::endl;
+                            if (search_object(oid, t_q, rctIndex, p)) {
+                                knn_element knn_e(oid, p_q, p, t_q);
+                                insert_result(knn_e, pq_results, pq_distances, k);
+                            }
+                        }
+                    }else{
+                        snap.enqueue_children(candidate, candidates, p_q, rctIndex.speed_max,
+                                              sid, snap_t, d_t, rctIndex.x_max, rctIndex.y_max);
                     }
                 }
                 double_t k_distance = 0;
@@ -1099,7 +1099,6 @@ namespace rct {
             for(size_type i = first; i <= last; ++i){
                 for(const auto &id : rctIndex.reap[i]){
                     if(object_to_heap.find(id) == object_to_heap.end()) {
-                        std::cout << "Reap: " << id << std::endl;
                         pq_objects.push_back(pq_object_type());
                         auto snap_id = first;
                         while (snap_id <= last) {
@@ -1134,7 +1133,6 @@ namespace rct {
                 pq_global.pop();
                 //Header
                 if(candidate.is_header){
-                    std::cout << "Search in pq_object" << std::endl;
                     //Search in the priority queue of the object
 
                     if(candidate.distance == candidate.max_distance){
@@ -1203,7 +1201,6 @@ namespace rct {
                                 } else if (info2_ok) {
                                     pq_object.push(info2, dmin2, dmax2);
                                 }
-                                std::cout << pq_object.empty() << std::endl;
                                 if(!pq_object.empty()){
                                     auto min_max = pq_object.top_min_max();
                                     pq_global.push(knn_traj_element(candidate.id, min_max.first, min_max.second));
@@ -1212,7 +1209,6 @@ namespace rct {
                             }
                         }
                     }
-                    std::cout << "Sale" << std::endl;
 
                 }else if(candidate.is_leaf){
                     // std::cout << "Leaf: " << candidate.id << std::endl;
@@ -1229,8 +1225,6 @@ namespace rct {
                                 auto e = std::min((snap_id + 1) * rctIndex.period_snapshot - 1, t_e);
                                 if (MBR(b, e, oid, rctIndex, mbr)) {
                                     //std::cout << "MBR" << std::endl;
-                                    std::cout << reg << std::endl;
-                                    std::cout << mbr << std::endl;
                                     object_info_type info{b, e, 0, snap_id};
                                     auto dmin = knn_support_helper::dmin(reg, mbr.min, mbr.max);
                                     auto dmax = knn_support_helper::dmax(reg, mbr.min, mbr.max);
@@ -1247,7 +1241,6 @@ namespace rct {
                         }
                     }
                 }else{
-                    std::cout << "aaaa" << std::endl;
                     util::geo::region reg = root_regions[candidate.snap_id - first];
                     auto snap_t = candidate.snap_id * rctIndex.period_snapshot;
                     auto d_t = t_e - snap_t;
@@ -1260,9 +1253,6 @@ namespace rct {
                 r.emplace_back(pq_results.top().id);
                 pq_results.pop();
             }
-            std::cout << "END" << std::endl;
-
-
         }
 
         template<class RCTIndex>
@@ -1306,7 +1296,6 @@ namespace rct {
             for(size_type i = first; i <= last; ++i){
                 for(const auto &id : rctIndex.reap[i]){
                     if(object_to_heap.find(id) == object_to_heap.end()) {
-                        std::cout << "Reap: " << id << std::endl;
                         pq_objects.push_back(pq_object_type());
                         auto snap_id = first;
                         while (snap_id <= last) {
@@ -1401,7 +1390,6 @@ namespace rct {
                                 } else if (info2_ok) {
                                     pq_object.push(info2, dmin2, dmax2);
                                 }
-                                std::cout << pq_object.empty() << std::endl;
                                 if(!pq_object.empty()){
                                     auto min_max = pq_object.top_min_max();
                                     pq_global.push(knn_traj_element(candidate.id, min_max.first, min_max.second));
@@ -1410,7 +1398,6 @@ namespace rct {
                             }
                         }
                     }
-                    std::cout << "Sale" << std::endl;
 
                 }else if(candidate.is_leaf){
                     // std::cout << "Leaf: " << candidate.id << std::endl;
@@ -1426,7 +1413,6 @@ namespace rct {
                                 auto e = std::min((snap_id + 1) * rctIndex.period_snapshot - 1, t_e);
                                 if (MBR(b, e, oid, rctIndex, mbr)) {
                                     //std::cout << "MBR" << std::endl;
-                                    std::cout << mbr << std::endl;
                                     object_info_type info{b, e, snap_id};
                                     auto dmin = knn_support_helper::dmin(p_q, mbr.min, mbr.max);
                                     auto dmax = knn_support_helper::dmax(p_q, mbr.min, mbr.max);

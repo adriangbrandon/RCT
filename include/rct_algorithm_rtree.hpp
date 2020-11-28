@@ -889,7 +889,6 @@ namespace rct {
                 pq_global.pop();
                 //Header
                 if(candidate.is_header){
-                    std::cout << "Search in pq_object: " << candidate.id << std::endl;
                     //Search in the priority queue of the object
                     if(candidate.distance == candidate.max_distance){
                         knn_element knn_e(candidate.id, candidate.distance);
@@ -957,7 +956,6 @@ namespace rct {
                     }
 
                 }else if(candidate.is_leaf){
-                    std::cout << "Leaf: " << candidate.id << std::endl;
                     const auto it = object_to_heap.find(candidate.id);
                     if(it == object_to_heap.end()){
                         pq_objects.push_back(pq_object_type());
@@ -968,7 +966,6 @@ namespace rct {
                             auto b = std::max(snap_id*rctIndex.period_snapshot, t_b);
                             auto e = std::min((snap_id+1)*rctIndex.period_snapshot-1, t_e);
                             if(MBR(b, e, candidate.id, rctIndex, mbr)){
-                                std::cout << "MBR" << std::endl;
                                 object_info_type info{b, e, snap_id};
                                 auto dmin = knn_support_helper_rtree::dmin(p_q, mbr.min, mbr.max);
                                 auto dmax = knn_support_helper_rtree::dmax(p_q, mbr.min, mbr.max);
@@ -979,7 +976,6 @@ namespace rct {
                         }
                         if(!pq_objects[pq_objects.size()-1].empty()){
                             auto min_max = pq_objects[pq_objects.size()-1].top_min_max();
-                            std::cout << "First min_max min=" << min_max.first << " max=" << min_max.second << std::endl;
                             pq_global.push(knn_traj_element(candidate.id, min_max.first, min_max.second));
                         }
                         object_to_heap.insert({candidate.id, pq_objects.size()-1});
