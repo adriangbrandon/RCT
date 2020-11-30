@@ -476,7 +476,8 @@ int main(int argc, const char **argv) {
     cout << "Knn traj (µs): " << avg_find_knn_traj <<  endl;
     cout << "-----------------------------------------------------------------" << endl;
 
-    std::ofstream out_res("RCT_multiple_rtree_" + util::file::remove_path(argv[1]) + ".res", std::ios_base::app);
+    std::string r = argv[2];
+    std::ofstream out_res("RCT_multiple_rtree_" + r + "_" + util::file::remove_path(argv[1]) + ".res", std::ios_base::app);
     out_res <<  avg_object <<"," << avg_traj << "," << avg_slice_s << "," << avg_slice_l << ","
             << avg_interval_s << "," << avg_interval_l << "," << avg_mbr <<  "," << avg_find_knn <<  ","
             << avg_find_knn_int <<  "," << avg_find_knn_traj << endl;
@@ -484,5 +485,8 @@ int main(int argc, const char **argv) {
 
 
     std::cout << "Everything is OK!" << std::endl;
+    sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, util::file::index_file("rct_index_multiple_rtree", argv, 4) + ".html");
+    sdsl::write_structure<sdsl::JSON_FORMAT>(m_rct_index, util::file::index_file("rct_index_multiple_rtree", argv, 4) + ".json");
+    std::cout << "Done." << std::endl;
 
 }
