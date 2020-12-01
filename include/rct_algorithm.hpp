@@ -603,7 +603,7 @@ namespace rct {
 
         template<class RCTIndex>
         static void search_trajectory_fast(const typename RCTIndex::size_type oid, const typename RCTIndex::value_type t_i,
-                                      const typename RCTIndex::size_type t_j, const RCTIndex &rctIndex,
+                                      const typename RCTIndex::size_type t_j, RCTIndex &rctIndex,
                                       std::vector<util::geo::traj_step> &r) {
 
             auto t_start = rctIndex.log_objects[oid].time_start();

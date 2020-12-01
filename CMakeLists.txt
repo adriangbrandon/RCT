@@ -118,6 +118,9 @@ target_link_libraries(rct_test_repair sdsl divsufsort divsufsort64)
 add_executable(rct_times_multiple src/rct_times_multiple.cpp)
 target_link_libraries(rct_times_multiple sdsl divsufsort divsufsort64)
 
+add_executable(rct_times_multiple_sparse src/rct_times_multiple_sparse.cpp)
+target_link_libraries(rct_times_multiple_sparse sdsl divsufsort divsufsort64)
+
 add_executable(rct_times src/rct_times.cpp)
 target_link_libraries(rct_times sdsl divsufsort divsufsort64)
 
@@ -154,6 +157,9 @@ target_link_libraries(rct_test_repair_rtree sdsl divsufsort divsufsort64 spatial
 add_executable(rct_test_multiple_rtree src/rct_test_multiple_rtree.cpp)
 target_link_libraries(rct_test_multiple_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
+add_executable(rct_test_sparse_multiple_rtree src/rct_test_multiple_sparse_rtree.cpp)
+target_link_libraries(rct_test_sparse_multiple_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
 add_executable(rct_test_rtree src/rct_test_rtree.cpp)
 target_link_libraries(rct_test_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
@@ -172,6 +178,9 @@ target_link_libraries(rct_times_repair sdsl divsufsort divsufsort64)
 add_executable(rct_times_multiple_rtree src/rct_times_multiple_rtree.cpp)
 target_link_libraries(rct_times_multiple_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
+add_executable(rct_times_multiple_sparse_rtree src/rct_times_multiple_sparse_rtree.cpp)
+target_link_libraries(rct_times_multiple_sparse_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
 add_executable(rct_repair src/rct_main_repair.cpp)
 target_link_libraries(rct_repair libRepairGN sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
@@ -189,6 +198,9 @@ target_link_libraries(rct_multiple sdsl divsufsort divsufsort64)
 
 add_executable(rct_multiple_test src/rct_test_multiple.cpp)
 target_link_libraries(rct_multiple_test sdsl divsufsort divsufsort64)
+
+add_executable(rct_multiple_sparse_test src/rct_test_multiple_sparse.cpp)
+target_link_libraries(rct_multiple_sparse_test sdsl divsufsort divsufsort64)
 
 add_executable(update_period src/update_period.cpp)
 target_link_libraries(update_period sdsl divsufsort divsufsort64)
@@ -216,6 +228,12 @@ target_link_libraries(size_repair_index sdsl divsufsort divsufsort64)
 
 add_executable(size_repair_index_rtree src/size_repair_index_rtree.cpp)
 target_link_libraries(size_repair_index_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(sparse_multiple src/sparse_multiple.cpp)
+target_link_libraries(sparse_multiple sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(sparse_multiple_rtree src/sparse_multiple_rtree.cpp)
+target_link_libraries(sparse_multiple_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
 add_executable(proba test/test.cpp)
 target_link_libraries(proba sdsl divsufsort divsufsort64)

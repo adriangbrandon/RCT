@@ -31,27 +31,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Created by Adrián on 27/11/2018.
 //
 
-#ifndef RCT_LOG_REFERENCE_HPP
-#define RCT_LOG_REFERENCE_HPP
+#ifndef RCT_LOG_REFERENCE_SPARSE_HPP
+#define RCT_LOG_REFERENCE_SPARSE_HPP
 
 #include <sdsl/int_vector.hpp>
 #include <sdsl/rank_support.hpp>
 #include <rmq_succinct_ct.hpp>
 #include <sdsl/sd_vector.hpp>
-#include <succ_support_v.hpp>
+#include <succ_support_sd.hpp>
 #include <geo_util.hpp>
 #include <queue>
 
 namespace rct {
 
-    template <class t_movements = sdsl::bit_vector>
-    class log_reference {
+    template <class t_movements = sdsl::sd_vector<>>
+    class log_reference_sparse {
 
     public:
         typedef uint64_t size_type;
         typedef uint32_t value_type ;
         typedef t_movements move_type;
-        typedef succ_support_v<1> succ_move_type;
+        typedef sdsl::succ_support_sd<1> succ_move_type;
         typedef typename move_type::select_1_type select_move_type;
         typedef sdsl::sd_vector<> sampling_type;
         typedef typename sampling_type::rank_1_type rank_sampling_type;
@@ -102,7 +102,7 @@ namespace rct {
         rmq_succinct_ct<false> m_rMq_x;
         rmq_succinct_ct<false> m_rMq_y;
 
-        void copy(const log_reference &o){
+        void copy(const log_reference_sparse &o){
             m_x_p = o.m_x_p;
             m_select_x_p = o.m_select_x_p;
             m_select_x_p.set_vector(&m_x_p);
@@ -197,21 +197,35 @@ namespace rct {
 
     public:
 
-        const move_type &x_p = m_x_p;
-        const move_type &x_n = m_x_n;
-        const move_type &y_p = m_y_p;
-        const move_type &y_n = m_y_n;
-        const sampling_type &rMmq_x_sample = m_rMmq_x_sample;
-        const sampling_type &rMmq_y_sample = m_rMmq_y_sample;
-        const rmq_succinct_ct<true> &rmq_x = m_rmq_x;
-        const rmq_succinct_ct<true> &rmq_y = m_rmq_y;
-        const rmq_succinct_ct<false> &rMq_x = m_rMq_x;
-        const rmq_succinct_ct<false> &rMq_y = m_rMq_y;
+        log_reference_sparse() = default;
 
-        log_reference() = default;
+        log_reference_sparse(log_reference<> &ref){
+            m_x_p = t_movements(ref.x_p);
+            m_x_n = t_movements(ref.x_n);
+            m_y_p = t_movements(ref.y_p);
+            m_y_n = t_movements(ref.y_n);
+            sdsl::util::init_support(m_select_x_p, &m_x_p);
+            sdsl::util::init_support(m_succ_x_p, &m_x_p);
+            sdsl::util::init_support(m_select_x_n, &m_x_n);
+            sdsl::util::init_support(m_succ_x_n, &m_x_n);
+            sdsl::util::init_support(m_select_y_p, &m_y_p);
+            sdsl::util::init_support(m_succ_y_p, &m_y_p);
+            sdsl::util::init_support(m_select_y_n, &m_y_n);
+            sdsl::util::init_support(m_succ_y_n, &m_y_n);
+            m_rMmq_x_sample = ref.rMmq_x_sample;
+            sdsl::util::init_support(m_rank_rMmq_x_sample, &m_rMmq_x_sample);
+            sdsl::util::init_support(m_select_rMmq_x_sample, &m_rMmq_x_sample);
+            m_rMmq_y_sample = ref.rMmq_y_sample;
+            sdsl::util::init_support(m_rank_rMmq_y_sample, &m_rMmq_y_sample);
+            sdsl::util::init_support(m_select_rMmq_y_sample, &m_rMmq_y_sample);
+            m_rmq_x = ref.rmq_x;
+            m_rMq_x = ref.rMq_x;
+            m_rmq_y = ref.rmq_y;
+            m_rMq_y = ref.rMq_y;
+        }
 
         template <class ContainerMovements>
-        log_reference(const ContainerMovements &movements){
+        log_reference_sparse(const ContainerMovements &movements){
 
             //1. Bitmap representation of the movements
             {
@@ -334,7 +348,7 @@ namespace rct {
         };
 
         util::geo::movement compute_movement_next(size_type &x_p_prev,
-                                                  size_type &x_n_prev, size_type &y_p_prev, size_type &y_n_prev) const {
+                                                  size_type &x_n_prev, size_type &y_p_prev, size_type &y_n_prev){
 
             auto x_p = m_succ_x_p(x_p_prev+1);
             auto x_n = m_succ_x_n(x_n_prev+1);
@@ -686,7 +700,7 @@ namespace rct {
         template<size_type leaf_width = 20 >
         bool contains_region_old(const size_type x, const size_type y, const size_type move_s, const size_type move_e,
                              const util::geo::point &p_s, const util::geo::point &p_e, const util::geo::region &r_q,
-                             const int32_t delta_x, const int32_t delta_y) const{
+                             const int32_t delta_x, const int32_t delta_y){
 
             if(util::geo::contains(r_q, p_s) || util::geo::contains(r_q, p_e)) {
                 return true;
@@ -781,7 +795,7 @@ namespace rct {
 
         template<size_type leaf_width = 20 >
         bool contains_region(const value_type phrase_x, const value_type phrase_y, const size_type phrase_start,
-                                const size_type move_s, const size_type move_e, const util::geo::region &r_q) const {
+                                const size_type move_s, const size_type move_e, const util::geo::region &r_q) {
 
             //1. Compute p_s and p_e
             size_type sel_p_x, sel_n_x, sel_p_y, sel_n_y;
@@ -903,26 +917,26 @@ namespace rct {
 
 
         //! Copy constructor
-        log_reference(const log_reference& o)
+        log_reference_sparse(const log_reference_sparse& o)
         {
             copy(o);
         }
 
         //! Move constructor
-        log_reference(log_reference&& o)
+        log_reference_sparse(log_reference_sparse&& o)
         {
             *this = std::move(o);
         }
 
 
-        log_reference &operator=(const log_reference &o) {
+        log_reference_sparse &operator=(const log_reference_sparse &o) {
             if (this != &o) {
                 copy(o);
             }
             return *this;
         }
 
-        log_reference &operator=(log_reference &&o) {
+        log_reference_sparse &operator=(log_reference_sparse &&o) {
             if (this != &o) {
                 m_x_p = std::move(o.m_x_p);
                 m_select_x_p = std::move(o.m_select_x_p);
@@ -962,7 +976,7 @@ namespace rct {
             return *this;
         }
 
-        void swap(log_reference &o) {
+        void swap(log_reference_sparse &o) {
             // m_bp.swap(bp_support.m_bp); use set_vector to set the supported bit_vector
             m_x_p.swap(o.m_x_p);
             sdsl::util::swap_support(m_succ_x_p, o.m_succ_x_p, &m_x_p, &o.m_x_p);

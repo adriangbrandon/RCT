@@ -8,6 +8,7 @@
 #include <vector>
 #include <log_object.hpp>
 #include <log_reference.hpp>
+#include <log_reference_sparse.hpp>
 #include <geo_util.hpp>
 #include <string>
 #include "spiral_matrix_coder.hpp"
@@ -146,7 +147,7 @@ namespace rct {
 
     public:
 
-        const log_reference_type &log_reference = m_log_reference;
+        log_reference_type &log_reference = m_log_reference;
         const std::vector<log_object_type> &log_objects = m_log_objects;
         const std::vector<snapshot_type> &snapshots = m_snapshots;
         //const std::vector<succ_support_v<1>> &succs_reap = m_succs_reap;
@@ -345,6 +346,18 @@ namespace rct {
             auto n_snapshots = util::math::ceil_div(m_t_max, m_period_snapshot);
             m_snapshots.resize(n_snapshots);
             _init_snapshots(dataset, n_snapshots);
+        }
+
+        void to_sparse(rct_index_rtree<::rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> &o){
+            m_total_objects = o.total_objects;
+            m_speed_max = o.speed_max;
+            m_t_max = o.t_max;
+            m_x_max = o.x_max;
+            m_y_max = o.y_max;
+            m_period_snapshot = o.period_snapshot;
+            m_log_objects = o.log_objects;
+            m_snapshots = o.snapshots;
+            m_log_reference = t_log_reference(o.log_reference);
         }
 
         void load(std::istream& in, std::string &dataset) {
