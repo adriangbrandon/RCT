@@ -223,6 +223,9 @@ target_link_libraries(size_multiple_index sdsl divsufsort divsufsort64)
 add_executable(size_multiple_index_rtree src/size_multiple_index_rtree.cpp)
 target_link_libraries(size_multiple_index_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
+add_executable(size_multiple_sparse_index_rtree src/size_multiple_sparse_index_rtree.cpp)
+target_link_libraries(size_multiple_sparse_index_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
 add_executable(size_repair_index src/size_repair_index.cpp)
 target_link_libraries(size_repair_index sdsl divsufsort divsufsort64)
 

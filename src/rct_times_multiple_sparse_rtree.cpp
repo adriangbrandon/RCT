@@ -485,8 +485,8 @@ int main(int argc, const char **argv) {
 
 
     std::cout << "Everything is OK!" << std::endl;
-    sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, util::file::index_file("rct_index_multiple_rtree", argv, 4) + ".html");
-    sdsl::write_structure<sdsl::JSON_FORMAT>(m_rct_index, util::file::index_file("rct_index_multiple_rtree", argv, 4) + ".json");
+    sdsl::write_structure<sdsl::HTML_FORMAT>(m_rct_index, util::file::index_file("rct_index_multiple_sparse_rtree", argv, 4) + ".html");
+    sdsl::write_structure<sdsl::JSON_FORMAT>(m_rct_index, util::file::index_file("rct_index_multiple_sparse_rtree", argv, 4) + ".json");
     std::cout << "Done." << std::endl;
 
 }
