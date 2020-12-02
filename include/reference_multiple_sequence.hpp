@@ -87,7 +87,7 @@ namespace rct {
                 //std::cout << "Symbol: " << sym << std::endl;
                 if(char2comp.count(sym) == 0){
                     if(start_input != it) ++counter;
-                    if(new_values.count(sym) == 0){
+                    if(new_values.find(sym) == new_values.end()){
                         new_values[sym]=1;
                     }
                     ++counter;
@@ -176,7 +176,7 @@ namespace rct {
                             }
                             ++pos;
                         }*/
-                    }else{
+                    }/*else{
                         for(auto it : new_values){
                             m_reference.push_back(it.first);
                         }
@@ -186,12 +186,28 @@ namespace rct {
                         }
 
 
-                    }
+                    }*/
                     std::cout << "size reference: " << m_reference.size() << std::endl;
                 }
                 ++traj_done;
                 std::cout << "Progress: (" << traj_done << "/" << lengths.size() << ")" << std::endl;
 
+            }
+            std::cout << "Pushing symbols" << std::endl;
+            std::unordered_map<size_type, size_type> D;
+            for(auto it = m_reference.begin(); it != m_reference.end(); ++it) {
+                auto value = *it;
+                D.insert({value, 1});
+                if(value ==  0) {
+                    std::cout << "Contains zero symbol (reference)" << std::endl;
+                    exit(0);
+                }
+            }
+
+            for(auto it : new_values){
+                if(D.find(it.first) == D.end()){
+                    m_reference.push_back(it.first);
+                }
             }
         }
 
