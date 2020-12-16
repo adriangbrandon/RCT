@@ -137,7 +137,7 @@ namespace rct {
 
         rct_index(const std::string &dataset_file,
                   const size_type size_reference, const size_type size_block, const double_t ratio,
-                  const size_type period_snapshot) {
+                  const size_type period_snapshot, const std::string rev_ref_file="") {
 
             m_period_snapshot = period_snapshot;
             _get_stats(dataset_file);
@@ -218,7 +218,12 @@ namespace rct {
             trees.clear();
             std::cout << "Done." << std::endl;
             std::cout << "RLZ: " << std::flush;
-            rlz_type rlz(input_reference, lengths, size_reference, size_block, ratio);
+            rlz_type rlz;
+            if(rev_ref_file.empty()){
+                rlz = rlz_type(input_reference, lengths, size_reference, size_block, ratio);
+            }else{
+                rlz = rlz_type(rev_ref_file);
+            }
             std::cout << "Done." << std::endl;
             input_reference.clear();
             input_reference.shrink_to_fit();

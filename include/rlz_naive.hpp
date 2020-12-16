@@ -91,6 +91,21 @@ namespace rct {
             std::cout << "done" << std::endl;
         }
 
+        rlz_naive(const std::string &file_rev_reference){
+
+            auto size_bytes = util::file::file_size(file_rev_reference);
+            auto length = size_bytes / sizeof(value_type);
+            std::vector<value_type> rev_reference(length);
+            std::ifstream in(file_rev_reference);
+            in.read((char*) &rev_reference[0], size_bytes);
+
+            std::vector<value_type> ref(length);
+            for(auto i = 0; i < length; ++i){
+                ref[i] = rev_reference[length-1-i];
+            }
+            m_reference = reference_type(ref);
+            sdsl::construct(m_csa, file_rev_reference.c_str(), sizeof(size_type));
+        }
 
         void init_factorization(const std::vector<value_type> *container){
             m_input = container;

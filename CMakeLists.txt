@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -195,6 +195,9 @@ target_link_libraries(sa sdsl divsufsort divsufsort64)
 
 add_executable(rct_multiple src/rct_main_multiple.cpp)
 target_link_libraries(rct_multiple sdsl divsufsort divsufsort64)
+
+add_executable(rct_multiple_rev src/rct_main_multiple_rev.cpp)
+target_link_libraries(rct_multiple_rev sdsl divsufsort divsufsort64)
 
 add_executable(rct_multiple_test src/rct_test_multiple.cpp)
 target_link_libraries(rct_multiple_test sdsl divsufsort divsufsort64)

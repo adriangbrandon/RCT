@@ -737,7 +737,7 @@ namespace rct {
                 if(candidate.is_header){
                     //std::cout << "Search in pq_object" << std::endl;
                     //Search in the priority queue of the object
-                    if(candidate.distance == candidate.max_distance){
+                    if(candidate.max_distance < pq_global.top().distance || candidate.distance == candidate.max_distance){
                         knn_element knn_e(candidate.id, candidate.max_distance);
                         insert_result(knn_e, pq_results, pq_distances, k);
                     }else{
@@ -890,7 +890,7 @@ namespace rct {
                 //Header
                 if(candidate.is_header){
                     //Search in the priority queue of the object
-                    if(candidate.distance == candidate.max_distance){
+                    if(candidate.max_distance < pq_global.top().distance || candidate.distance == candidate.max_distance){
                         knn_element knn_e(candidate.id, candidate.distance);
                         insert_result(knn_e, pq_results, pq_distances, k);
                     }else{
