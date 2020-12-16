@@ -87,7 +87,7 @@ namespace rct {
                 sdsl::store_to_plain_array<value_type>(rev_reference, file_rev_reference);
             }
             std::cout << "building SA " << std::endl;
-            sdsl::construct(m_csa, file_rev_reference.c_str(), sizeof(size_type));
+            sdsl::construct(m_csa, file_rev_reference.c_str(), sizeof(value_type));
             sdsl::store_to_file(m_reference, "reference_" + std::to_string(getpid()) + ".ref" );
             std::cout << "done" << std::endl;
         }
@@ -118,7 +118,7 @@ namespace rct {
                 }
                 sdsl::store_to_plain_array<value_type>(rev_reference, file_rev_reference);
             }
-            sdsl::construct(m_csa, file_rev_reference.c_str(), sizeof(size_type));
+            sdsl::construct(m_csa, file_rev_reference.c_str(), sizeof(value_type));
         }
 
         void init_factorization(const std::vector<value_type> *container){
