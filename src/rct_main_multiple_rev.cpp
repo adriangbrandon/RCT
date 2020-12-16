@@ -52,7 +52,7 @@ int main(int argc, const char* argv[]) {
         std::string dataset_path = argv[1];
         double_t ratio = (double_t) atoi(argv[2])/(double_t) 100;
         uint32_t period = (uint32_t) atoi(argv[3]);
-        std::string rev_ref = argv[4];
+        std::string ref = argv[4];
         argc = 4;
 
         std::string index_file = util::file::index_file("rct_index_multiple", argv, argc) + ".idx";
@@ -61,7 +61,7 @@ int main(int argc, const char* argv[]) {
             std::cout << "Building index" << std::endl;
             auto t1 = util::time::user::now();
             rct::rct_index<2, rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64>
-                    m_rct_index(dataset_path, 0, 0, ratio, period, rev_ref);
+                    m_rct_index(dataset_path, 0, 0, ratio, period, ref);
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
             sdsl::store_to_file(m_rct_index, index_file);

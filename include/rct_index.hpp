@@ -137,7 +137,7 @@ namespace rct {
 
         rct_index(const std::string &dataset_file,
                   const size_type size_reference, const size_type size_block, const double_t ratio,
-                  const size_type period_snapshot, const std::string rev_ref_file="") {
+                  const size_type period_snapshot, const std::string ref_file="") {
 
             m_period_snapshot = period_snapshot;
             _get_stats(dataset_file);
@@ -219,10 +219,10 @@ namespace rct {
             std::cout << "Done." << std::endl;
             std::cout << "RLZ: " << std::flush;
             rlz_type rlz;
-            if(rev_ref_file.empty()){
+            if(ref_file.empty()){
                 rlz = rlz_type(input_reference, lengths, size_reference, size_block, ratio);
             }else{
-                rlz = rlz_type(rev_ref_file);
+                rlz = rlz_type(ref_file);
             }
             std::cout << "Done." << std::endl;
             input_reference.clear();
@@ -257,7 +257,7 @@ namespace rct {
                     rlz.init_factorization(&movements);
                     while (rlz.has_next()) {
                         auto f = rlz.next();
-                        //factors_log << "f.length: " << f.length << " f.offset: "  << f.offset << std::endl;
+                        std::cout << "f.length: " << f.length << " f.offset: "  << f.offset << std::endl;
                         factors.push_back(f);
                     }
 

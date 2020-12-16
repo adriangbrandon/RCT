@@ -88,22 +88,36 @@ namespace rct {
             }
             std::cout << "building SA " << std::endl;
             sdsl::construct(m_csa, file_rev_reference.c_str(), sizeof(size_type));
+            sdsl::store_to_file(m_reference, "reference_" + std::to_string(getpid()) + ".ref" );
             std::cout << "done" << std::endl;
         }
 
-        rlz_naive(const std::string &file_rev_reference){
+        rlz_naive(const std::string &file_reference){
 
-            auto size_bytes = util::file::file_size(file_rev_reference);
-            auto length = size_bytes / sizeof(value_type);
-            std::vector<value_type> rev_reference(length);
-            std::ifstream in(file_rev_reference);
-            in.read((char*) &rev_reference[0], size_bytes);
+            sdsl::load_from_file(m_reference, file_reference );
+            std::string file_rev_reference =  std::to_string(getpid()) + ".rev_ref";
+            {
+                std::map<size_type, size_type> D;
+                // count occurrences of each symbol
+                for(auto it = m_reference.begin(); it != m_reference.end(); ++it) {
+                    auto value = *it;
+                    D[value]++;
+                }
 
-            std::vector<value_type> ref(length);
-            for(auto i = 0; i < length; ++i){
-                ref[i] = rev_reference[length-1-i];
+                size_type index = 1;
+                for(auto it = D.begin(); it != D.end(); ++it){
+                    m_char2comp[it->first] = index;
+                    ++index;
+                }
+                m_char2comp[0] = 0;
+                sdsl::int_vector<> rev_reference;
+                rev_reference.resize(m_reference.size());
+                for(size_type i = 0; i < rev_reference.size() ; ++i){
+                    auto value = *(m_reference.begin() + m_reference.size()-1-i);
+                    rev_reference[i] = m_char2comp[value];
+                }
+                sdsl::store_to_plain_array<value_type>(rev_reference, file_rev_reference);
             }
-            m_reference = reference_type(ref);
             sdsl::construct(m_csa, file_rev_reference.c_str(), sizeof(size_type));
         }
 
@@ -119,7 +133,6 @@ namespace rct {
             size_type end = m_csa.size()-1;
             size_type start_input = m_input_pos;
             while(m_input_pos < m_input_size){
-
                 auto sym = m_input->at(m_input_pos);
                 auto sym_comp = m_char2comp[sym];
                 size_type res_start, res_end;
@@ -144,6 +157,7 @@ namespace rct {
                     end = res_end;
                     ++m_input_pos;
                 }
+                //std::cout << "start: " << start << " end: " << end << " csa.size(): " << m_csa.size() << std::endl;
             }
             length_type length = m_input_pos - start_input;
             offset_type offset = m_reference.size() - (m_csa[start] + length);
