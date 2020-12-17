@@ -7,6 +7,7 @@
 
 #include <file_util.hpp>
 #include <unordered_map>
+#include <map>
 #include <reference_uniform_sample.hpp>
 #include <reference_repair.hpp>
 #include <reference_multiple_sequence.hpp>
@@ -48,6 +49,7 @@ namespace rct {
         void copy(const rlz_naive &n){
             m_reference = n.m_reference;
             m_csa = n.m_csa;
+            m_char2comp = n.m_char2comp;
             m_input_size = n.m_input_size;
             m_input_pos = n.m_input_pos;
         }
@@ -74,7 +76,8 @@ namespace rct {
 
                 size_type index = 1;
                 for(auto it = D.begin(); it != D.end(); ++it){
-                    m_char2comp[it->first] = index;
+                    size_type symbol = it->first;
+                    m_char2comp[symbol] = index;
                     ++index;
                 }
                 m_char2comp[0] = 0;
@@ -104,17 +107,21 @@ namespace rct {
                     D[value]++;
                 }
 
+                std::cout << "max size: " << m_char2comp.max_size() << std::endl;
                 size_type index = 1;
                 for(auto it = D.begin(); it != D.end(); ++it){
                     m_char2comp[it->first] = index;
-                    ++index;
                 }
-                m_char2comp[0] = 0;
+                m_char2comp.insert({0,0});
+                std::cout << "size: " << m_char2comp.size() << std::endl;
                 sdsl::int_vector<> rev_reference;
                 rev_reference.resize(m_reference.size());
                 for(size_type i = 0; i < rev_reference.size() ; ++i){
                     auto value = *(m_reference.begin() + m_reference.size()-1-i);
                     rev_reference[i] = m_char2comp[value];
+                    if(i == rev_reference.size()-1){
+                        std::cout << "0 movement: " << rev_reference[i] << std::endl;
+                    }
                 }
                 sdsl::store_to_plain_array<value_type>(rev_reference, file_rev_reference);
             }
@@ -133,6 +140,7 @@ namespace rct {
             size_type end = m_csa.size()-1;
             size_type start_input = m_input_pos;
             while(m_input_pos < m_input_size){
+
                 auto sym = m_input->at(m_input_pos);
                 auto sym_comp = m_char2comp[sym];
                 size_type res_start, res_end;
@@ -200,6 +208,7 @@ namespace rct {
             if (this != &r) {
                 m_reference.swap(r.m_reference);
                 m_csa.swap(r.m_csa);
+                std::swap(m_char2comp, r.m_char2comp;)
                 std::swap(m_input_size, r.m_input_size);
                 std::swap(m_input_pos, r.m_input_pos);
             }
@@ -218,6 +227,7 @@ namespace rct {
             if (this != &v) {
                 m_reference = std::move(v.m_reference);
                 m_csa = std::move(v.m_csa);
+                m_char2comp = std::move(v.m_char2comp);
                 m_input_size = std::move(v.m_input_size);
                 m_input_pos = v.m_input_pos;
             }

@@ -243,3 +243,6 @@ target_link_libraries(sparse_multiple_rtree sdsl divsufsort divsufsort64 spatial
 
 add_executable(proba test/test.cpp)
 target_link_libraries(proba sdsl divsufsort divsufsort64)
+
+add_executable(loading_reference src/loading_reference.cpp)
+target_link_libraries(loading_reference sdsl divsufsort divsufsort64)

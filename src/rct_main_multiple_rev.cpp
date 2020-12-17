@@ -65,7 +65,6 @@ int main(int argc, const char* argv[]) {
             auto t2 = util::time::user::now();
             std::cout << "User time: " << t2 - t1 << " µs" << std::endl;
             sdsl::store_to_file(m_rct_index, index_file);
-            
         }
 
         std::cout << "Loading index" << std::endl;
