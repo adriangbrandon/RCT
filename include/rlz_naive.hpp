@@ -208,7 +208,7 @@ namespace rct {
             if (this != &r) {
                 m_reference.swap(r.m_reference);
                 m_csa.swap(r.m_csa);
-                std::swap(m_char2comp, r.m_char2comp;)
+                std::swap(m_char2comp, r.m_char2comp);
                 std::swap(m_input_size, r.m_input_size);
                 std::swap(m_input_pos, r.m_input_pos);
             }
