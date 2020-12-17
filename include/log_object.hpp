@@ -172,17 +172,17 @@ namespace rct {
 
             //2. Compute the disappearances
             auto last_t = m_time_start;
-            size_type disap_i = 1;
+            //size_type disap_i = 1;
             sdsl::bit_vector aux_disap(trajectory.back().t - m_time_start + 1, 0);
             uint64_t d = 0;
             for (size_type i = 1; i < trajectory.size(); ++i) {
                 const auto &info = trajectory[i];
                 for (auto t = last_t + 1; t < info.t; ++t) {
-                    aux_disap[disap_i++] = 1;
+                    aux_disap[t - m_time_start] = 1;
                     d++;
                 }
                 last_t = info.t;
-                ++disap_i; //set to zero
+               // ++disap_i; //set to zero
             }
             m_disap = disap_type(aux_disap);
             sdsl::util::init_support(m_rank_disap, &m_disap);

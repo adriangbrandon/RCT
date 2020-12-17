@@ -81,8 +81,8 @@ namespace rct {
                     if(prev_id == id){
                         //std::cout << v.m_id << " " << prev_t << " " << v.m_t << std::endl;
 
-                        uint64_t x_diff = std::abs((x - prev_x)) / (t - prev_t);
-                        uint64_t y_diff = std::abs((y - prev_y)) / (t - prev_t);
+                        uint64_t x_diff = std::abs((int64_t) (x - prev_x)) / (t - prev_t);
+                        uint64_t y_diff = std::abs((int64_t) (y - prev_y)) / (t - prev_t);
                         if(x_diff > m_speed_max) {
                             m_speed_max = x_diff;
                         }
