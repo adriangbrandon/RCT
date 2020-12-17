@@ -71,7 +71,7 @@ namespace rct {
         void _get_stats(const std::string &infile){
             m_total_objects = 0, m_speed_max = 0, m_t_max= 0, m_x_max = 0, m_y_max = 0;
             auto prev_id = (value_type) -1;
-            int64_t prev_x, prev_y, prev_t, x, y, t, id, i = 0;
+            uint64_t prev_x, prev_y, prev_t, x, y, t, id, i = 0;
             std::ifstream in(infile);
             while(in){
                 in >> id >> t >> x >> y;
@@ -80,7 +80,6 @@ namespace rct {
                 if(i > 0){
                     if(prev_id == id){
                         //std::cout << v.m_id << " " << prev_t << " " << v.m_t << std::endl;
-
                         uint64_t x_diff = std::abs((int64_t) (x - prev_x)) / (t - prev_t);
                         uint64_t y_diff = std::abs((int64_t) (y - prev_y)) / (t - prev_t);
                         if(x_diff > m_speed_max) {
