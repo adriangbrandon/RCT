@@ -256,7 +256,7 @@ namespace rct {
                     rlz.init_factorization(&movements);
                     while (rlz.has_next()) {
                         auto f = rlz.next();
-                        std::cout << "f.length: " << f.length << " f.offset: "  << f.offset << std::endl;
+                        //std::cout << "f.length: " << f.length << " f.offset: "  << f.offset << std::endl;
                         factors.push_back(f);
                     }
 

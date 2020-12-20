@@ -142,7 +142,7 @@ namespace rct {
             while(m_input_pos < m_input_size){
                 auto sym = m_input->at(m_input_pos);
                 auto sym_comp = m_char2comp[sym];
-                std::cout << "sym: " << sym << " sym_comp: " << sym_comp << std::endl;
+                //std::cout << "sym: " << sym << " sym_comp: " << sym_comp << std::endl;
                 size_type res_start, res_end;
                 if(start == 0 && end == m_csa.size()-1){
                     res_start = m_csa.C[sym_comp];
