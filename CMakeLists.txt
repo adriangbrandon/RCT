@@ -246,3 +246,6 @@ target_link_libraries(proba sdsl divsufsort divsufsort64)
 
 add_executable(loading_reference src/loading_reference.cpp)
 target_link_libraries(loading_reference sdsl divsufsort divsufsort64)
+
+add_executable(baseline_times src/baseline_times.cpp)
+target_link_libraries(baseline_times sdsl divsufsort divsufsort64)
