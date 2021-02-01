@@ -249,3 +249,6 @@ target_link_libraries(loading_reference sdsl divsufsort divsufsort64)
 
 add_executable(baseline_times src/baseline_times.cpp)
 target_link_libraries(baseline_times sdsl divsufsort divsufsort64)
+
+add_executable(space_estimation src/space_estimation.cpp)
+target_link_libraries(space_estimation sdsl divsufsort divsufsort64 spatialindex STRRtree)

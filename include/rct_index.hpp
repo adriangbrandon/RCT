@@ -444,6 +444,33 @@ namespace rct {
             m_log_reference = t_log_reference(o.log_reference);
         }
 
+        size_type new_space(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name=""){
+
+            sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
+            size_type written_bytes = 0;
+
+            written_bytes += sdsl::write_member(m_total_objects, out, child, "total_objects");
+            written_bytes += sdsl::write_member(m_speed_max, out, child, "speed_max");
+            written_bytes += sdsl::write_member(m_t_max, out, child, "t_max");
+            written_bytes += sdsl::write_member(m_x_max, out, child, "x_max");
+            written_bytes += sdsl::write_member(m_y_max, out, child, "y_max");
+            written_bytes += sdsl::write_member(m_level_max, out, child, "level_max");
+            written_bytes += sdsl::write_member(m_period_snapshot, out, child, "period_snapshot");
+            //TODO: delete next line (log_size)
+            written_bytes += sdsl::write_member(m_log_objects.size(), out, child, "log_size");
+            for (const auto& x : m_log_objects) {
+                written_bytes += x.new_space( out, child, "[]");
+            }
+            written_bytes += m_log_reference.new_space(out, child, "log_reference");
+            written_bytes += sdsl::serialize_vector(m_snapshots, out, child, "snapshots");
+            written_bytes += sdsl::serialize_vector(m_reap, out, child, "reap");
+            //written_bytes += sdsl::serialize_vector(m_succs_reap, out, child, "succs_reap");
+            written_bytes += sdsl::serialize_vector(m_disap, out, child, "disap");
+            //written_bytes += sdsl::serialize_vector(m_succs_disap, out, child, "succs_disap");
+            sdsl::structure_tree::add_size(child, written_bytes);
+            return written_bytes;
+        }
+
         void fix_disap(const std::string &dataset_file){
             /*std::ifstream in(dataset_file);
             uint32_t id, old_id = (uint32_t) -1, t, old_t = 0, x, y;

@@ -553,6 +553,26 @@ namespace rct {
             return written_bytes;
         }
 
+
+        size_type new_space(std::ostream &out, sdsl::structure_tree_node *v = nullptr, std::string name = "") const {
+            sdsl::structure_tree_node *child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
+            size_type written_bytes = 0;
+            written_bytes += sdsl::write_member(m_time_start, out, child, "time_start");
+            written_bytes += sdsl::write_member(m_x_start, out, child, "x_start");
+            written_bytes += sdsl::write_member(m_y_start, out, child, "y_start");
+            written_bytes += m_x_values.serialize(out, child, "x_values");
+            written_bytes += m_y_values.serialize(out, child, "y_values");
+            written_bytes += m_offsets.serialize(out, child, "offsets");
+            written_bytes += m_lengths.serialize(out, child, "lengths");
+            written_bytes += m_rank_lengths.serialize(out, child, "rank_lengths");
+            written_bytes += m_select_lengths.serialize(out, child, "select_lengths");
+            written_bytes += m_disap.serialize(out, child, "disap");
+            written_bytes += m_rank_disap.serialize(out, child, "rank_disap");
+            written_bytes += m_succ_0_disap.serialize(out, child, "succ_0_disap");
+            sdsl::structure_tree::add_size(child, written_bytes);
+            return written_bytes;
+        }
+
         void load(std::istream& in) {
             sdsl::read_member(m_time_start, in);
             sdsl::read_member(m_x_start, in);
