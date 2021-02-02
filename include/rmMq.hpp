@@ -25,6 +25,12 @@ namespace rct {
             value_type min;
             value_type max;
         } result_type;
+        typedef struct {
+            size_type min;
+            size_type max;
+            bool min_ok = false;
+            bool max_ok = false;
+        } pos_result_type;
 
     private:
         rmq_succinct_ct<true> m_rmq;
@@ -36,6 +42,7 @@ namespace rct {
         select_sampling_type m_select;
         const std::vector<value_type>* m_v;
 
+    public:
         void set_vector(const std::vector<value_type>* vec){
             m_v = vec;
         }
@@ -121,9 +128,9 @@ namespace rct {
                 m_start_increasing = o.m_start_increasing;
                 m_sampling = o.m_sampling;
                 m_rank = o.m_rank;
-                m_rank.set_vector(&m_rank);
+                m_rank.set_vector(&m_sampling);
                 m_select = o.m_select;
-                m_select.set_vector(&m_select);
+                m_select.set_vector(&m_sampling);
             }
             return *this;
         }
@@ -135,9 +142,9 @@ namespace rct {
                 m_start_increasing = std::move(o.m_start_increasing);
                 m_sampling = std::move(o.m_sampling);
                 m_rank = std::move(o.m_rank);
-                m_rank.set_vector(&m_rank);
+                m_rank.set_vector(&m_sampling);
                 m_select = std::move(o.m_select);
-                m_select.set_vector(&m_select);
+                m_select.set_vector(&m_sampling);
             }
             return *this;
         }
@@ -202,6 +209,44 @@ namespace rct {
                 maximum = m_v->at(r);
             }
             return maximum;
+        }
+
+        pos_result_type locals(const size_type l, const size_type r) const{
+            size_type min_l = 0, max_l = 0, min_r = 0, max_r = 0;
+            pos_result_type result;
+            auto rank_l = m_rank(l+1);
+            if(rank_l){
+                min_l = rank_to_min(rank_l)+1;
+                max_l = rank_to_max(rank_l)+1;
+            }else{
+                min_l = 1;
+                max_l = 1;
+            }
+            auto rank_r = m_rank(r);
+            if(rank_r){
+                min_r = rank_to_min(rank_r);
+                max_r = rank_to_max(rank_r);
+            }
+            if(min_l > 0 && min_r > 0 && min_l <= min_r){
+                if(min_l < min_r) {
+                    size_type min_pos = m_rmq(min_l - 1, min_r - 1);
+                    result.min = select_min(min_pos + 1);
+                }else{
+                    result.min = select_min(min_l);//TODO: revisar
+                }
+                result.min_ok = true;
+            }
+
+            if(max_l > 0 && max_r > 0 && max_l <= max_r) {
+                if (max_l < max_r) {
+                    size_type max_pos = m_rMq(max_l - 1, max_r - 1);
+                    result.max = select_max(max_pos + 1);
+                } else {
+                    result.max = select_max(max_l);//TODO: revisar
+                }
+                result.max_ok = true;
+            }
+            return result;
         }
 
         result_type operator()(const size_type l, const size_type r) const{

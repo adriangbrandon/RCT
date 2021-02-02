@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Created by Adrián on 26/11/2018.
 //
 
-#ifndef RCT_LOG_OBJECT_HPP
-#define RCT_LOG_OBJECT_HPP
+#ifndef RCT_LOG_OBJECT_NO_MIN_MAX_HPP
+#define RCT_LOG_OBJECT_NO_MIN_MAX_HPP
 
 #include <sdsl/vectors.hpp>
 #include <sdsl/sd_vector.hpp>
@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <oz_vector.hpp>
 #include <runs_vector.hpp>
 #include "geo_util.hpp"
+#include "rmMq.hpp"
 #include <runs_bitvector.hpp>
 
 #define VERBOSE 0
@@ -57,7 +58,7 @@ namespace rct {
               class t_disap = runs_bitvector<>,
               class t_disap_rank_1 = rank_support_runs_bitvector<1>,
               class t_disap_succ_0 = succ_support_runs_bitvector<0>>
-    class log_object {
+    class log_object_no_min_max {
 
     public:
         typedef uint64_t size_type;
@@ -72,6 +73,12 @@ namespace rct {
         typedef t_disap_rank_1 rank_1_disap_type;
         typedef t_disap_succ_0 succ_0_disap_type;
         typedef typename t_disap::next_info_type next_info_type;
+        typedef struct {
+            size_type i_beg, i_end, min_x_beg, min_x_end, min_y_beg, min_y_end,
+            max_x_beg, max_x_end, max_y_beg, max_y_end, j_beg, j_end;
+            bool min_x_ok, min_y_ok, max_x_ok, max_y_ok;
+            util::geo::movement i_delta, j_delta, min_delta, max_delta;
+        } mbr_phrases_type;
 
     private:
         value_type m_time_start = 0;
@@ -80,15 +87,6 @@ namespace rct {
 
         values_type m_x_values;
         values_type m_y_values;
-
-        values_min_max_type m_min_x_values;
-        values_min_max_type m_max_x_values;
-        values_min_max_type m_min_y_values;
-        values_min_max_type m_max_y_values;
-        rmq_succinct_ct<true> m_rmq_x;
-        rmq_succinct_ct<false> m_rMq_x;
-        rmq_succinct_ct<true> m_rmq_y;
-        rmq_succinct_ct<false> m_rMq_y;
 
         offsets_type m_offsets;
 
@@ -100,16 +98,15 @@ namespace rct {
         rank_1_disap_type m_rank_disap;
         succ_0_disap_type m_succ_0_disap;
 
-        void copy(const log_object &o){
+        rmMq<value_type> m_rmMq_x;
+        rmMq<value_type> m_rmMq_y;
+
+        void copy(const log_object_no_min_max &o){
             m_time_start = o.m_time_start;
             m_x_start = o.m_x_start;
             m_y_start = o.m_y_start;
             m_x_values = o.m_x_values;
             m_y_values = o.m_y_values;
-            m_min_x_values = o.m_min_x_values;
-            m_min_y_values = o.m_min_y_values;
-            m_max_x_values = o.m_max_x_values;
-            m_max_y_values = o.m_max_y_values;
             m_offsets = o.m_offsets;
             m_lengths = o.m_lengths;
             m_rank_lengths = o.m_rank_lengths;
@@ -121,10 +118,9 @@ namespace rct {
             m_rank_disap.set_vector(&m_disap);
             m_succ_0_disap = o.m_succ_0_disap;
             m_succ_0_disap.set_vector(&m_disap);
-            m_rmq_x = o.m_rmq_x;
-            m_rMq_x = o.m_rMq_x;
-            m_rmq_y = o.m_rmq_y;
-            m_rMq_y = o.m_rMq_y;
+            m_rmMq_x = o.m_rmMq_x;
+            m_rmMq_y = o.m_rmMq_y;
+
         }
 
         template <class Container, class BitVector>
@@ -151,28 +147,15 @@ namespace rct {
 
     public:
 
-        log_object() = default;
+        log_object_no_min_max() = default;
 
-        const value_type &x_start = m_x_start;
-        const value_type &y_start = m_y_start;
         const values_type &x_values = m_x_values;
         const values_type &y_values = m_y_values;
-        const values_min_max_type &min_x_values = m_min_x_values;
-        const values_min_max_type &min_y_values = m_min_y_values;
-        const values_min_max_type &max_x_values = m_max_x_values;
-        const values_min_max_type &max_y_values = m_max_y_values;
-        const lengths_type &lengths = m_lengths;
-        const rank_1_lengths_type &rank_lengths = m_rank_lengths;
-        const select_1_lengths_type &select_lengths = m_select_lengths;
         const offsets_type  &offsets = m_offsets;
         const disap_type &disap = m_disap;
-        const rank_1_disap_type &rank_disap = m_rank_disap;
-        const succ_0_disap_type &succ_0_disap = m_succ_0_disap;
-
-
 
         template<class ContainerTrajectory, class ContainerFactors>
-        log_object(const ContainerTrajectory &trajectory, const ContainerFactors &factors) {
+        log_object_no_min_max(const ContainerTrajectory &trajectory, const ContainerFactors &factors) {
 
             //1. Compute the start values
             m_time_start = trajectory[0].t;
@@ -182,8 +165,11 @@ namespace rct {
             //2. Compute the disappearances
             auto last_t = m_time_start;
             //size_type disap_i = 1;
+            std::vector<value_type> xs, ys;
             sdsl::bit_vector aux_disap(trajectory.back().t - m_time_start + 1, 0);
             uint64_t d = 0;
+            xs.push_back(m_x_start);
+            ys.push_back(m_y_start);
             for (size_type i = 1; i < trajectory.size(); ++i) {
                 const auto &info = trajectory[i];
                 for (auto t = last_t + 1; t < info.t; ++t) {
@@ -191,23 +177,24 @@ namespace rct {
                     d++;
                 }
                 last_t = info.t;
+                xs.push_back(info.x);
+                ys.push_back(info.y);
                // ++disap_i; //set to zero
             }
             m_disap = disap_type(aux_disap);
             sdsl::util::init_support(m_rank_disap, &m_disap);
             sdsl::util::init_support(m_succ_0_disap, &m_disap);
+            //Building the range minimum/maximum query structure for the horizontal and vertical axis
+            sdsl::util::init_support(m_rmMq_x, &xs);
+            sdsl::util::init_support(m_rmMq_y, &ys);
 
             //3.2 Set offset, length, x and y
             {
                 std::vector<size_type> offset_temp(factors.size());
                 std::vector<size_type> x_values_temp(factors.size());
                 std::vector<size_type> y_values_temp(factors.size());
-                std::vector<size_type> min_x_values_temp(factors.size());
-                std::vector<size_type> max_x_values_temp(factors.size());
-                std::vector<size_type> min_y_values_temp(factors.size());
-                std::vector<size_type> max_y_values_temp(factors.size());
                 std::vector<size_type> pos_ones_lengths;
-                std::vector<value_type> temp_x, temp_y, min_x, min_y, max_x, max_y;
+                std::vector<value_type> temp_x, temp_y;
                 size_type acum_length = 0, start_phrase = 1;
                 size_type factor_i = 0;
                 for (const auto &factor : factors) {
@@ -217,20 +204,8 @@ namespace rct {
                     temp_x.push_back(trajectory[acum_length].x);
                     temp_y.push_back(trajectory[acum_length].y);
 
-                    value_type m_x = trajectory[start_phrase].x, M_x = trajectory[start_phrase].x;
-                    value_type m_y = trajectory[start_phrase].y, M_y = trajectory[start_phrase].y;
-                    for(size_type i = start_phrase+1; i < start_phrase + factor.length; ++i){
-                        if(trajectory[i].x < m_x) m_x = trajectory[i].x;
-                        if(trajectory[i].y < m_y) m_y = trajectory[i].y;
-                        if(trajectory[i].x > M_x) M_x = trajectory[i].x;
-                        if(trajectory[i].y > M_y) M_y = trajectory[i].y;
-                    }
                     start_phrase += factor.length;
                     acum_length += factor.length;
-                    min_x.push_back(m_x);
-                    min_y.push_back(m_y);
-                    max_x.push_back(M_x);
-                    max_y.push_back(M_y);
                     ++factor_i;
                 }
                 if(factor_i > 0) pos_ones_lengths.push_back(acum_length);
@@ -241,32 +216,35 @@ namespace rct {
                 sdsl::util::init_support(m_rank_lengths, &m_lengths);
                 sdsl::util::init_support(m_select_lengths, &m_lengths);
 
-                //Construction of structures to solve range minimum queries (rmq) and range maximum queries (rMq)
-                m_rmq_x = rmq_succinct_ct<true>(min_x);
-                m_rMq_x = rmq_succinct_ct<false>(max_x);
-                m_rmq_y = rmq_succinct_ct<true>(min_y);
-                m_rMq_y = rmq_succinct_ct<false>(max_y);
-
                 //The absolute values are stored as differences with respect to the first position
                 for (size_type i = 0; i < temp_x.size(); ++i) {
                     x_values_temp[i] = alternative_code::encode((int32_t) (temp_x[i] - m_x_start));
                     y_values_temp[i] = alternative_code::encode((int32_t) (temp_y[i] - m_y_start));
-                    min_x_values_temp[i] =  alternative_code::encode((int32_t) (temp_x[i] - min_x[i]));
-                    min_y_values_temp[i] =  alternative_code::encode((int32_t) (temp_y[i] - min_y[i]));
-                    max_x_values_temp[i] =  alternative_code::encode((int32_t) (max_x[i] - temp_x[i]));
-                    max_y_values_temp[i] =  alternative_code::encode((int32_t) (max_y[i] - temp_y[i]));
                 }
                 compress_data(m_x_values, x_values_temp);
                 compress_data(m_y_values, y_values_temp);
-                compress_data(m_min_x_values, min_x_values_temp);
-                compress_data(m_min_y_values, min_y_values_temp);
-                compress_data(m_max_x_values, max_x_values_temp);
-                compress_data(m_max_y_values, max_y_values_temp);
             }
-
-
         }
 
+        template<class Log>
+        log_object_no_min_max(const Log &o) {
+            m_time_start = o.time_start();
+            m_x_start = o.x_start;
+            m_y_start = o.y_start;
+            m_x_values = o.x_values;
+            m_y_values = o.y_values;
+            m_offsets = o.offsets;
+            m_lengths = o.lengths;
+            m_rank_lengths = o.rank_lengths;
+            m_rank_lengths.set_vector(&m_lengths);
+            m_select_lengths = o.select_lengths;
+            m_select_lengths.set_vector(&m_lengths);
+            m_disap = o.disap;
+            m_rank_disap = o.rank_disap;
+            m_rank_disap.set_vector(&m_disap);
+            m_succ_0_disap = o.succ_0_disap;
+            m_succ_0_disap.set_vector(&m_disap);
+        }
 
         inline util::geo::traj_step start_traj_step() const {
             return util::geo::traj_step{m_time_start, m_x_start, m_y_start};
@@ -318,28 +296,6 @@ namespace rct {
             return m_select_lengths(phrase+1);
         }
 
-        inline util::geo::region MBR(const size_type phrase_i, const size_type phrase_j) const {
-            auto index_min_x = m_rmq_x(phrase_i-1, phrase_j-1);
-            auto index_min_y = m_rmq_y(phrase_i-1, phrase_j-1);
-            auto index_max_x = m_rMq_x(phrase_i-1, phrase_j-1);
-            auto index_max_y = m_rMq_y(phrase_i-1, phrase_j-1);
-            return util::geo::region{util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_min_x]) - alternative_code::decode(m_min_x_values[index_min_x])),
-                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_min_y]) - alternative_code::decode(m_min_y_values[index_min_y]))},
-                                     util::geo::point{(uint32_t) (m_x_start + alternative_code::decode(m_x_values[index_max_x]) + alternative_code::decode(m_max_x_values[index_max_x])),
-                                                      (uint32_t) (m_y_start + alternative_code::decode(m_y_values[index_max_y]) + alternative_code::decode(m_max_y_values[index_max_y]))}
-            };
-        }
-
-        inline util::geo::region MBR(const size_type phrase_i) const{
-
-            auto x_phrase = m_x_start + alternative_code::decode(m_x_values[phrase_i-1]);
-            auto y_phrase = m_y_start + alternative_code::decode(m_y_values[phrase_i-1]);
-            return util::geo::region{util::geo::point{(uint32_t) (x_phrase - alternative_code::decode(m_min_x_values[phrase_i-1])),
-                                                      (uint32_t) (y_phrase - alternative_code::decode(m_min_y_values[phrase_i-1]))},
-                                     util::geo::point{(uint32_t) (x_phrase + alternative_code::decode(m_max_x_values[phrase_i-1])),
-                                                      (uint32_t) (y_phrase + alternative_code::decode(m_max_y_values[phrase_i-1]))}
-            };
-        }
 
 
         inline void interval_phrases(const size_type movement_i, const size_type movement_j,
@@ -364,70 +320,6 @@ namespace rct {
             }
         }
 
-        inline bool contains_region(const size_type phrase_i, const size_type phrase_j, const util::geo::region &r,
-                                        std::vector<size_type> &phrases_to_check) const {
-
-            if(phrase_i > phrase_j) return false;
-            std::stack<std::pair<size_type, size_type>> queue_index;
-            queue_index.push({phrase_i, phrase_j});
-#if VERBOSE
-    std::cout << "Push: <" << phrase_i << ", " << phrase_j << ">" << std::endl;
-#endif
-            while(!queue_index.empty()){
-                //const auto pair = queue_index.front();
-                const auto pair = queue_index.top();
-                queue_index.pop();
-#if VERBOSE
-                std::cout << "Processing: <" << pair.first << ", " << pair.second << ">" << std::endl;
-#endif
-                if(pair.first < pair.second){
-                    auto mbr_region = MBR(pair.first, pair.second);
-#if VERBOSE
-                    std::cout << "Region: " << mbr_region << std::endl;
-#endif
-                    if(util::geo::contains(r, mbr_region)){
-#if VERBOSE
-                        std::cout << "Contains region "<< std::endl;
-#endif
-                        return true;
-                    }
-                    if(util::geo::touches(r, mbr_region)){
-                        auto mid = (pair.second - pair.first) / 2 + pair.first;
-                        queue_index.push({pair.first, mid});
-                        queue_index.push({mid+1, pair.second});
-#if VERBOSE
-                        std::cout << "Push: <" << pair.first << ", " << mid << ">" << std::endl;
-                        std::cout << "Push: <" << mid+1 << ", " << pair.second << ">" << std::endl;
-#endif
-                    }
-                }else{
-                    auto mbr_region = MBR(pair.first);
-                    if(util::geo::contains(r, mbr_region)){
-#if VERBOSE
-                        std::cout << "Contains region " << mbr_region << std::endl;
-#endif
-                        return true;
-                    }
-                    phrases_to_check.push_back(pair.first);
-#if VERBOSE
-                    std::cout << "Phrases to check: " << pair.first << std::endl;
-#endif
-                }
-            }
-#if VERBOSE
-            std::cout << "Doesn't contain region " << std::endl;
-#endif
-            /*std::unordered_map<size_type, char> map_aux;
-            for(const auto &phrase : phrases_to_check){
-                if(map_aux.count(phrase) > 0){
-                    std::cout << "Error repetido" << std::endl;
-                    exit(0);
-                }
-                map_aux[phrase] = 1;
-            }*/
-            return false;
-
-        }
 
         //Pre: t_q > m_time_start
         inline size_type interval_ref(const size_type movement_q, size_type &idx_beg, size_type &idx_end,
@@ -454,6 +346,94 @@ namespace rct {
             return phrase;
         }
 
+        //Pre: t_i > m_time_start && t_j <= m_time_end
+        inline mbr_phrases_type mbr(const size_type movement_i, const size_type movement_j) const {
+
+            mbr_phrases_type result;
+            auto phrase_i = m_rank_lengths(movement_i);
+            auto phrase_j = m_rank_lengths(movement_j);
+            result.i_beg = m_offsets[phrase_i-1];
+            result.i_end = (movement_i - m_select_lengths(phrase_i)) + result.i_beg;
+            result.i_delta = util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase_i-1]),
+                                    (int32_t) alternative_code::decode(m_y_values[phrase_i-1])};
+            result.j_beg = m_offsets[phrase_j-1];
+            result.j_end = (movement_j - m_select_lengths(phrase_j)) + result.j_beg;
+            result.j_delta = util::geo::movement{(int32_t) alternative_code::decode(m_x_values[phrase_j-1]),
+                                          (int32_t) alternative_code::decode(m_y_values[phrase_j-1])};
+
+            auto locals_x = m_rmMq_x.locals(movement_i, movement_j);
+            result.min_x_ok = locals_x.min_ok;
+            result.max_x_ok = locals_x.max_ok;
+            if(result.min_x_ok){
+                auto phrase = m_rank_lengths(locals_x.min);
+                result.min_x_beg = m_offsets[phrase-1];
+                result.min_x_end = (locals_x.min - m_select_lengths(phrase)) + result.min_x_beg;
+                result.min_delta.x = (int32_t) alternative_code::decode(m_x_values[phrase-1]);
+            }
+            if(result.max_x_ok){
+                auto phrase = m_rank_lengths(locals_x.max);
+                result.max_x_beg = m_offsets[phrase-1];
+                result.max_x_end = (locals_x.max - m_select_lengths(phrase)) + result.max_x_beg;
+                result.max_delta.x = (int32_t) alternative_code::decode(m_x_values[phrase-1]);
+            }
+
+            auto locals_y = m_rmMq_y.locals(movement_i, movement_j);
+            result.min_y_ok = locals_y.min_ok;
+            result.max_y_ok = locals_y.max_ok;
+            if(result.min_y_ok){
+                auto phrase = m_rank_lengths(locals_y.min);
+                result.min_y_beg = m_offsets[phrase-1];
+                result.min_y_end = (locals_y.min - m_select_lengths(phrase)) + result.min_y_beg;
+                result.min_delta.y = (int32_t) alternative_code::decode(m_y_values[phrase-1]);
+            }
+            if(result.max_y_ok){
+                auto phrase = m_rank_lengths(locals_y.max);
+                result.max_y_beg = m_offsets[phrase-1];
+                result.max_y_end = (locals_y.max - m_select_lengths(phrase)) + result.max_y_beg;
+                result.max_delta.y = (int32_t) alternative_code::decode(m_y_values[phrase-1]);
+            }
+            return result;
+        }
+
+        //Pre: t_i > m_time_start && t_j <= m_time_end
+        inline mbr_phrases_type mbr_precomputed(const size_type movement_i, const size_type movement_j) const {
+
+            mbr_phrases_type result;
+
+            auto locals_x = m_rmMq_x.locals(movement_i, movement_j);
+            result.min_x_ok = locals_x.min_ok;
+            result.max_x_ok = locals_x.max_ok;
+            if(result.min_x_ok){
+                auto phrase = m_rank_lengths(locals_x.min);
+                result.min_x_beg = m_offsets[phrase-1];
+                result.min_x_end = (locals_x.min - m_select_lengths(phrase)) + result.min_x_beg;
+                result.min_delta.x = (int32_t) alternative_code::decode(m_x_values[phrase-1]);
+            }
+            if(result.max_x_ok){
+                auto phrase = m_rank_lengths(locals_x.max);
+                result.max_x_beg = m_offsets[phrase-1];
+                result.max_x_end = (locals_x.max - m_select_lengths(phrase)) + result.max_x_beg;
+                result.max_delta.x = (int32_t) alternative_code::decode(m_x_values[phrase-1]);
+            }
+
+            auto locals_y = m_rmMq_y.locals(movement_i, movement_j);
+            result.min_y_ok = locals_y.min_ok;
+            result.max_y_ok = locals_y.max_ok;
+            if(result.min_y_ok){
+                auto phrase = m_rank_lengths(locals_y.min);
+                result.min_y_beg = m_offsets[phrase-1];
+                result.min_y_end = (locals_y.min - m_select_lengths(phrase)) + result.min_y_beg;
+                result.min_delta.y = (int32_t) alternative_code::decode(m_y_values[phrase-1]);
+            }
+            if(result.max_y_ok){
+                auto phrase = m_rank_lengths(locals_y.max);
+                result.max_y_beg = m_offsets[phrase-1];
+                result.max_y_end = (locals_y.max - m_select_lengths(phrase)) + result.max_y_beg;
+                result.max_delta.y = (int32_t) alternative_code::decode(m_y_values[phrase-1]);
+            }
+            return result;
+        }
+
         inline void next_phrase(size_type &phrase, size_type &idx_beg, size_type &next_phrase_beg) const {
             ++phrase;
             next_phrase_beg = m_select_lengths(phrase+1);
@@ -461,36 +441,32 @@ namespace rct {
         }
 
         //! Copy constructor
-        log_object(const log_object& o)
+        log_object_no_min_max(const log_object_no_min_max& o)
         {
             copy(o);
         }
 
         //! Move constructor
-        log_object(log_object&& o)
+        log_object_no_min_max(log_object_no_min_max&& o)
         {
             *this = std::move(o);
         }
 
 
-        log_object &operator=(const log_object &o) {
+        log_object_no_min_max &operator=(const log_object_no_min_max &o) {
             if (this != &o) {
                 copy(o);
             }
             return *this;
         }
 
-        log_object &operator=(log_object &&o) {
+        log_object_no_min_max &operator=(log_object_no_min_max &&o) {
             if (this != &o) {
                 m_time_start = o.m_time_start;
                 m_x_start = o.m_x_start;
                 m_y_start = o.m_y_start;
                 m_x_values = std::move(o.m_x_values);
                 m_y_values = std::move(o.m_y_values);
-                m_min_x_values = std::move(o.m_min_x_values);
-                m_min_y_values = std::move(o.m_min_y_values);
-                m_max_x_values = std::move(o.m_max_x_values);
-                m_max_y_values = std::move(o.m_max_y_values);
                 m_offsets = std::move(o.m_offsets);
                 m_lengths = std::move(o.m_lengths);
                 m_rank_lengths = std::move(o.m_rank_lengths);
@@ -502,25 +478,19 @@ namespace rct {
                 m_rank_disap.set_vector(&m_disap);
                 m_succ_0_disap = std::move(o.m_succ_0_disap);
                 m_succ_0_disap.set_vector(&m_disap);
-                m_rmq_x = std::move(o.m_rmq_x);
-                m_rMq_x = std::move(o.m_rMq_x);
-                m_rmq_y = std::move(o.m_rmq_y);
-                m_rMq_y = std::move(o.m_rMq_y);
+                m_rmMq_x = std::move(o.m_rmMq_x);
+                m_rmMq_y = std::move(o.m_rmMq_y);
             }
             return *this;
         }
 
-        void swap(log_object &o) {
+        void swap(log_object_no_min_max &o) {
             // m_bp.swap(bp_support.m_bp); use set_vector to set the supported bit_vector
             std::swap(m_time_start, o.m_time_start);
             std::swap(m_x_start, o.m_x_start);
             std::swap(m_y_start, o.m_y_start);
             m_x_values.swap(o.m_x_values);
             m_y_values.swap(o.m_y_values);
-            m_min_x_values.swap(o.m_min_x_values);
-            m_min_y_values.swap(o.m_min_y_values);
-            m_max_x_values.swap(o.m_max_x_values);
-            m_max_y_values.swap(o.m_max_y_values);
             m_offsets.swap(o.m_offsets);
             m_lengths.swap(o.m_lengths);
             sdsl::util::swap_support(m_rank_lengths, o.m_rank_lengths, &m_lengths, &o.m_lengths);
@@ -528,10 +498,8 @@ namespace rct {
             m_disap.swap(o.m_disap);
             sdsl::util::swap_support(m_rank_disap, o.m_rank_disap, &m_disap, &o.m_disap);
             sdsl::util::swap_support(m_succ_0_disap, o.m_succ_0_disap, &m_disap, &o.m_disap);
-            m_rmq_x.swap(o.m_rmq_x);
-            m_rmq_y.swap(o.m_rmq_y);
-            m_rMq_x.swap(o.m_rMq_x);
-            m_rMq_y.swap(o.m_rMq_y);
+            m_rmMq_x.swap(o.m_rmMq_x);
+            m_rmMq_y.swap(o.m_rmMq_y);
         }
 
 
@@ -543,10 +511,6 @@ namespace rct {
             written_bytes += sdsl::write_member(m_y_start, out, child, "y_start");
             written_bytes += m_x_values.serialize(out, child, "x_values");
             written_bytes += m_y_values.serialize(out, child, "y_values");
-            written_bytes += m_min_x_values.serialize(out, child, "min_x_values");
-            written_bytes += m_min_y_values.serialize(out, child, "min_y_values");
-            written_bytes += m_max_x_values.serialize(out, child, "max_x_values");
-            written_bytes += m_max_y_values.serialize(out, child, "max_y_values");
             written_bytes += m_offsets.serialize(out, child, "offsets");
             written_bytes += m_lengths.serialize(out, child, "lengths");
             written_bytes += m_rank_lengths.serialize(out, child, "rank_lengths");
@@ -554,10 +518,8 @@ namespace rct {
             written_bytes += m_disap.serialize(out, child, "disap");
             written_bytes += m_rank_disap.serialize(out, child, "rank_disap");
             written_bytes += m_succ_0_disap.serialize(out, child, "succ_0_disap");
-            written_bytes += m_rmq_x.serialize(out, child, "rmq_x");
-            written_bytes += m_rmq_y.serialize(out, child, "rmq_y");
-            written_bytes += m_rMq_x.serialize(out, child, "rMq_x");
-            written_bytes += m_rMq_y.serialize(out, child, "rMq_y");
+            written_bytes += m_rmMq_x.serialize(out, child, "rmMq_x");
+            written_bytes += m_rmMq_y.serialize(out, child, "rmMq_y");
             sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
         }
@@ -588,10 +550,6 @@ namespace rct {
             sdsl::read_member(m_y_start, in);
             m_x_values.load(in);
             m_y_values.load(in);
-            m_min_x_values.load(in);
-            m_min_y_values.load(in);
-            m_max_x_values.load(in);
-            m_max_y_values.load(in);
             m_offsets.load(in);
             m_lengths.load(in);
             m_rank_lengths.load(in, &m_lengths);
@@ -599,11 +557,8 @@ namespace rct {
             m_disap.load(in);
             m_rank_disap.load(in, &m_disap);
             m_succ_0_disap.load(in, &m_disap);
-            m_rmq_x.load(in);
-            m_rmq_y.load(in);
-            m_rMq_x.load(in);
-            m_rMq_y.load(in);
-
+            m_rmMq_x.load(in);
+            m_rmMq_y.load(in);
         }
 
         void print(){
@@ -753,14 +708,28 @@ namespace rct {
             }
         }
 
+        template<class ContainerTrajectory>
+        void transform(const ContainerTrajectory &trajectory) {
+
+            //size_type disap_i = 1;
+            std::vector<value_type> xs, ys;
+            for (size_type i = 0; i < trajectory.size(); ++i) {
+                const auto &info = trajectory[i];
+                xs.push_back(info.x);
+                ys.push_back(info.y);
+            }
+            sdsl::util::init_support(m_rmMq_x, &xs);
+            sdsl::util::init_support(m_rmMq_y, &ys);
+
+        }
 
     };
 
-    typedef log_object< sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::sd_vector<>,
-                                  sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::dac_vector_dp<sdsl::bit_vector>> log_object_dac_vector;
+    typedef log_object_no_min_max< sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::sd_vector<>,
+                                  sdsl::dac_vector_dp<sdsl::bit_vector>, sdsl::dac_vector_dp<sdsl::bit_vector>> log_object_no_min_max_dac_vector;
 
-    typedef log_object< sdsl::int_vector<>, sdsl::sd_vector<>, sdsl::int_vector<>,
-                                  sdsl::dac_vector_dp<sdsl::bit_vector> > log_object_int_vector;
+    typedef log_object_no_min_max< sdsl::int_vector<>, sdsl::sd_vector<>, sdsl::int_vector<>,
+                                  sdsl::dac_vector_dp<sdsl::bit_vector> > log_object_no_min_max_int_vector;
 
 
 

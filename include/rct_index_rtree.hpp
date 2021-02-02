@@ -7,8 +7,11 @@
 
 #include <vector>
 #include <log_object.hpp>
+#include <log_object_no_min_max.hpp>
 #include <log_reference.hpp>
+#include <log_reference_no_min_max.hpp>
 #include <log_reference_sparse.hpp>
+#include <log_reference_sparse_no_min_max.hpp>
 #include <geo_util.hpp>
 #include <string>
 #include "spiral_matrix_coder.hpp"
@@ -358,6 +361,43 @@ namespace rct {
             m_log_objects = o.log_objects;
             m_snapshots = o.snapshots;
             m_log_reference = t_log_reference(o.log_reference);
+        }
+
+        template <class Index>
+        void to_no_min_max(const Index &o,
+                           const string &dataset){
+            m_total_objects = o.total_objects;
+            m_speed_max = o.speed_max;
+            m_t_max = o.t_max;
+            m_x_max = o.x_max;
+            m_y_max = o.y_max;
+            m_period_snapshot = o.period_snapshot;
+            m_snapshots = o.snapshots;
+            m_log_reference = t_log_reference(o.log_reference);
+            m_log_objects.resize(o.log_objects.size());
+            for(size_type i = 0; i < m_log_objects.size(); ++i){
+                m_log_objects[i] = t_log_object(o.log_objects[i]);
+            }
+
+            std::ifstream in(dataset);
+            std::vector<util::geo::traj_step> trajectory;
+            auto start = util::time::user::now();
+            uint32_t id = 0, t, x, y, old_id = 0;
+            size_type i = 0;
+            while (!in.eof() && id != -1) {
+                in >> id >> t >> x >> y;
+                if (in.eof()) id = (uint32_t) -1;
+                //if (in.eof() || id > 99) id = (uint32_t) -1;
+                if (id != old_id && old_id != -1) {
+                    m_log_objects[i].transform(trajectory);
+                    trajectory.clear();
+                    ++i;
+                }
+                old_id = id;
+                trajectory.emplace_back(util::geo::traj_step{t, x, y});
+            }
+
+
         }
 
         void load(std::istream& in, std::string &dataset) {

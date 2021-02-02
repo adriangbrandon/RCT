@@ -160,6 +160,18 @@ target_link_libraries(rct_test_multiple_rtree sdsl divsufsort divsufsort64 spati
 add_executable(rct_test_sparse_multiple_rtree src/rct_test_multiple_sparse_rtree.cpp)
 target_link_libraries(rct_test_sparse_multiple_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
+add_executable(rct_test_sparse_multiple_rtree_no_min_max src/rct_test_multiple_sparse_rtree_no_min_max.cpp)
+target_link_libraries(rct_test_sparse_multiple_rtree_no_min_max sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(rct_test_multiple_rtree_no_min_max src/rct_test_multiple_rtree_no_min_max.cpp)
+target_link_libraries(rct_test_multiple_rtree_no_min_max sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(to_no_min_max src/to_no_min_max.cpp)
+target_link_libraries(to_no_min_max sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(to_no_min_max_sparse src/to_no_min_max_sparse.cpp)
+target_link_libraries(to_no_min_max_sparse sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
 add_executable(rct_test_rtree src/rct_test_rtree.cpp)
 target_link_libraries(rct_test_rtree sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
