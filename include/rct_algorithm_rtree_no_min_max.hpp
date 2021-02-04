@@ -507,7 +507,7 @@ namespace rct {
                                     size_type phrase, next_phrase_beg;
                                     size_type x_p_prev, x_n_prev, y_p_prev, y_n_prev;
                                     util::geo::point p;
-                                    if(move < movement_m){
+                                    if(move < mbr_info.m_j){
                                         phrase = rctIndex.log_objects[oid].interval_ref(move, idx_beg, idx_end,
                                                                                         next_phrase_beg, movement_phrase);
                                         movement = rctIndex.log_reference.compute_movement_init(idx_beg, idx_end, x_p_prev, x_n_prev,
@@ -522,7 +522,7 @@ namespace rct {
                                         ++move; //next movement
                                     }
                                     auto prev = idx_end;
-                                    while (move < movement_m) {
+                                    while (move < mbr_info.m_j) {
                                         if (next_phrase_beg < move) { //next_phrase_beg is index, and movement_i count
                                             rctIndex.log_objects[oid].next_phrase(phrase, prev, next_phrase_beg);
                                             movement = rctIndex.log_reference.compute_movement_init_next(prev, x_p_prev,
