@@ -58,7 +58,7 @@ int main(int argc, const char **argv) {
     std::string dataset_path = argv[1];
     double_t ratio = (double_t) atoi(argv[2])/(double_t) 100;
     uint32_t period = (uint32_t) atoi(argv[3]);
-    std::string index_file = util::file::index_file("rct_index_multiple_sparse_rtree_no_min_max", argv, first_query_arg) + ".idx";
+    std::string index_file = util::file::index_file("rct_index_multiple_rtree_no_min_max_sparse", argv, first_query_arg) + ".idx";
     std::cout << "Loading index: " << index_file << std::endl;
     rct::rct_index_rtree<rct::log_reference_sparse_no_min_max<>, rct::log_object_no_min_max_int_vector, rct::rlz_multiple_csa_bc_int64> m_rct_index;
     std::ifstream in(index_file);

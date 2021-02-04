@@ -49,7 +49,6 @@ using namespace rct::knn_support_helper_rtree;
 
 namespace rct {
 
-
     class algorithm {
 
     private:
@@ -374,6 +373,7 @@ namespace rct {
                                           const RCTIndex &rctIndex,
                                           std::vector<typename  RCTIndex::value_type> &r){
 
+            size_type leaf_width = 20;
             typename RCTIndex::size_type movement_i = 0, movement_j = 0, c_phrase_i = 0, c_phrase_j = 0,
                     ic_phrase_l = 0, ic_phrase_r = 0, delta_phrase_l = 0, delta_phrase_r = 0;
             typedef struct {
@@ -419,7 +419,7 @@ namespace rct {
                                 util::geo::movement movement = rctIndex.log_reference.compute_movement(idx_beg, idx_end);
                                 util::geo::point p_m{traj_step.x + movement_phrase.x + movement.x,
                                                      traj_step.y + movement_phrase.y + movement.y};
-                                if(movement_m - mbr_info.m_i > 1){
+                                if(movement_m - mbr_info.m_i > leaf_width){
                                     MBR_precomputed(mbr_info.m_i, movement_m, oid, rctIndex, traj_step, mbr_info.p_i, p_m, mbr1);
                                     if(util::geo::contains(region_q, mbr1)){
                                         r.push_back(oid);
@@ -440,9 +440,49 @@ namespace rct {
                                         processed_ids[oid]=1;
                                         return;
                                     }
+
+                                    auto move = mbr_info.m_i+1;
+                                    size_type phrase, next_phrase_beg;
+                                    size_type x_p_prev, x_n_prev, y_p_prev, y_n_prev;
+                                    util::geo::point p;
+                                    if(move < movement_m){
+                                        phrase = rctIndex.log_objects[oid].interval_ref(move, idx_beg, idx_end,
+                                                                                             next_phrase_beg, movement_phrase);
+                                        movement = rctIndex.log_reference.compute_movement_init(idx_beg, idx_end, x_p_prev, x_n_prev,
+                                                                                                y_p_prev, y_n_prev);
+                                        p = util::geo::point {traj_step.x + movement_phrase.x + movement.x,
+                                                         traj_step.y + movement_phrase.y + movement.y};
+                                        if(util::geo::contains(region_q, p)){
+                                            r.push_back(oid);
+                                            processed_ids[oid]=1;
+                                            return;
+                                        }
+
+                                        ++move; //next movement
+                                    }
+                                    auto prev = idx_end;
+                                    while (move < movement_m) {
+                                        if (next_phrase_beg < move) { //next_phrase_beg is index, and movement_i count
+                                            rctIndex.log_objects[oid].next_phrase(phrase, prev, next_phrase_beg);
+                                            movement = rctIndex.log_reference.compute_movement_init_next(prev, x_p_prev,
+                                                                                                         x_n_prev, y_p_prev, y_n_prev);
+                                        } else {
+                                            movement = rctIndex.log_reference.compute_movement_next(x_p_prev,
+                                                                                                    x_n_prev, y_p_prev, y_n_prev);
+                                        }
+                                        p = util::geo::point{p.x + movement.x, p.y + movement.y};
+                                        if(util::geo::contains(region_q, p)){
+                                            r.push_back(oid);
+                                            processed_ids[oid]=1;
+                                            return;
+                                        }
+                                        ++move;
+                                        ++prev;
+                                    }
+
                                 }
 
-                                if(mbr_info.m_j - movement_m > 1) {
+                                if(mbr_info.m_j - movement_m > leaf_width) {
                                     MBR_precomputed(movement_m, mbr_info.m_j, oid, rctIndex, traj_step, p_m, mbr_info.p_j, mbr2);
                                     if (util::geo::contains(region_q, mbr2)) {
                                         r.push_back(oid);
@@ -462,6 +502,43 @@ namespace rct {
                                         r.push_back(oid);
                                         processed_ids[oid]=1;
                                         return;
+                                    }
+                                    auto move = movement_m+1;
+                                    size_type phrase, next_phrase_beg;
+                                    size_type x_p_prev, x_n_prev, y_p_prev, y_n_prev;
+                                    util::geo::point p;
+                                    if(move < movement_m){
+                                        phrase = rctIndex.log_objects[oid].interval_ref(move, idx_beg, idx_end,
+                                                                                        next_phrase_beg, movement_phrase);
+                                        movement = rctIndex.log_reference.compute_movement_init(idx_beg, idx_end, x_p_prev, x_n_prev,
+                                                                                                y_p_prev, y_n_prev);
+                                        p = util::geo::point {traj_step.x + movement_phrase.x + movement.x,
+                                                              traj_step.y + movement_phrase.y + movement.y};
+                                        if(util::geo::contains(region_q, p)){
+                                            r.push_back(oid);
+                                            processed_ids[oid]=1;
+                                            return;
+                                        }
+                                        ++move; //next movement
+                                    }
+                                    auto prev = idx_end;
+                                    while (move < movement_m) {
+                                        if (next_phrase_beg < move) { //next_phrase_beg is index, and movement_i count
+                                            rctIndex.log_objects[oid].next_phrase(phrase, prev, next_phrase_beg);
+                                            movement = rctIndex.log_reference.compute_movement_init_next(prev, x_p_prev,
+                                                                                                         x_n_prev, y_p_prev, y_n_prev);
+                                        } else {
+                                            movement = rctIndex.log_reference.compute_movement_next(x_p_prev,
+                                                                                                    x_n_prev, y_p_prev, y_n_prev);
+                                        }
+                                        p = util::geo::point{p.x + movement.x, p.y + movement.y};
+                                        if(util::geo::contains(region_q, p)){
+                                            r.push_back(oid);
+                                            processed_ids[oid]=1;
+                                            return;
+                                        }
+                                        ++move;
+                                        ++prev;
                                     }
                                 }
                             }
