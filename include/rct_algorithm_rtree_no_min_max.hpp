@@ -83,6 +83,12 @@ namespace rct {
             }
         }
 
+        template<class t_value>
+        static void insert_result(knn_element &candidate, std::vector<t_value> &result, distance_type &distance){
+            result.push_back(candidate.id);
+            distance = candidate.distance;
+        }
+
         template<class RCTIndex, class t_array>
         static void init_knn(const typename RCTIndex::size_type t_q,
                              const util::geo::point &p_q,
@@ -1184,11 +1190,10 @@ namespace rct {
                 snap.enqueue_children(root, pq_global, p_q);
             }
 
-            pq_knn_result_type pq_results;
-            pq_knn_movement_type pq_distances;
+            distance_type k_distance;
             map_obj_heap_type object_to_heap;
             std::vector<pq_object_type> pq_objects;
-            while(!pq_global.empty() && !(pq_results.size() >= k && pq_global.top().distance >= pq_distances.top())){
+            while(!pq_global.empty() && !(r.size() >= k && pq_global.top().distance >= k_distance)){
                 auto candidate = pq_global.top();
                 //std::cout << "New candidate: " << candidate.id << std::endl;
                 pq_global.pop();
@@ -1197,7 +1202,7 @@ namespace rct {
                     //Search in the priority queue of the object
                     if(candidate.max_distance < pq_global.top().distance || candidate.distance == candidate.max_distance){
                         knn_element knn_e(candidate.id, candidate.distance);
-                        insert_result(knn_e, pq_results, pq_distances, k);
+                        insert_result(knn_e, r, k_distance);
                     }else{
                         const auto it = object_to_heap.find(candidate.id);
                         auto &pq_object = pq_objects[it->second];
@@ -1206,7 +1211,7 @@ namespace rct {
                             pq_object.pop();
                             if(info.t_e == info.t_b){
                                 knn_element knn_e(candidate.id, candidate.distance);
-                                insert_result(knn_e, pq_results, pq_distances, k);
+                                insert_result(knn_e, r, k_distance);
                             }else if (info.t_e - info.t_b == 1) {
                                 util::geo::point pb, pe;
                                 if (search_object(candidate.id, info.t_b, rctIndex, pb)) {
@@ -1290,10 +1295,10 @@ namespace rct {
                 }
             }
 
-            for (uint i = 0; i < k; i++) {
+            /*for (uint i = 0; i < k; i++) {
                 r.emplace_back(pq_results.top().id);
                 pq_results.pop();
-            }
+            }*/
 
 
         }
