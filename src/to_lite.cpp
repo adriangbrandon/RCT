@@ -28,54 +28,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 //
-// Created by Adrián on 27/11/2018.
+// Created by Adrián on 17/12/20.
 //
 
-#ifndef TIME_UTIL_HPP
-#define TIME_UTIL_HPP
-
-#include <cstdint>
-#include <sys/resource.h>
-
-namespace util {
-
-    namespace time {
-
-        class user {
-
-        public:
-
-            /***
-             * User time in microseconds
-             * @return the user time in microseconds
-             */
-            static uint64_t now(){
-
-                struct rusage r_usage;
-                getrusage(RUSAGE_SELF, &r_usage);
-                return r_usage.ru_utime.tv_sec * 1000000 + r_usage.ru_utime.tv_usec;
-            }
-
-        };
-
-        class system {
-
-        public:
-
-            /***
-             * Sys time in microseconds
-             * @return the system time in microseconds
-             */
-            static uint64_t now(){
-
-                struct rusage r_usage;
-                getrusage(RUSAGE_SELF, &r_usage);
-                return r_usage.ru_stime.tv_sec * 1000000 + r_usage.ru_stime.tv_usec;
-            }
+#include <rct_index_rtree.hpp>
 
 
-        };
-    }
+int main(int argc, const char* argv[]) {
+
+    std::string dataset = argv[1];
+    std::string index_file = util::file::index_file("rct_index_multiple_rtree", argv, argc) + ".idx";
+    std::cout << index_file << std::endl;
+    rct::rct_index_rtree<rct::log_reference<>, rct::log_object_int_vector, rct::rlz_multiple_csa_bc_int64> m_rct_index;
+    std::ifstream in(index_file);
+    m_rct_index.load(in, dataset);
+
+    std::cout << "First index load" << std::endl;
+
+    rct::rct_index_rtree<rct::log_reference<>, rct::log_object_lite_int_vector ,
+                         rct::rlz_multiple_csa_bc_int64> m_rct_new_index;
+
+    m_rct_new_index.to_lite(m_rct_index, dataset);
+    std::string index_file_rtree =  util::file::index_file("rct_index_multiple_rtree_lite", argv, argc)+ ".idx";
+    sdsl::store_to_file(m_rct_new_index, index_file_rtree);
+
+
 }
-
-#endif

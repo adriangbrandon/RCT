@@ -8,7 +8,7 @@ set(CMAKE_PROJECT_NAME "RCT")
 set(PROJECT_CONTACT "adrian.gbrandon@udc.es")
 set(CMAKE_INSTALL_PREFIX /home/adrian/software)
 
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 # C++11 compiler Check
 if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
@@ -166,8 +166,14 @@ target_link_libraries(rct_test_sparse_multiple_rtree_no_min_max sdsl divsufsort 
 add_executable(rct_test_multiple_rtree_no_min_max src/rct_test_multiple_rtree_no_min_max.cpp)
 target_link_libraries(rct_test_multiple_rtree_no_min_max sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
+add_executable(rct_test_multiple_rtree_lite src/rct_test_multiple_rtree_lite.cpp)
+target_link_libraries(rct_test_multiple_rtree_lite sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
 add_executable(to_no_min_max src/to_no_min_max.cpp)
 target_link_libraries(to_no_min_max sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(to_lite src/to_lite.cpp)
+target_link_libraries(to_lite sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
 add_executable(to_no_min_max_sparse src/to_no_min_max_sparse.cpp)
 target_link_libraries(to_no_min_max_sparse sdsl divsufsort divsufsort64 spatialindex STRRtree)
