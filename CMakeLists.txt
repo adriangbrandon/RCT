@@ -208,6 +208,12 @@ target_link_libraries(rct_times_multiple_rtree_no_min_max sdsl divsufsort divsuf
 add_executable(rct_times_multiple_sparse_rtree_no_min_max src/rct_times_multiple_sparse_rtree_no_min_max.cpp)
 target_link_libraries(rct_times_multiple_sparse_rtree_no_min_max sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
+add_executable(rct_times_multiple_rtree_lite src/rct_times_multiple_rtree_lite.cpp)
+target_link_libraries(rct_times_multiple_rtree_lite sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
+add_executable(rct_times_multiple_sparse_rtree_lite src/rct_times_multiple_sparse_rtree_lite.cpp)
+target_link_libraries(rct_times_multiple_sparse_rtree_lite sdsl divsufsort divsufsort64 spatialindex STRRtree)
+
 add_executable(rct_repair src/rct_main_repair.cpp)
 target_link_libraries(rct_repair libRepairGN sdsl divsufsort divsufsort64 spatialindex STRRtree)
 
